@@ -1,7 +1,10 @@
-export async function* parseNDJSON(readable,{maxLineChars=64000}={}){
+export async function* parseNDJSON(readable,{maxLineChars=64000,signal}={}){
  if(!readable||typeof readable.getReader!=="function")throw new Error("No hay flujo de datos NDJSON.");
  const reader=readable.getReader();
  const decoder=new TextDecoder();
+ const abort=()=>{reader.cancel(signal?.reason).catch(()=>{});};
+ signal?.addEventListener("abort",abort,{once:true});
+ if(signal?.aborted)abort();
  let buffer="";
  try{
   for(;;){
@@ -22,7 +25,7 @@ export async function* parseNDJSON(readable,{maxLineChars=64000}={}){
    if(buffer.length>maxLineChars)throw new Error("Última línea NDJSON demasiado grande.");
    yield JSON.parse(buffer.trim());
   }
- }finally{reader.releaseLock();}
+ }finally{signal?.removeEventListener("abort",abort);reader.releaseLock();}
 }
 
 export class SentenceChunker {

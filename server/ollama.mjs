@@ -55,11 +55,18 @@ export async function listOllamaModels({provider,fetchImpl=fetch,env=process.env
 }
 
 // Produces only user-visible text deltas; hidden reasoning is neither emitted nor persisted.
-export async function* streamOllama({provider,model,messages,signal,fetchImpl=fetch,env=process.env}){
+// User-visible text only; the provider's hidden reasoning is never exposed.
+export async function* streamOllama({
+ provider,model,messages,signal,fetchImpl=fetch,env=process.env,
+ connectTimeoutMs=provider==="cloud"?25000:10000,
+ idleTimeoutMs=provider==="cloud"?60000:20000
+}){
  validateModel(model);
  const {base,headers}=connection(provider,env);
- const timeoutSignal=AbortSignal.timeout(90000);
- const combined=signal?AbortSignal.any([signal,timeoutSignal]):timeoutSignal;
+ const total=AbortSignal.timeout(90000);
+ const phaseController=new AbortController();
+ const combined=signal?AbortSignal.any([signal,total,phaseController.signal]):AbortSignal.any([total,phaseController.signal]);
+ const timer=setTimeout(()=>phaseController.abort(Error("Connect phase deadline")),Math.max(1,connectTimeoutMs));
  let response;
  try{
   response=await fetchImpl(base+"/api/chat",{
@@ -70,13 +77,22 @@ export async function* streamOllama({provider,model,messages,signal,fetchImpl=fe
   });
  }catch(error){
   if(signal?.aborted)throw error;
-  throw new OllamaError("No se ha podido iniciar el flujo de Ollama.",502);
+  throw new OllamaError("No se ha podido iniciar el flujo de Ollama (conexión o timeout).",502);
+ }finally{
+  clearTimeout(timer);
  }
  if(!response.ok)throw new OllamaError("Ollama streaming devolvió HTTP "+response.status+".",502);
  let outputLength=0;
+ let idleTimer;
+ const refresh=()=>{
+  clearTimeout(idleTimer);
+  idleTimer=setTimeout(()=>phaseController.abort(Error("Stream idle phase deadline")),Math.max(1,idleTimeoutMs));
+ };
+ refresh();
  try{
-  for await(const event of parseNDJSON(response.body)){
-   if(combined.aborted)throw new OllamaError("Respuesta interrumpida.",499);
+  for await(const event of parseNDJSON(response.body,{signal:combined})){
+   if(combined.aborted)throw new OllamaError("Respuesta cancelada o tiempo agotado.",502);
+   refresh();
    if(event.error)throw new OllamaError("El proveedor devolvió un error durante la respuesta.",502);
    const delta=event.message?.content;
    if(typeof delta==="string"&&delta.length){
@@ -85,10 +101,13 @@ export async function* streamOllama({provider,model,messages,signal,fetchImpl=fe
     yield delta;
    }
   }
+  if(combined.aborted)throw new OllamaError("Respuesta cancelada o tiempo agotado.",502);
  }catch(error){
   if(signal?.aborted)throw error;
   if(error instanceof OllamaError)throw error;
-  throw new OllamaError("Flujo NDJSON inválido o interrumpido.",502);
+  throw new OllamaError("Flujo NDJSON inválido, cancelado o timeout.",502);
+ }finally{
+  clearTimeout(idleTimer);
  }
  if(!outputLength)throw new OllamaError("Ollama no devolvió texto en streaming.",502);
 }
