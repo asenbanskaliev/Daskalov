@@ -13,12 +13,17 @@ export function openMemory(fileName) {
  "CREATE INDEX IF NOT EXISTS memories_player_date ON memories(player_id,id DESC);",
  "CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(content,content='memories',content_rowid='id');",
  "CREATE TRIGGER IF NOT EXISTS memories_ai AFTER INSERT ON memories BEGIN INSERT INTO memories_fts(rowid,content) VALUES (new.id,new.content); END;",
- "CREATE TRIGGER IF NOT EXISTS memories_ad AFTER DELETE ON memories BEGIN INSERT INTO memories_fts(memories_fts,rowid,content) VALUES('delete',old.id,old.content); END;"
+ "CREATE TRIGGER IF NOT EXISTS memories_ad AFTER DELETE ON memories BEGIN INSERT INTO memories_fts(memories_fts,rowid,content) VALUES('delete',old.id,old.content); END;",
+ "CREATE TABLE IF NOT EXISTS session_credentials(key_hash TEXT PRIMARY KEY, player_id TEXT NOT NULL UNIQUE, created_at TEXT NOT NULL DEFAULT(datetime('now')), expires_at TEXT NOT NULL DEFAULT(datetime('now','+30 days')));",
+ "CREATE INDEX IF NOT EXISTS idx_session_expiry ON session_credentials(expires_at);"
  ].join("\n"));
  const add=db.prepare("INSERT INTO memories(player_id,role,content) VALUES (?,?,?)");
  const recent=db.prepare("SELECT role,content,created_at FROM memories WHERE player_id=? ORDER BY id DESC LIMIT ?");
  const fts=db.prepare("SELECT m.role,m.content,m.created_at FROM memories_fts JOIN memories m ON m.id=memories_fts.rowid WHERE memories_fts MATCH ? AND m.player_id=? ORDER BY bm25(memories_fts) LIMIT ?");
  const del=db.prepare("DELETE FROM memories WHERE player_id=?");
+ const insertCredential=db.prepare("INSERT INTO session_credentials(key_hash,player_id) VALUES (?,?)");
+ const queryCredential=db.prepare("SELECT player_id FROM session_credentials WHERE key_hash=? AND expires_at>datetime('now')");
+ const revokeCredential=db.prepare("DELETE FROM session_credentials WHERE key_hash=?");
  return {
   save(id,role,content){if(!isPlayerId(id)||!["user","assistant"].includes(role))throw new Error("Memoria inválida");add.run(id,role,String(content).slice(0,1500));},
   search(id,query,limit=5){
@@ -34,7 +39,10 @@ export function openMemory(fileName) {
   },
   list(id){return isPlayerId(id)?recent.all(id,30):[];},
   deletePlayer(id){if(isPlayerId(id))del.run(id);},
-  cleanup(){db.exec("DELETE FROM memories WHERE created_at < datetime('now','-30 days')");},
+  createSession(hash,id){if(!/^[a-f0-9]{64}$/.test(hash)||!isPlayerId(id))throw new Error("Credential format invalid");insertCredential.run(hash,id);},
+  resolveSession(hash){if(typeof hash!=="string"||!/^[a-f0-9]{64}$/.test(hash))return null;return queryCredential.get(hash)?.player_id||null;},
+  revokeSession(hash){if(typeof hash==="string"&&/^[a-f0-9]{64}$/.test(hash))revokeCredential.run(hash);},
+  cleanup(){db.exec("DELETE FROM memories WHERE created_at < datetime('now','-30 days'); DELETE FROM session_credentials WHERE expires_at < datetime('now')");},
   close(){db.close();}
  };
 }
