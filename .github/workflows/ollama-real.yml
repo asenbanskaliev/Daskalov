@@ -1,12 +1,8 @@
 name: Ollama Cloud - REAL smoke
+# Manual ONLY, and only from trusted main after review.
+# Configure environment "daskalov-cloud-test" with required reviewers in GitHub Settings.
+# Secrets are NEVER provided to pull requests or editable feature branches.
 on:
-  push:
-    branches:
-      - feat/odd-tdd-web-mvp
-    paths:
-      - "server/**"
-      - scripts/ollama-cloud-smoke.mjs
-      - .github/workflows/ollama-real.yml
   workflow_dispatch:
 permissions:
   contents: read
@@ -15,11 +11,14 @@ concurrency:
   cancel-in-progress: true
 jobs:
   beam-api:
-    if: github.repository == 'asenbanskaliev/Daskalov'
+    if: github.repository == 'asenbanskaliev/Daskalov' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
+    environment: daskalov-cloud-test
     timeout-minutes: 4
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v7
         with:
           node-version: "24"
