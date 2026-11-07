@@ -1,4 +1,3 @@
-import {randomUUID} from "node:crypto";
 import {once} from "node:events";
 import {createApp} from "../server/main.mjs";
 
@@ -7,7 +6,7 @@ if(!process.env.OLLAMA_API_KEY){
 }else{
  const app=createApp({dbPath:":memory:",allowMemory:true});
  const model=process.env.OLLAMA_CLOUD_MODEL||"beam";
- const started=Date.now(),id=randomUUID();
+ const started=Date.now();
  app.server.listen(0,"127.0.0.1");
  await once(app.server,"listening");
  const base="http://127.0.0.1:"+app.server.address().port;
@@ -36,10 +35,12 @@ if(!process.env.OLLAMA_API_KEY){
   if(reply.animation!=="ruler_desk")throw new Error("No se asignó el gesto esperado.");
   const before=await post("/api/memory",{});
   if(before.memories?.length!==2)throw new Error("La memoria no almacenó ambos turnos.");
+  const oldCookie=cookie;
   await post("/api/memory",{},"DELETE");
   cookie="";csrfToken="";
-  const after=await post("/api/session",{});
-  if(after.active!==undefined&&after.active!==false)throw new Error("La sesión de memoria no se revocó.");
+  const afterResponse=await fetch(base+"/api/session",{headers:{cookie:oldCookie}});
+  const after=await afterResponse.json();
+  if(after.active!==false)throw new Error("La sesión de memoria no se revocó.");
   console.log("PASS E2E: Ollama Cloud "+model+", personaje Daskalov, gesto, SQL y borrado; elapsed_ms="+(Date.now()-started)+", reply_chars="+reply.reply.length);
  }catch(error){
   console.error("FAIL: integración E2E Cloud: "+error.name+" "+error.message);

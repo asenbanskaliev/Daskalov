@@ -23,3 +23,25 @@ test("SEC-003: ordinary PR CI does not reference secret values",()=>{
  assert.doesNotMatch(yaml,/secrets\.|OLLAMA_API_KEY/);
  assert.match(yaml,/pull_request:/);
 });
+
+test("SEC-002: all GitHub Actions are pinned to full commit SHAs",()=>{
+ for(const name of ["ci.yml","ollama-real.yml"]){
+  const yaml=readFileSync(resolve(".github/workflows",name),"utf8");
+  const lines=yaml.split("\n").filter(line=>/uses:\s+/.test(line));
+  assert.ok(lines.length>=2,name+": workflows should use pinned actions");
+  for(const line of lines){
+   assert.match(line,/uses:\s+actions\/(?:checkout|setup-node|upload-artifact)@[a-f0-9]{40}(?:\s|$)/);
+  }
+  assert.match(yaml,/persist-credentials:\s*false/);
+ }
+});
+test("SEC-003: secret references only in a trustworthy workflow",()=>{
+ for(const name of ["ci.yml","ollama-real.yml"]){
+  const yaml=readFileSync(resolve(".github/workflows",name),"utf8");
+  if(yaml.includes("secrets.")){
+   assert.equal(name,"ollama-real.yml");
+   assert.doesNotMatch(yaml,/^\s*(?:pull_request|pull_request_target|push|workflow_run):/m);
+   assert.match(yaml,/github\.ref\s*==\s*'refs\/heads\/main'/);
+  }
+ }
+});

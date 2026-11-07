@@ -74,11 +74,39 @@ test("SEC-005: cuota por IP y máximo un turno simultáneo",async(t)=>{
  release();
  assert.equal((await first).status,200);
 });
-test("SEC-004: las sesiones de memoria sobreviven al reinicio y el token no queda en SQLite en claro",async(t)=>{
- const {base}=await fixture(t);
- const a=await auth(base);
- assert.match(a.cookie,/daskalov_sid=/);
- // The exact token is never returned in the body and is not part of a client-controlled playerId.
- const r=await post(base,"/api/memory",{},a.cookie,a.csrf);
+test("SEC-004: sesión persiste tras reiniciar servidor sin guardar su cookie en claro",async(t)=>{
+ const {mkdtempSync,readFileSync,rmSync}=await import("node:fs");
+ const {tmpdir}=await import("node:os");
+ const {join}=await import("node:path");
+ const dir=mkdtempSync(join(tmpdir(),"daskalov-session-test-"));
+ const dbPath=join(dir,"memory.sqlite");
+ t.after(()=>rmSync(dir,{recursive:true,force:true}));
+ async function boot(){
+  const app=createApp({dbPath,allowMemory:true,llm:async()=>"¡Hola, alumno!"});
+  app.server.listen(0,"127.0.0.1");await once(app.server,"listening");
+  return {app,base:"http://127.0.0.1:"+app.server.address().port};
+ }
+ const one=await boot(),a=await auth(one.base);
+ let r=await post(one.base,"/api/chat",{provider:"cloud",model:"beam",text:"Recuerda que me gustan las mates",remember:true},a.cookie,a.csrf);
  assert.equal(r.status,200);
+ await new Promise(done=>one.app.server.close(done));one.app.close();
+ const data=readFileSync(dbPath);
+ const raw=a.cookie.split("=")[1];
+ assert.equal(data.includes(Buffer.from(raw)),false);
+ const two=await boot();
+ t.after(async()=>{await new Promise(done=>two.app.server.close(done));two.app.close();});
+ r=await post(two.base,"/api/memory",{},a.cookie,a.csrf);
+ assert.equal(r.status,200);
+ assert.equal((await r.json()).memories.length,2);
+});
+test("SEC-005: límite diario impide repetir consumo aunque no se alcance el minuto",async(t)=>{
+ const {base}=await fixture(t,{maxCallsPerDay:1});
+ const body={provider:"cloud",model:"beam",text:"Hola",remember:false};
+ assert.equal((await post(base,"/api/chat",body)).status,200);
+ assert.equal((await post(base,"/api/chat",body)).status,429);
+});
+test("SEC-004: bloquea origen ajeno antes de crear memoria",async(t)=>{
+ const {base}=await fixture(t);
+ const res=await fetch(base+"/api/session",{method:"POST",headers:{origin:"https://otro.example"}});
+ assert.equal(res.status,403);
 });
