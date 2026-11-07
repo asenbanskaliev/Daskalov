@@ -12,6 +12,7 @@ function readSetting(key){try{return localStorage.getItem("daskalov_"+key);}catc
 function writeSetting(key,value){try{localStorage.setItem("daskalov_"+key,value);}catch{}}
 function showMessage(role,text){
  const item=document.createElement("div");item.className="message "+role;item.textContent=text;$("history").appendChild(item);$("history").scrollTop=$("history").scrollHeight;
+ return item;
 }
 async function send(text,event="dialog"){
  text=String(text).trim();
