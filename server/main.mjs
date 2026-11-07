@@ -71,6 +71,9 @@ export function createApp({
    if(["POST","PUT","PATCH","DELETE"].includes(req.method)&&!isSameSiteRequest(req)){
     throw new OllamaError("Solicitud de otro sitio bloqueada.",403);
    }
+   if(process.env.DASKALOV_SAFE_DEMO_ONLY==="1"&&path.startsWith("/api/")&&!(path==="/api/health"&&req.method==="GET")){
+    throw new OllamaError("Demo pública: IA y datos personales desactivados.",403);
+   }
    if(path==="/api/metrics"&&req.method==="GET"){
     if(!isPrivateHost(req.headers.host))throw new OllamaError("Métricas solo disponibles en modo privado.",403);
     return respond(res,200,metrics.snapshot());
