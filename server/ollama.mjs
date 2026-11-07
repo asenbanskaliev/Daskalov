@@ -24,7 +24,7 @@ export async function chatOllama({provider,model,messages,fetchImpl=fetch,env=pr
  const {base,headers}=connection(provider,env);
  let response;
  try {
-  response=await fetchImpl(base+"/api/chat",{method:"POST",headers:{"content-type":"application/json",...headers},body:JSON.stringify({model,messages,stream:false,options:{num_predict:180}}),signal:AbortSignal.timeout(90000)});
+  response=await fetchImpl(base+"/api/chat",{method:"POST",headers:{"content-type":"application/json",...headers},body:JSON.stringify({model,messages,stream:false,think:false,options:{num_predict:512}}),signal:AbortSignal.timeout(90000)});
  }catch{throw new OllamaError("No se ha podido conectar con Ollama.",502);}
  if(!response.ok)throw new OllamaError("Ollama devolvió HTTP "+response.status+".",502);
  let data;try{data=await response.json();}catch{throw new OllamaError("Ollama devolvió JSON inválido.",502);}
