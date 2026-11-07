@@ -93,3 +93,17 @@ test("LLM-003: el botón Interrumpir está disponible en la interfaz y vuelve a 
  await expect(page.getByRole("log")).toContainText("¡Respuesta de prueba!");
  await expect(page.locator("#stopButton")).toBeDisabled();
 });
+
+test("WEB-006: sin reconocimiento ni voz nativos mantiene chat con teclado",async({page})=>{
+ await page.addInitScript(()=>{
+  Object.defineProperty(window,"SpeechRecognition",{value:undefined,configurable:true});
+  Object.defineProperty(window,"webkitSpeechRecognition",{value:undefined,configurable:true});
+  Object.defineProperty(window,"SpeechSynthesisUtterance",{value:undefined,configurable:true});
+ });
+ await page.route("**/api/chat/stream",route=>route.fulfill({status:200,contentType:"application/x-ndjson",body:mockTurn("¡También podemos aprender escribiendo!")}));
+ await page.goto("/");
+ await expect(page.locator("#micButton")).toBeDisabled();
+ await page.locator("#question").fill("Profesor, hoy no tengo micrófono");
+ await page.locator("#sendButton").click();
+ await expect(page.getByRole("log")).toContainText("También podemos aprender escribiendo");
+});

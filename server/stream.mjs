@@ -26,7 +26,7 @@ export async function* parseNDJSON(readable,{maxLineChars=64000}={}){
 }
 
 export class SentenceChunker {
- constructor({minChars=12,maxChars=180}={}){
+ constructor({minChars=12,maxChars=160}={}){
   this.minChars=minChars;this.maxChars=maxChars;this.buffer="";
  }
  push(delta){
