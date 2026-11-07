@@ -1,9 +1,11 @@
 import http from "node:http";
+import {randomUUID} from "node:crypto";
 import {readFile} from "node:fs/promises";
 import {resolve,dirname,join} from "node:path";
 import {fileURLToPath} from "node:url";
 import {createMessages,normalizeReply,inferAnimation} from "./personality.mjs";
-import {chatOllama,listOllamaModels,OllamaError,validateModel,validateProvider} from "./ollama.mjs";
+import {chatOllama,streamOllama,listOllamaModels,OllamaError,validateModel,validateProvider} from "./ollama.mjs";
+import {SentenceChunker} from "./stream.mjs";
 import {openMemory} from "./memory.mjs";
 import {createSession, getSession, csrfIsValid, isSameSiteRequest, clearSessionCookie} from "./session.mjs";
 
@@ -35,6 +37,7 @@ function rejectClientPlayerId(body){
 export function createApp({
  dbPath=join(root,"server","data","daskalov.sqlite"),
  llm=chatOllama,
+ streamLlm=streamOllama,
  models=listOllamaModels,
  allowMemory=process.env.DASKALOV_ALLOW_MEMORY==="1",
  maxCallsPerMinute=12,
@@ -83,7 +86,7 @@ export function createApp({
     }
     return respond(res,200,{memories:memory.list(session.playerId)});
    }
-   if(path==="/api/chat"&&req.method==="POST"){
+   if((path==="/api/chat"||path==="/api/chat/stream")&&req.method==="POST"){
     const body=await bodyOf(req);
     rejectClientPlayerId(body);
     const provider=validateProvider(body.provider),model=validateModel(body.model);
@@ -108,6 +111,49 @@ export function createApp({
     try{
      const memories=remember?memory.search(session.playerId,body.text):[];
      const messages=createMessages({text:body.text,event,memories,history:body.history});
+     if(path==="/api/chat/stream"){
+      const requestId=randomUUID(),chunker=new SentenceChunker();
+      const cancellation=new AbortController();
+      let sequence=0,full="";
+      res.once("close",()=>{if(!res.writableEnded)cancellation.abort();});
+      res.writeHead(200,{
+       "content-type":"application/x-ndjson; charset=utf-8",
+       "cache-control":"no-cache, no-transform",
+       "x-content-type-options":"nosniff",
+       "x-accel-buffering":"no"
+      });
+      const emit=(type,data={})=>{
+       if(!res.destroyed&&!cancellation.signal.aborted){
+        res.write(JSON.stringify({type,requestId,sequence:sequence++,...data})+"\n");
+       }
+      };
+      try{
+       emit("started",{provider,model});
+       for await(const delta of streamLlm({provider,model,messages,signal:cancellation.signal})){
+        if(cancellation.signal.aborted)break;
+        const text=String(delta);
+        full+=text;
+        if(full.length>6000)throw new OllamaError("Respuesta demasiado larga.",502);
+        emit("delta",{text});
+        for(const sentence of chunker.push(text))emit("sentence",{text:sentence});
+       }
+       if(!cancellation.signal.aborted){
+        const reply=normalizeReply(full);
+        if(!reply)throw new OllamaError("Ollama no devolvió texto.",502);
+        for(const sentence of chunker.flush())emit("sentence",{text:sentence});
+        if(remember){
+         memory.save(session.playerId,"user",body.text);
+         memory.save(session.playerId,"assistant",reply);
+        }
+        emit("completed",{reply,animation:inferAnimation(reply,event),provider,model});
+       }
+      }catch(error){
+       if(!cancellation.signal.aborted){
+        emit("error",{error:error instanceof OllamaError?error.message:"Error de conexión con el profesor."});
+       }
+      }finally{if(!res.destroyed)res.end();}
+      return;
+     }
      const reply=normalizeReply(await llm({provider,model,messages}));
      if(!reply)throw new OllamaError("El profesor no ha respondido.",502);
      if(remember){

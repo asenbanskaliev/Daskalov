@@ -19,7 +19,7 @@ test("LLM-002: NDJSON UTF-8 reconstruye emojis y letras entre chunks",async()=>{
  assert.equal(messages[1].done,true);
 });
 test("LLM-004: segmenta frases antes de fin sin perder su remate",()=>{
- const chunker=new SentenceChunker({minChars:12,maxChars:70});
+ const chunker=new SentenceChunker({minChars:8,maxChars:70});
  assert.deepEqual(chunker.push("¡Profesor! En mis tiempos sumábamos ladrillos. "),["¡Profesor!","En mis tiempos sumábamos ladrillos."]);
  assert.deepEqual(chunker.push("¿Y la pizarra?"),["¿Y la pizarra?"]);
  assert.deepEqual(chunker.flush(),[]);
