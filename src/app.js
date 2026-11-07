@@ -8,7 +8,7 @@ import {createMemoryUI} from "./memory-ui.js";
 import {configureVoiceInput} from "./voice-input.js";
 
 const history=[];
-let playing=false,yaw=0,sceneState=null,activeController=null,activeTurn=0;
+let busy=false,playing=false,yaw=0,sceneState=null,activeController=null,activeTurn=0;
 const speech=new BrowserSpeechQueue({onSpeaking:active=>{playing=active;}});
 const settings=createSettingsUI({find:$,showMessage});
 const memoryUI=createMemoryUI({find:$,showMessage,history});
