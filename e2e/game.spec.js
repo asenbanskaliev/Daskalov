@@ -28,3 +28,17 @@ test("STT-001/002: modo solo teclado funciona sin micrófono",async({page})=>{
  await page.locator("#sendButton").click();
  await expect(page.locator("#history")).toContainText("La historia");
 });
+
+test("GAME-007: cambios de dificultad sin crear perfil de edad",async({page})=>{
+ await page.goto("/");
+ await page.locator("#lessonDifficulty").selectOption("advanced");
+ await page.getByRole("button",{name:"Matemáticas"}).click();
+ await expect(page.locator("#lessonQuestion")).toContainText("6 tizas");
+ await page.locator("#lessonAnswers").getByRole("button",{name:"4"}).click();
+ await expect(page.locator("#gameProgress")).toContainText("1 de 3");
+ await page.locator("#lessonDifficulty").selectOption("basic");
+ await page.getByRole("button",{name:"Lengua",exact:true}).click();
+ await expect(page.locator("#lessonQuestion")).toContainText("objeto");
+ await page.locator("#lessonAnswers").getByRole("button",{name:"mesa"}).click();
+ await expect(page.locator("#gameProgress")).toContainText("2 de 3");
+});

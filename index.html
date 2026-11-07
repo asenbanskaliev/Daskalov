@@ -54,6 +54,9 @@
       </section>
       <section id="lessonPanel" class="lesson-panel" aria-label="Misiones educativas">
         <div class="lesson-heading"><h3>Retos de clase</h3><p id="gameProgress" aria-live="polite">0 de 3 misiones completadas · 0 puntos</p></div>
+        <div class="fields"><label for="lessonDifficulty">Nivel del reto (sin recopilar edad ni datos personales)</label>
+          <select id="lessonDifficulty"><option value="basic">Principiante</option><option value="standard" selected>Intermedio</option><option value="advanced">Avanzado</option></select>
+        </div>
         <div id="lessonChoices" class="lesson-choices" role="group" aria-label="Elige una materia"></div>
         <div id="lessonActivity" class="lesson-activity" hidden>
           <p id="lessonGoal" class="lesson-goal"></p>

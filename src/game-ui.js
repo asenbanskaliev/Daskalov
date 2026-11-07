@@ -1,6 +1,11 @@
 import {LESSONS,createGame} from "./game.js";
 export function createGameUI({find,onGesture=()=>{},onQuestion=()=>{},onCompleted=()=>{}}){
  const game=createGame({onChange:renderProgress});
+ const levelSelect=find("lessonDifficulty");
+ levelSelect?.addEventListener("change",()=>{
+  game.setLevel(levelSelect.value);
+  if(game.lesson)renderQuestion(game.lesson);
+ });
  const choices=find("lessonChoices"),answers=find("lessonAnswers");
  function renderProgress(){
   const state=game.snapshot();
