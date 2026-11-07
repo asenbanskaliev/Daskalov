@@ -23,3 +23,12 @@ test("Local consulta modelos y nunca usa secreto Cloud",async()=>{
 test("error remoto no filtra contenido",async()=>{
  await assert.rejects(()=>chatOllama({provider:"cloud",model:"beam",messages:[],env:{OLLAMA_API_KEY:"FAKE_TEST"},fetchImpl:async()=>new Response("SENSITIVE",{status:401})}),e=>e instanceof OllamaError&&e.status===502&&!e.message.includes("SENSITIVE"));
 });
+
+test("LLM-005: Cloud consulta el catálogo en la API oficial",async()=>{
+ let requested;
+ const list=await listOllamaModels({provider:"cloud",env:{},fetchImpl:async url=>{
+  requested=url;return Response.json({models:[{name:"beam"},{name:"gemma4:31b"},{name:"http://bad"},{bad:"x"}]});
+ }});
+ assert.equal(requested,"https://ollama.com/api/tags");
+ assert.deepEqual(list,["beam","gemma4:31b"]);
+});

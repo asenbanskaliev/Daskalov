@@ -1,4 +1,7 @@
 import {test,expect} from "@playwright/test";
+test.beforeEach(async({page})=>{
+ await page.route("**/api/models?*",route=>route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({models:["beam","qwen2.5:7b"]})}));
+});
 const id="00000000-0000-4000-8000-000000000011";
 function mockTurn(reply,animation="talk"){
  return [
@@ -66,4 +69,12 @@ test("WEB-003: una recarga conserva la interfaz y sirve assets compilados",async
  await expect(page.getByRole("heading",{name:"Profesor Daskalov"})).toBeVisible();
  const resources=await page.evaluate(()=>performance.getEntriesByType("resource").filter(e=>e.name.includes("/assets/")).map(e=>e.name));
  expect(resources.length).toBeGreaterThan(0);
+});
+
+test("LLM-005: el catálogo de modelos depende del proveedor elegido",async({page})=>{
+ await page.goto("/");
+ await page.locator("#provider").selectOption("local");
+ await expect(page.locator("#model")).toHaveValue("qwen2.5:7b");
+ await page.locator("#provider").selectOption("cloud");
+ await expect(page.locator("#model")).toHaveValue("beam");
 });

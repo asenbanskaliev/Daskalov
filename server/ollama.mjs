@@ -40,16 +40,19 @@ export async function chatOllama({provider,model,messages,fetchImpl=fetch,env=pr
 }
 export async function listOllamaModels({provider,fetchImpl=fetch,env=process.env}) {
  validateProvider(provider);
- if(provider==="cloud")return ["beam","gpt-oss:20b","deepseek-v4.1-flash"];
- const {base}=connection("local",env);
+ const base=provider==="cloud"?"https://ollama.com":connection("local",env).base;
  try{
   const res=await fetchImpl(base+"/api/tags",{signal:AbortSignal.timeout(7000)});
-  if(!res.ok)throw new Error("bad status");
+  if(!res.ok)throw new Error("HTTP "+res.status);
   const data=await res.json();
-  return Array.isArray(data.models)?data.models.map(m=>m.name).filter(x=>typeof x==="string"):[];
- }catch{throw new OllamaError("No es posible consultar los modelos locales.",502);}
+  return Array.isArray(data.models)?data.models
+   .map(m=>m.name)
+   .filter(name=>typeof name==="string"&&/^[a-zA-Z0-9._:-]{1,100}$/.test(name))
+   .slice(0,200):[];
+ }catch{
+  throw new OllamaError("No se pueden consultar los modelos de Ollama "+provider+".",502);
+ }
 }
-
 
 // Produces only user-visible text deltas; hidden reasoning is neither emitted nor persisted.
 export async function* streamOllama({provider,model,messages,signal,fetchImpl=fetch,env=process.env}){

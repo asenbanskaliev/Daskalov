@@ -116,7 +116,10 @@ async function refreshModels(){
   if(!r.ok)throw new Error(data.error);
   $("modelsList").replaceChildren();
   for(const name of data.models){const o=document.createElement("option");o.value=name;$("modelsList").appendChild(o);}
-  if(provider==="local"&&!$("model").value&&data.models.length)$("model").value=data.models[0];
+  if(data.models.length&&!data.models.includes($("model").value)){
+   $("model").value=data.models[0];
+   writeSetting("model",$("model").value);
+  }
  }catch(error){showMessage("error",error.message||"No se pudieron consultar los modelos.");}
 }
 $("provider").addEventListener("change",()=>{writeSetting("provider",$("provider").value);refreshModels();});
