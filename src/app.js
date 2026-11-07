@@ -10,9 +10,36 @@ import {demoReply} from "./demo.js";
 
 const history=[];
 let busy=false,playing=false,yaw=0,sceneState=null,activeController=null,activeTurn=0;
-const speech=new BrowserSpeechQueue({onSpeaking:active=>{playing=active;}});
+const speech=new BrowserSpeechQueue({onSpeaking:active=>{
+ playing=active;
+ $("pauseVoice").disabled=!active;
+ $("resumeVoice").disabled=active||!speech.enabled;
+}});
 const settings=createSettingsUI({find:$,showMessage});
 const memoryUI=createMemoryUI({find:$,showMessage,history});
+$("graphicsQuality").value=readSetting("graphicsQuality")||"auto";
+$("reducedMotion").checked=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+$("graphicsQuality").addEventListener("change",()=>{
+ writeSetting("graphicsQuality",$("graphicsQuality").value);
+ sceneState?.setQuality($("graphicsQuality").value);
+});
+function refreshBrowserVoices(){
+ const select=$("voiceChoice"),old=select.value;
+ select.replaceChildren();
+ const defaultOpt=document.createElement("option");
+ defaultOpt.value="";defaultOpt.textContent="Voz predeterminada";
+ select.append(defaultOpt);
+ for(const voice of speech.listVoices()){
+  const opt=document.createElement("option");opt.value=voice.name;opt.textContent=voice.name;
+  select.append(opt);
+ }
+ select.value=old&&[...select.options].some(x=>x.value===old)?old:"";
+}
+$("voiceChoice").addEventListener("change",()=>speech.setVoiceName($("voiceChoice").value));
+$("pauseVoice").addEventListener("click",()=>{speech.pause();$("resumeVoice").disabled=false;});
+$("resumeVoice").addEventListener("click",()=>{speech.resume();$("resumeVoice").disabled=true;});
+refreshBrowserVoices();
+window.speechSynthesis?.addEventListener?.("voiceschanged",refreshBrowserVoices);
 $("provider").value=readSetting("provider")||"cloud";
 $("model").value=readSetting("model")||"beam";
 async function send(text,event="dialog"){
@@ -104,7 +131,10 @@ function applyDemoControls(){
   $("micButton").disabled=!mic.available;
   memoryUI.refresh();
  }
- $("demoNotice").hidden=!demo;
+ $("voiceChoice").disabled=demo;
+ $("pauseVoice").disabled=demo||!playing;
+ $("resumeVoice").disabled=demo||!speech.enabled;
+  $("demoNotice").hidden=!demo;
 }
 $("provider").addEventListener("change",()=>{
  writeSetting("provider",$("provider").value);
@@ -133,7 +163,8 @@ settings.refreshModels();
 memoryUI.refresh().then(applyDemoControls);
 createClassroomScene({
  canvas:$("sceneCanvas"),status:$("sceneStatus"),getYaw:()=>yaw,isSpeaking:()=>playing,
- getReducedMotion:()=>window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+ getReducedMotion:()=>$("reducedMotion").checked||window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+ quality:$("graphicsQuality").value,
  onReady:scene=>{sceneState=scene;}
 });
 
