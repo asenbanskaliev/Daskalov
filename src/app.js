@@ -8,6 +8,7 @@ import {createMemoryUI} from "./memory-ui.js";
 import {configureVoiceInput} from "./voice-input.js";
 import {demoReply} from "./demo.js";
 import {createGameUI} from "./game-ui.js";
+import {configureDevMetrics} from "./metrics-ui.js";
 
 const history=[];
 let busy=false,playing=false,yaw=0,sceneState=null,activeController=null,activeTurn=0;
@@ -169,6 +170,7 @@ bindCameraKeyboard({
  setYaw:next=>{yaw=next;},
  onTurn:()=>{if($("autoTurn").checked)send("Me he girado a mirar a mis compañeros.","turned_around");}
 });
+configureDevMetrics({find:$});
 settings.checkHealth();
 settings.refreshModels();
 memoryUI.refresh().then(applyDemoControls);

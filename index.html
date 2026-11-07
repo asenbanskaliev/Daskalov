@@ -60,6 +60,12 @@
         <input id="question" placeholder="Profesor, ¿puedo hablar en clase?" maxlength="700" autocomplete="off" required>
         <div class="actions"><button type="button" id="micButton" class="secondary" title="Hablar por micrófono">Micrófono</button><button type="button" id="raiseHand" class="secondary">Levantar la mano</button><button type="button" id="lookForward" class="secondary">Mirar al frente</button><button type="button" id="stopButton" class="secondary" disabled>Interrumpir</button><button type="submit" id="sendButton">Preguntar al profesor</button></div>
       </form>
+      <details id="devMetrics" class="dev-metrics">
+        <summary>Herramientas de diagnóstico (solo desarrollo)</summary>
+        <p>Únicamente valores agregados: latencias, errores y coste estimado. No se muestran conversaciones.</p>
+        <button id="refreshMetrics" type="button" class="secondary">Actualizar métricas</button>
+        <pre id="devMetricsJson" aria-live="polite"></pre>
+      </details>
       <div class="privacy">
         <button id="viewMemories" type="button" class="text-button" disabled>Ver y corregir recuerdos</button>
         <button id="exportMemories" type="button" class="text-button" disabled>Exportar mis datos</button>
