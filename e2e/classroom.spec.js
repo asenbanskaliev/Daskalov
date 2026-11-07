@@ -50,3 +50,11 @@ test("WEB-005: controles de IA y teclado son utilizables en tamaño móvil",asyn
  const width=await page.evaluate(()=>document.documentElement.scrollWidth);
  expect(width).toBeLessThanOrEqual(392);
 });
+
+test("WEB-003: una recarga conserva la interfaz y sirve assets compilados",async({page})=>{
+ await page.goto("/");
+ await page.reload();
+ await expect(page.getByRole("heading",{name:"Profesor Daskalov"})).toBeVisible();
+ const resources=await page.evaluate(()=>performance.getEntriesByType("resource").filter(e=>e.name.includes("/assets/")).map(e=>e.name));
+ expect(resources.length).toBeGreaterThan(0);
+});

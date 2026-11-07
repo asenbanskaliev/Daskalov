@@ -25,7 +25,7 @@ test("SEC-003: ordinary PR CI does not reference secret values",()=>{
 });
 
 test("SEC-002: all GitHub Actions are pinned to full commit SHAs",()=>{
- for(const name of ["ci.yml","ollama-real.yml"]){
+ for(const name of ["ci.yml","ollama-real.yml","browser-e2e.yml"]){
   const yaml=readFileSync(resolve(".github/workflows",name),"utf8");
   const lines=yaml.split("\n").filter(line=>/uses:\s+/.test(line));
   assert.ok(lines.length>=2,name+": workflows should use pinned actions");
@@ -44,4 +44,12 @@ test("SEC-003: secret references only in a trustworthy workflow",()=>{
    assert.match(yaml,/github\.ref\s*==\s*'refs\/heads\/main'/);
   }
  }
+});
+
+test("WEB-004: Browser E2E has no Cloud secret injection and runs on relevant changes",()=>{
+ const browser=readFileSync(resolve(".github/workflows/browser-e2e.yml"),"utf8");
+ assert.match(browser,/chromium firefox/);
+ assert.match(browser,/src\/\*\*/);
+ assert.doesNotMatch(browser,/secrets\.|OLLAMA_API_KEY/);
+ assert.match(browser,/persist-credentials:\s*false/);
 });

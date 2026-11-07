@@ -95,7 +95,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 ### S01 — Proyecto web reproducible, testing en navegadores y UI modular
 **Prioridad:** P0 · **Gate:** WEB-READY · **Dependencias:** S00.01-03
 
-- [ ] **S01.01** Instalar Three.js con versión fijada, Vite ligero, lockfile npm, builds versionados sin CDN obligatorio.  
+- [x] **S01.01** Instalar Three.js con versión fijada, Vite ligero, lockfile npm, builds versionados sin CDN obligatorio.  
   - **Aceptación:** npm ci + npm run build repetibles en Linux/Windows; sin fetch CDN al lanzar.  
   - **TDD:** WEB-001 · **Dep.:** S00.01.
 - [ ] **S01.02** Modularizar app.js en UI, cámara, input, conversation, audio, animación, ajustes y eventos; sin framework pesado.  
@@ -104,7 +104,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [ ] **S01.03** Crear SPA simple de un solo origen servido por Node con assets compilados, cabeceras y caché coherentes.  
   - **Aceptación:** Navegador abre /, recarga y carga módulos sin 404.  
   - **TDD:** WEB-003 · **Dep.:** 01.
-- [ ] **S01.04** Añadir Playwright Chromium + Firefox: primer render, chat mock, error Ollama, modo texto, micrófono ausente.  
+- [x] **S01.04** Añadir Playwright Chromium + Firefox: primer render, chat mock, error Ollama, modo texto, micrófono ausente.  
   - **Aceptación:** CI E2E verde en ambos navegadores (sin API keys).  
   - **TDD:** WEB-004 · **Dep.:** 03.
 - [ ] **S01.05** Implementar panel accesible y responsive para IA Cloud/local, voz, permisos, memoria y rendimiento.  
@@ -456,6 +456,14 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - **S00.07 — PARTIAL:** creados registros de riesgos y runbook; requieren revisión y ejercitar rotación con responsables.
 - Evidencia GREEN: https://github.com/asenbanskaliev/Daskalov/actions/runs/42405520911 (SHA 1880dc70, SUCCESS). RED intermedio documentado (CI 42405197820) hasta adaptar contratos antiguos.
 - **NO declarar SEC-READY** hasta S00.01, .05, .06 y .07 completados y revisados.
+
+## 4B. Seguimiento de ejecución — tanda WEB-01 (7/11/2026)
+- **S01.01 DONE:** Vite 8.3.6 + Three 0.187.0 con package-lock.json generado en GitHub Actions, `npm ci`, build compilado; `src/app.js` importa Three local, no CDN. Pruebas asset pipeline en CI.
+- **S01.04 DONE:** Playwright Chromium y Firefox con E2E del aula, chat mock, respuesta textual, modo sin WebGL y controles móviles; primer run Browser E2E: https://github.com/asenbanskaliev/Daskalov/actions/runs/42406104018 (SUCCESS).
+- **S01.03 PARTIAL:** servidor Node sirve dist/index.html y /assets con fallback dev; falta comprobar recarga en browser y cabeceras CSP en S10.
+- **S01.05-S01.08 PARTIAL/TODO:** interfaz básica y fallback sin WebGL, falta auditoría de accesibilidad, módulos más pequeños y demo offline.
+- **CI optimizado:** jobs rápidos separados de un workflow browser que solo se dispara para rutas afectadas. Verificar de nuevo después de la separación.
+- **No declarar WEB-READY:** faltan WEB-002, WEB-003 completo, WEB-005-008.
 
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
