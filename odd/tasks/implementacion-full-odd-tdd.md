@@ -101,7 +101,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [ ] **S01.02** Modularizar app.js en UI, cámara, input, conversation, audio, animación, ajustes y eventos; sin framework pesado.  
   - **Aceptación:** Cada módulo con contratos públicos y tests; sin regresiones de UX.  
   - **TDD:** WEB-002 · **Dep.:** 01.
-- [ ] **S01.03** Crear SPA simple de un solo origen servido por Node con assets compilados, cabeceras y caché coherentes.  
+- [x] **S01.03** Crear SPA simple de un solo origen servido por Node con assets compilados, cabeceras y caché coherentes.  
   - **Aceptación:** Navegador abre /, recarga y carga módulos sin 404.  
   - **TDD:** WEB-003 · **Dep.:** 01.
 - [x] **S01.04** Añadir Playwright Chromium + Firefox: primer render, chat mock, error Ollama, modo texto, micrófono ausente.  
@@ -110,7 +110,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [ ] **S01.05** Implementar panel accesible y responsive para IA Cloud/local, voz, permisos, memoria y rendimiento.  
   - **Aceptación:** Uso con teclado, foco visible, etiquetas y anchura móvil sin solapes.  
   - **TDD:** WEB-005 · **Dep.:** 02.
-- [ ] **S01.06** Detección de capacidades WebGL2, micrófono y audio, con recuperación explícita y fallback textual.  
+- [x] **S01.06** Detección de capacidades WebGL2, micrófono y audio, con recuperación explícita y fallback textual.  
   - **Aceptación:** Si falta WebGL/STT/TTS el chat sigue siendo utilizable.  
   - **TDD:** WEB-006 · **Dep.:** 03.
 - [ ] **S01.07** Política de accesibilidad WCAG 2.2 AA: subtítulos, transcripción, mute, pausas, reduced-motion y contraste.  
@@ -126,13 +126,13 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [ ] **S02.01** Contratos tipados de turn/session/requestID y eventos streaming: started, delta, sentence, gesture, done, error.  
   - **Aceptación:** Parser y schemas rechazan mensajes incompletos, mezclados y fuera de orden.  
   - **TDD:** LLM-001 · **Dep.:** S01.02.
-- [ ] **S02.02** Adaptador Ollama NDJSON con stream=true, lectura incremental UTF-8 y límites de memoria.  
+- [x] **S02.02** Adaptador Ollama NDJSON con stream=true, lectura incremental UTF-8 y límites de memoria.  
   - **Aceptación:** Cadenas Unicode cortadas entre chunks se recomponen y terminan sin pérdida.  
   - **TDD:** LLM-002 · **Dep.:** 01.
-- [ ] **S02.03** AbortController de extremo a extremo y política latest-turn-wins para interrupciones.  
+- [x] **S02.03** AbortController de extremo a extremo y política latest-turn-wins para interrupciones.  
   - **Aceptación:** Turno cancelado no escribe memoria ni voz ni actualiza interfaz.  
   - **TDD:** LLM-003 · **Dep.:** 02.
-- [ ] **S02.04** SentenceChunker que reconoce puntuación española, topes 80-160 caracteres y flush final.  
+- [x] **S02.04** SentenceChunker que reconoce puntuación española, topes 80-160 caracteres y flush final.  
   - **Aceptación:** Primer segmento no espera respuesta completa; no pierde signos ni texto.  
   - **TDD:** LLM-004 · **Dep.:** 02.
 - [ ] **S02.05** Modelo/provider health y validación real de disponibilidad; soporte Cloud local con selección desde ajustes.  
@@ -464,6 +464,21 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - **S01.05-S01.08 PARTIAL/TODO:** interfaz básica y fallback sin WebGL, falta auditoría de accesibilidad, módulos más pequeños y demo offline.
 - **CI optimizado:** jobs rápidos separados de un workflow browser que solo se dispara para rutas afectadas. Verificar de nuevo después de la separación.
 - **No declarar WEB-READY:** faltan WEB-002, WEB-003 completo, WEB-005-008.
+
+## 4C. Seguimiento de ejecución — tandas STREAM-01 y STREAM-02 (7/11/2026)
+- **S01.03 DONE:** Node sirve assets Vite compilados y mantiene interfaz tras recarga; Playwright E2E.
+- **S01.06 DONE:** modo texto probado sin WebGL, SpeechRecognition ni SpeechSynthesisUtterance; Chromium y Firefox.
+- **S02.01 PARTIAL:** protocolo turn.started/delta/sentence/completed/error con requestId + secuencia validados en cliente; quedan esquemas versionados y cues de animación/visemas como eventos separados.
+- **S02.02 DONE:** adaptador Ollama streaming `stream:true`, parser NDJSON con UTF-8 fragmentado, límites y tests mock. NO confundir con Cloud streaming real aún no ejecutado bajo workflow confiable.
+- **S02.03 DONE (prototipo):** AbortController último turno prevalece; botón Interrumpir y cancelación por desconexión; test de no persistencia de memoria ante abort.
+- **S02.04 DONE:** SentenceChunker genera frases y flush final con límite de 160 caracteres, tests de fragmentación y puntuación.
+- **S02.05 PARTIAL:** selección de proveedor/modelo consulta `/api/tags` (Cloud oficial y servidor local), test mock y UI; falta prueba real de local + Cloud model catálogo en entorno autorizado.
+- **S02.07 PARTIAL:** errores de upstream, respuestas vacías, 429 y timeout tratados; falta suite adversarial de 100 escenarios y política backpressure.
+- **S03/S04 PARTIAL:** micrófono y Web Speech inicial, TTS cola por frases con cancelación; no hay voz búlgara validada ni TTS local/Cloud definitivo.
+- Evidencia CI-fast: https://github.com/asenbanskaliev/Daskalov/actions/runs/42407451468 (SUCCESS SHA 35e095bc).
+- Evidencia Browser E2E Chromium/Firefox: https://github.com/asenbanskaliev/Daskalov/actions/runs/42407451385 (SUCCESS SHA 35e095bc).
+- Regresión detectada y corregida por Playwright en `showMessage` al integrar streaming: fallo https://github.com/asenbanskaliev/Daskalov/actions/runs/42406791890, arreglo https://github.com/asenbanskaliev/Daskalov/actions/runs/42406993550 (SUCCESS).
+- **Pendientes críticos:** S00.01 environment reviewers, S00.05 control de acceso Cloud público, S00.06 tutela de menores, S01.02 modularización completa, S02.09 smoke de streaming real desde código protegido, voz y assets profesionales.
 
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
