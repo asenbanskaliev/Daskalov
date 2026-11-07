@@ -1,0 +1,34 @@
+name: CI - ODD TDD
+on:
+  push:
+    branches:
+      - "feat/**"
+  pull_request:
+    branches:
+      - main
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  unit-build:
+    name: Unit, contracts and web build
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Syntax check
+        run: npm run check
+      - name: Unit and integration tests with mocks
+        run: npm test
+      - name: Build web
+        run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: daskalov-web-preview
+          path: dist/
+          retention-days: 7

@@ -1,0 +1,30 @@
+name: Ollama Cloud - REAL smoke
+on:
+  push:
+    branches:
+      - feat/odd-tdd-web-mvp
+    paths:
+      - "server/**"
+      - scripts/ollama-cloud-smoke.mjs
+      - .github/workflows/ollama-real.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: daskalov-real-ollama-smoke
+  cancel-in-progress: true
+jobs:
+  beam-api:
+    if: github.repository == 'asenbanskaliev/Daskalov'
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Smoke Ollama Cloud API with repository secret
+        env:
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+          OLLAMA_CLOUD_MODEL: beam
+        run: node scripts/ollama-cloud-smoke.mjs
