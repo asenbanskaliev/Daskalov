@@ -45,7 +45,7 @@ function rejectClientPlayerId(body){
  if(body&&Object.hasOwn(body,"playerId"))throw new OllamaError("El cliente no puede indicar la identidad de otro jugador.",400);
 }
 export function createApp({
- dbPath=join(root,"server","data","daskalov.sqlite"),
+ dbPath=process.env.DASKALOV_DB_PATH||join(root,"server","data","daskalov.sqlite"),
  llm=chatOllama,
  streamLlm=streamOllama,
  models=listOllamaModels,
@@ -75,7 +75,8 @@ export function createApp({
     if(!isPrivateHost(req.headers.host))throw new OllamaError("Métricas solo disponibles en modo privado.",403);
     return respond(res,200,metrics.snapshot());
    }
-   if(path==="/api/health"&&req.method==="GET")return respond(res,200,{ok:true,cloudConfigured:!!process.env.OLLAMA_API_KEY});
+   if(path==="/api/health"&&req.method==="GET")return respond(res,200,{ok:true,cloudConfigured:process.env.DASKALOV_SAFE_DEMO_ONLY==="1"?false:!!process.env.OLLAMA_API_KEY,demoOnly:process.env.DASKALOV_SAFE_DEMO_ONLY==="1"});
+   if(process.env.DASKALOV_SAFE_DEMO_ONLY==="1"&&path.startsWith("/api/"))throw new OllamaError("Demo pública: IA y datos personales desactivados.",403);
    if(path==="/api/stt/status"&&req.method==="GET"){
     return respond(res,200,{available:Boolean(process.env.DASKALOV_WHISPER_URL),provider:"whisper-local",recordingPersisted:false});
    }
@@ -288,5 +289,6 @@ export function createApp({
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const app=createApp(),port=Number(process.env.PORT)||3000;
- app.server.listen(port,"127.0.0.1",()=>console.log("Profesor Daskalov: http://localhost:"+port));
+ const host=process.env.DASKALOV_SAFE_DEMO_ONLY==="1"?"0.0.0.0":"127.0.0.1";
+ app.server.listen(port,host,()=>console.log("Profesor Daskalov: servidor "+port+" ("+host+")"));
 }

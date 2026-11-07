@@ -50,7 +50,9 @@ export function createSettingsUI({find,showMessage}){
   try{
    const response=await fetch("/api/health"),data=await response.json();
    find("apiDot").classList.toggle("ok",Boolean(data.ok));
-   find("apiStatus").textContent=data.ok?"Servidor conectado"+(data.cloudConfigured?" · Cloud configurado":" · Cloud sin clave"):"Servidor desconectado";
+   find("apiStatus").textContent=data.demoOnly?"Demo segura sin IA":data.ok?"Servidor conectado"+(data.cloudConfigured?" · Cloud configurado":" · Cloud sin clave"):"Servidor desconectado";
+   if(data.demoOnly){find("provider").value="demo";find("provider").dispatchEvent(new Event("change"));}
+
   }catch{find("apiStatus").textContent="Servidor desconectado";}
  }
  return {refreshModels,refreshProviderStatus,checkHealth};
