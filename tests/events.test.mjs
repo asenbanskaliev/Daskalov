@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {TurnTrigger} from "../public/events.js";
+import {TurnTrigger} from "../src/events.js";
 test("el giro de cámara solo causa un evento por ciclo, con cooldown",()=>{
  const t=new TurnTrigger({threshold:.8,cooldownMs:2000});
  assert.equal(t.update(.3,0),false);assert.equal(t.update(.9,100),true);assert.equal(t.update(1.1,200),false);

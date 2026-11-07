@@ -8,9 +8,18 @@
   },
   "scripts": {
     "start": "node server/main.mjs",
-    "dev": "node server/main.mjs",
-    "check": "node --check server/main.mjs && node --check server/ollama.mjs && node --check server/memory.mjs && node --check server/session.mjs && node --check server/personality.mjs && node --check public/app.js && node --check scripts/ollama-cloud-smoke.mjs",
+    "dev": "vite",
+    "check": "node --check server/main.mjs && node --check server/ollama.mjs && node --check server/memory.mjs && node --check server/session.mjs && node --check server/personality.mjs && node --check public/app.js && node --check scripts/ollama-cloud-smoke.mjs && node --check src/app.js && node --check src/events.js && node --check vite.config.js",
     "test": "node --test tests/*.test.mjs",
-    "build": "node scripts/build.mjs"
+    "build": "vite build",
+    "dev:server": "node server/main.mjs",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "three": "0.187.0"
+  },
+  "devDependencies": {
+    "vite": "8.3.6",
+    "@playwright/test": "1.65.0"
   }
 }

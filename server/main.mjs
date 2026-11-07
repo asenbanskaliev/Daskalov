@@ -117,7 +117,17 @@ export function createApp({
      return respond(res,200,{reply,animation:inferAnimation(reply,event),provider,model});
     }finally{inFlight.set(ip,Math.max(0,(inFlight.get(ip)||1)-1));}
    }
-   if(req.method==="GET"&&Object.hasOwn(files,path)){
+   if(req.method==="GET"&&(path==="/"||path==="/index.html"||/^\/assets\/[A-Za-z0-9_.-]+\.(?:js|css|woff2|png|webp|svg|glb|wasm)$/.test(path))){
+    const assetPath=path==="/"||path==="/index.html"?"index.html":path.slice(1);
+    try{
+     const data=await readFile(join(root,"dist",assetPath));
+     const ext=assetPath.split(".").at(-1);
+     const type=ext==="html"?"text/html":ext==="js"?"text/javascript":ext==="css"?"text/css":ext==="svg"?"image/svg+xml":ext==="wasm"?"application/wasm":ext==="glb"?"model/gltf-binary":ext==="png"?"image/png":ext==="webp"?"image/webp":"application/octet-stream";
+     res.writeHead(200,{"content-type":type+(["html","js","css","svg"].includes(ext)?"; charset=utf-8":""),"x-content-type-options":"nosniff","cache-control":assetPath.startsWith("assets/")?"public, max-age=31536000, immutable":"no-cache"});
+     return res.end(data);
+    }catch(error){if(error.code!=="ENOENT")throw error;}
+   }
+      if(req.method==="GET"&&Object.hasOwn(files,path)){
     const [name,type]=files[path],file=await readFile(join(root,"public",name));
     res.writeHead(200,{"content-type":type+"; charset=utf-8","x-content-type-options":"nosniff","cache-control":"no-cache"});
     return res.end(file);

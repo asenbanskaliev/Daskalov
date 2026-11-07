@@ -24,6 +24,16 @@ jobs:
         with:
           node-version: "24"
           package-manager-cache: false
+      # Bootstrap ONLY for initial lockfile generation. Remove after committing package-lock.json.
+      - name: Bootstrap lockfile (temporary)
+        run: |
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          echo DASKALOV_PACKAGE_LOCK_BEGIN
+          base64 -w0 package-lock.json
+          echo
+          echo DASKALOV_PACKAGE_LOCK_END
+      - name: Install reproducibly
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Syntax check
         run: npm run check
       - name: Unit and integration tests with mocks
