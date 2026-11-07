@@ -1,19 +1,19 @@
-import { TurnTrigger } from "./events.js";
 import {streamTurn} from "./conversation.js";
 import {BrowserSpeechQueue} from "./speech.js";
-const $=id=>document.getElementById(id);
-const history=[],turn=new TurnTrigger();
-let busy=false,playing=false,yaw=0,sceneState=null,csrfToken=null,activeController=null,activeTurn=0;
+import {createClassroomScene} from "./scene.js";
+import {bindCameraKeyboard} from "./camera-input.js";
+import {$,showMessage} from "./dom-ui.js";
+import {readSetting,writeSetting,createSettingsUI} from "./settings.js";
+import {createMemoryUI} from "./memory-ui.js";
+import {configureVoiceInput} from "./voice-input.js";
+
+const history=[];
+let playing=false,yaw=0,sceneState=null,activeController=null,activeTurn=0;
 const speech=new BrowserSpeechQueue({onSpeaking:active=>{playing=active;}});
-const preferences={provider:readSetting("provider")||"cloud",model:readSetting("model")||"beam"};
-$("provider").value=preferences.provider;
-$("model").value=preferences.model;
-function readSetting(key){try{return localStorage.getItem("daskalov_"+key);}catch{return null;}}
-function writeSetting(key,value){try{localStorage.setItem("daskalov_"+key,value);}catch{}}
-function showMessage(role,text){
- const item=document.createElement("div");item.className="message "+role;item.textContent=text;$("history").appendChild(item);$("history").scrollTop=$("history").scrollHeight;
- return item;
-}
+const settings=createSettingsUI({find:$,showMessage});
+const memoryUI=createMemoryUI({find:$,showMessage,history});
+$("provider").value=readSetting("provider")||"cloud";
+$("model").value=readSetting("model")||"beam";
 async function send(text,event="dialog"){
  text=String(text).trim();
  if(!text)return;
@@ -35,12 +35,12 @@ async function send(text,event="dialog"){
  $("speechBubble").textContent="Daskalov está pensando…";
  let partial="",completed=false;
  try{
-  if(remember)await ensureMemorySession();
+  if(remember)await memoryUI.ensure();
   speech.setEnabled($("voiceEnabled").checked);
   for await(const eventData of streamTurn({
    body:{provider,model,text,event,remember,history:history.slice(-8)},
    signal:controller.signal,
-   csrfToken:remember?csrfToken:null
+   csrfToken:remember?memoryUI.csrfToken:null
   })){
    if(turn!==activeTurn||controller.signal.aborted)break;
    if(eventData.type==="started"){
@@ -80,149 +80,34 @@ async function send(text,event="dialog"){
   }
  }
 }
-async function refreshMemoryState(){
- try{
-  const r=await fetch("/api/session");
-  if(!r.ok)throw Error("No se puede comprobar la privacidad.");
-  const state=await r.json();
-  csrfToken=state.active?state.csrfToken:null;
-  $("remember").disabled=!state.memoryAvailable;
-  $("remember").title=state.memoryAvailable?"Memoria opcional en este servidor privado":"Memoria desactivada en este servidor.";
-  $("forgetButton").disabled=!state.active;
-  if(!state.memoryAvailable)$("remember").checked=false;
- }catch{
-  $("remember").disabled=true;
-  $("forgetButton").disabled=true;
- }
-}
-async function ensureMemorySession(){
- if(csrfToken)return;
- const response=await fetch("/api/session",{method:"POST"});
- const data=await response.json();
- if(!response.ok)throw Error(data.error||"La memoria no está disponible.");
- csrfToken=data.csrfToken;
- $("forgetButton").disabled=false;
-}
+
 try{localStorage.removeItem("daskalov_playerId");}catch{}
-$("remember").addEventListener("change",async()=>{
- if(!$("remember").checked)return;
- try{await ensureMemorySession();}
- catch(error){$("remember").checked=false;showMessage("error",error.message);}
+$("provider").addEventListener("change",()=>{
+ writeSetting("provider",$("provider").value);
+ settings.refreshModels();
 });
-async function refreshModels(){
- const provider=$("provider").value;
- if(provider==="local"&&$("model").value==="beam")$("model").value="";
- if(provider==="cloud"&&!$("model").value)$("model").value="beam";
- try{
-  const r=await fetch("/api/models?provider="+provider);const data=await r.json();
-  if(!r.ok)throw new Error(data.error);
-  $("modelsList").replaceChildren();
-  for(const name of data.models){const o=document.createElement("option");o.value=name;$("modelsList").appendChild(o);}
-  if(data.models.length&&!data.models.includes($("model").value)){
-   $("model").value=data.models[0];
-   writeSetting("model",$("model").value);
-  }
- }catch(error){showMessage("error",error.message||"No se pudieron consultar los modelos.");}
-}
-$("provider").addEventListener("change",()=>{writeSetting("provider",$("provider").value);refreshModels();});
 $("model").addEventListener("change",()=>writeSetting("model",$("model").value));
 $("stopButton").addEventListener("click",()=>{
  activeController?.abort();
  speech.cancel();
  $("speechBubble").textContent="(El profesor ha sido interrumpido.)";
 });
-
 $("voiceEnabled").addEventListener("change",()=>speech.setEnabled($("voiceEnabled").checked));
-$("chatForm").addEventListener("submit",event=>{event.preventDefault();const text=$("question").value;$("question").value="";send(text);});
-$("forgetButton").addEventListener("click",async()=>{
- if(!csrfToken){showMessage("assistant","Este navegador no tiene una sesión de memoria activa.");return;}
- try{
-  const r=await fetch("/api/memory",{method:"DELETE",headers:{"content-type":"application/json","x-daskalov-csrf":csrfToken},body:"{}"});
-  if(!r.ok)throw new Error("No se ha podido borrar la memoria.");
-  csrfToken=null;history.length=0;$("remember").checked=false;$("forgetButton").disabled=true;
-  showMessage("assistant","Los recuerdos almacenados se han borrado y la sesión se ha cerrado.");
- }catch(error){showMessage("error",error.message);}
+$("chatForm").addEventListener("submit",event=>{
+ event.preventDefault();const text=$("question").value;$("question").value="";send(text);
 });
-let recognition=null;
-const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
-if(SpeechRecognition){
- recognition=new SpeechRecognition();recognition.lang="es-ES";recognition.interimResults=false;recognition.maxAlternatives=1;
- recognition.onresult=e=>send(e.results[0][0].transcript);
- recognition.onerror=e=>showMessage("error","Micrófono: "+e.error+". Puedes escribir tu pregunta.");
- recognition.onend=()=>{$("micButton").textContent="Micrófono";};
- $("micButton").addEventListener("click",()=>{
-  try{activeController?.abort();speech.cancel();recognition.start();$("micButton").textContent="Escuchando…";}catch{showMessage("error","No se pudo iniciar el micrófono.");}
- });
-}else{$("micButton").disabled=true;$("micButton").title="Reconocimiento de voz no disponible; utiliza el teclado.";}
-async function checkHealth(){
- try{
-  const r=await fetch("/api/health"),data=await r.json();
-  $("apiDot").classList.toggle("ok",!!data.ok);
-  $("apiStatus").textContent=data.ok?"Servidor conectado"+(data.cloudConfigured?" · Cloud configurado":" · Cloud sin clave"):"Servidor desconectado";
- }catch{$("apiStatus").textContent="Servidor desconectado";}
-}
-async function create3D(){
- try{
-  const THREE=await import("three");
-  const canvas=$("sceneCanvas"),renderer=new THREE.WebGLRenderer({canvas,antialias:true});
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));renderer.setClearColor(0x738475);
-  const scene=new THREE.Scene();scene.background=new THREE.Color(0x718778);
-  const camera=new THREE.PerspectiveCamera(55,1,0.1,100);
-  camera.position.set(0,2.0,6.1);camera.lookAt(0,2,-2.8);
-  scene.add(new THREE.HemisphereLight(0xfff1d0,0x465043,2.3));
-  const light=new THREE.DirectionalLight(0xffe3bd,2.0);light.position.set(-3,7,5);scene.add(light);
-  const mat=(hex)=>new THREE.MeshStandardMaterial({color:hex,roughness:0.85});
-  const cream=mat(0xe4d7ab),wood=mat(0x7d5335),dark=mat(0x26342b),coat=mat(0x574f3f),skin=mat(0xe2ae83),black=mat(0x25221c),white=mat(0xffffff);
-  function box(w,h,d,x,y,z,material,parent=scene){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);o.position.set(x,y,z);parent.add(o);return o;}
-  function sphere(r,x,y,z,material,parent=scene){const o=new THREE.Mesh(new THREE.SphereGeometry(r,20,16),material);o.position.set(x,y,z);parent.add(o);return o;}
-  box(15,0.2,14,0,-0.1,-1,wood);
-  box(15,7,.25,0,3.3,-7.7,cream);
-  box(.22,7,14,-7.5,3.3,-1,cream);box(.22,7,14,7.5,3.3,-1,cream);
-  box(5,2.3,.12,0,3.2,-7.51,dark);box(5.4,.13,.3,0,2,-7.35,wood);
-  const chalkCanvas=document.createElement("canvas");chalkCanvas.width=512;chalkCanvas.height=220;
-  const ctx=chalkCanvas.getContext("2d");ctx.fillStyle="#eee0b6";ctx.font="bold 38px Georgia";ctx.textAlign="center";
-  ctx.fillText("EN MIS TIEMPOS…",256,75);ctx.font="24px Georgia";ctx.fillText("Profesor Daskalov",256,132);
-  const chalkTexture=new THREE.CanvasTexture(chalkCanvas);
-  const chalk=new THREE.Mesh(new THREE.PlaneGeometry(4.6,2),new THREE.MeshBasicMaterial({map:chalkTexture,transparent:true}));
-  chalk.position.set(0,3.4,-7.42);scene.add(chalk);
-  for(let i=-1;i<=1;i++){const x=i*2.45;box(1.55,.14,.9,x,.8,2.1,wood);box(.1,.75,.1,x-.64,.37,1.75,black);box(.1,.75,.1,x+.64,.37,1.75,black);}
-  box(2.8,.2,1.2,2,1,-3.3,wood);box(.14,1,.14,.9,.45,-3.3,wood);box(.14,1,.14,3.1,.45,-3.3,wood);
-  const teacher=new THREE.Group();teacher.position.set(-0.8,0,-3.4);scene.add(teacher);
-  box(.95,1.35,.47,0,1.52,0,coat,teacher);
-  box(.12,.65,.1,-.24,.4,0,black,teacher);box(.12,.65,.1,.24,.4,0,black,teacher);
-  const head=sphere(.48,0,2.66,0,skin,teacher);
-  sphere(.09,-.18,2.71,.43,white,teacher);sphere(.09,.18,2.71,.43,white,teacher);
-  sphere(.044,-.18,2.71,.50,black,teacher);sphere(.044,.18,2.71,.50,black,teacher);
-  sphere(.12,0,2.53,.49,skin,teacher);
-  const moustacheL=sphere(.16,-.13,2.43,.45,black,teacher);moustacheL.scale.y=.30;
-  const moustacheR=sphere(.16,.13,2.43,.45,black,teacher);moustacheR.scale.y=.30;
-  const mouth=sphere(.11,0,2.30,.44,black,teacher);mouth.scale.y=.20;
-  sphere(.42,0,2.95,-.07,mat(0x77736c),teacher).scale.y=.36;
-  box(.20,.9,.18,-.65,1.65,0,coat,teacher);const hand=sphere(.12,-.65,1.1,0,skin,teacher);
-  const arm=new THREE.Group();arm.position.set(.58,1.91,0);teacher.add(arm);
-  box(.2,.82,.2,0,-.43,0,coat,arm);sphere(.13,0,-.85,0,skin,arm);box(.08,.72,.06,0,-1.03,.12,wood,arm);
-  function resize(){const w=canvas.clientWidth,h=canvas.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/Math.max(1,h);camera.updateProjectionMatrix();}
-  new ResizeObserver(resize).observe(canvas);resize();
-  let animation="talk",until=0;
-  sceneState={act(value){animation=value;until=performance.now()+2400;}};
-  function frame(now){
-   camera.rotation.set(0,yaw,0);
-   const active=now<until;
-   head.position.y=2.66+Math.sin(now*.0017)*.025;
-   arm.rotation.z=active&&animation==="ruler_desk"?.6+Math.sin(now*.015)*.36:0;
-   mouth.scale.y=playing?.30+Math.abs(Math.sin(now*.02))*.9:.18;
-   teacher.rotation.y=Math.sin(now*.0004)*.06;
-   renderer.render(scene,camera);requestAnimationFrame(frame);
-  }
-  requestAnimationFrame(frame);$("sceneStatus").textContent="Aula 3D lista";
- }catch{$("sceneStatus").textContent="3D no disponible; puedes seguir hablando por texto.";}
-}
-window.addEventListener("keydown",e=>{
- if(e.target instanceof HTMLInputElement||e.target instanceof HTMLSelectElement)return;
- if(e.key==="ArrowLeft"||e.key==="ArrowRight"){
-  e.preventDefault();yaw=Math.max(-1.4,Math.min(1.4,yaw+(e.key==="ArrowLeft"?.22:-.22)));
-  if(turn.update(yaw)&&$("autoTurn").checked)send("Me he girado a mirar a mis compañeros.","turned_around");
- }
- if(e.key==="Home")yaw=0;
+memoryUI.bind();
+configureVoiceInput({find:$,send,stopSpeech:()=>{activeController?.abort();speech.cancel();},showMessage});
+bindCameraKeyboard({
+ getYaw:()=>yaw,
+ setYaw:next=>{yaw=next;},
+ onTurn:()=>{if($("autoTurn").checked)send("Me he girado a mirar a mis compañeros.","turned_around");}
 });
-checkHealth();refreshModels();refreshMemoryState();create3D();
+settings.checkHealth();
+settings.refreshModels();
+memoryUI.refresh();
+createClassroomScene({
+ canvas:$("sceneCanvas"),status:$("sceneStatus"),getYaw:()=>yaw,isSpeaking:()=>playing,
+ getReducedMotion:()=>window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+ onReady:scene=>{sceneState=scene;}
+});

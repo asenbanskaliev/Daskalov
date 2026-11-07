@@ -10,8 +10,15 @@ test("SEC-005: 100 Cloud requests con host no autorizado generan 0 llamadas LLM"
  t.after(async()=>{await new Promise(done=>app.server.close(done));app.close();});
  const url="http://127.0.0.1:"+app.server.address().port+"/api/chat";
  for(let i=0;i<100;i++){
-  const response=await fetch(url,{method:"POST",headers:{"content-type":"application/json",host:"daskalov.example"},body:JSON.stringify({provider:"cloud",model:"beam",text:"Hola"})});
-  assert.equal(response.status,403);
+  const {request}=await import("node:http");
+  const status=await new Promise((resolve,reject)=>{
+   const req=request(url,{method:"POST",headers:{"content-type":"application/json","Host":"daskalov.example"}},response=>{
+    response.resume();response.on("end",()=>resolve(response.statusCode));
+   });
+   req.on("error",reject);
+   req.end(JSON.stringify({provider:"cloud",model:"beam",text:"Hola"}));
+  });
+  assert.equal(status,403);
  }
  assert.equal(calls,0);
 });
