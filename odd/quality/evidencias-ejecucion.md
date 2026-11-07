@@ -26,3 +26,9 @@ Las pruebas unitarias con Ollama simulado no demuestran Cloud ni Ollama local re
 - S02.07 PARTIAL. S00.05, S00.07 y S01.07 siguen PARTIAL por controles y revisiones no realizados.
 - S00.01 BLOCKED_EXTERNAL, sin cambios en main; **seguridad para menores y exposición pública todavía NO APTA**.
 - Estimación de tokens y coste ≠ métrica de facturación de Ollama.
+
+## Cierre final de tanda — SHA f9ab9dd9 (2026-11-07)
+- S02.07 pasa de PARTIAL a DONE tras conexión/idle/total timeouts, parser NDJSON cancelable y batería 100 escenarios de fallos.
+- Unit https://github.com/asenbanskaliev/Daskalov/actions/runs/42411299316 SUCCESS.
+- Browser https://github.com/asenbanskaliev/Daskalov/actions/runs/42411299248 SUCCESS.
+- Tanda 9/9 DONE. Total plan 19/109 DONE. S00.01, S00.05, S00.07, S01.07 y publicación pública siguen bloqueadas/pendientes y fuera de las nueve de la tanda.

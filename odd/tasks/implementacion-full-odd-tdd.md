@@ -141,7 +141,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [x] **S02.06** Fallback explícito y consentido Cloud/local con política local-only sin fuga de contenido.  
   - **Aceptación:** Fallo local sin permiso NO envía mensaje a Cloud; con permiso reintenta una vez.  
   - **TDD:** LLM-006 · **Dep.:** 05.
-- [ ] **S02.07** Resiliencia: timeout por fase, 429/5xx, reconexión, límites tokens, respuestas vacías y cancelación limpia.  
+- [x] **S02.07** Resiliencia: timeout por fase, 429/5xx, reconexión, límites tokens, respuestas vacías y cancelación limpia.  
   - **Aceptación:** 100 casos de fallos simulados terminan sin cuelgues ni respuestas duplicadas.  
   - **TDD:** LLM-007 · **Dep.:** 02,03.
 - [ ] **S02.08** ContextBuilder: personalidad fija, historia autorizada, memoria relevante y eventos verificados por servidor.  
@@ -484,7 +484,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 **Referencia funcional:** SHA `8daeb52fb0c036081c87f38cebf9019ae16dced4`.  
 **CI-fast:** https://github.com/asenbanskaliev/Daskalov/actions/runs/42410836748 **SUCCESS**.  
 **Browser Chromium+Firefox:** https://github.com/asenbanskaliev/Daskalov/actions/runs/42410836750 **SUCCESS**.  
-**Resultado:** ocho contratos completados y uno **PARTIAL**, sin declarar FULL.
+**Resultado:** nueve contratos completados y verificados, sin declarar FULL.
 
 | ID | Resultado | Evidencia y alcance |
 |---|---|---|
@@ -495,7 +495,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 | S02.01 | DONE | shared/turn-protocol.js con tipos JSDoc, schemaVersion, requestId/sequence, tipos started/delta/sentence/gesture/provider-switched/completed/error, whitelist gestos, validación cliente+servidor; tests/turn-protocol.test.mjs. |
 | S02.05 | DONE funcional | /api/models y /api/provider-status consultan Ollama /api/tags y validan formato; selección y estado en UI, tests unit/e2e mock. **S02.09** mantiene pendiente prueba real de Ollama local/Cloud en rama confiable. |
 | S02.06 | DONE | Cloud fallback solo por consentimiento explícito (checkbox en modo local, OFF por defecto), no mezcla texto parcial ni falla silenciosamente a Cloud; tests/fallback.test.mjs, tests/server-fallback.test.mjs, e2e/fallback.spec.js. |
-| S02.07 | PARTIAL | 100 fallos transitorios locales simulados, retry limitado solo antes del primer delta; Cloud no se reintenta automáticamente, existe timeout global 90 s, límites NDJSON/char y errores controlados. Pendiente perfeccionar timeout **por fase** y chaos adicional. |
+| S02.07 | DONE | 100 fallos transitorios locales simulados, retry limitado solo antes del primer delta; Cloud no se reintenta automáticamente. Timeouts independientes de conexión (local 10 s, Cloud 25 s), inactividad (local 20 s, Cloud 60 s) y total 90 s; NDJSON abortable, límites de respuesta y control de 429/5xx. tests/resilience.test.mjs y stream-timeouts.test.mjs. |
 | S02.10 | DONE (estimaciones explícitas) | /api/metrics solo desde host local; conteos y p50/p95, tokens **estimados**, coste opcional **estimado** si se configuró tarifa; no PII, chats, cookies ni IP. tests/metrics*.test.mjs. No es facturación real. |
 
 ### Mejoras adicionales (sin marcar gate como completo)
@@ -504,6 +504,13 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - **S01.07 PARTIAL:** subtítulos, skip link, foco, reducción de animaciones, pausa/reanudación, accesibilidad teclado; falta auditoría integral WCAG 2.2 AA con revisión humana.
 - **S00.01 BLOCKED_EXTERNAL:** falta crear/proteger GitHub Environment `daskalov-cloud-test`, revisores y secretos de environment para smoke seguro; solo manual en main revisada.
 - No se ha fusionado `main`, no se ha gastado API Cloud en los nuevos tests, no se certifica funcionamiento de Ollama local real ni voz búlgara.
+
+## 4E. Cierre del noveno contrato — resiliencia (7/11/2026)
+- **S02.07 DONE:** el commit funcional `f9ab9dd9641bcce20f1527c009df43dbf2de70f2` completa la restricción por fases (conexión, inactividad, global 90 s) y cancela la lectura NDJSON sin dejar streams pendientes. No se realizan reintentos automáticos en Cloud.
+- Unit + contract + build: https://github.com/asenbanskaliev/Daskalov/actions/runs/42411299316 **SUCCESS**.
+- Browser E2E Chromium+Firefox: https://github.com/asenbanskaliev/Daskalov/actions/runs/42411299248 **SUCCESS**.
+- **Balance de tanda:** 9/9 DONE, 19/109 DONE acumuladas en el plan; 90 pendientes. Ningún gate global `SEC-PUBLIC` ni `FULL` se certifica.
+- **Tareas externas aún bloqueadas:** configurar Environment GitHub protegido, permisos parentales reales, validaciones Ollama Cloud/local con entorno de confianza y voz búlgara verificada.
 
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
