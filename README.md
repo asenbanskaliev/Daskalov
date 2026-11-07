@@ -14,8 +14,8 @@ Abrir el juego en el navegador con HTML, CSS y JavaScript. No es una aplicación
 
 ## Primera ejecución (cuando se complete la fase F0)
 Requisito: Node.js 24.
-1. Clona el repositorio y ejecuta npm start.
-2. Abre http://localhost:3000 en Chrome o Edge.
+1. Clona el repositorio y ejecuta `npm ci`, `npm run build` y `npm start`.
+2. Abre http://localhost:3000 en Chrome o Edge. Para desarrollo HMR, inicia `npm run dev:server` y, en otra terminal, `npm run dev`; abre http://127.0.0.1:5173.
 3. Para Cloud: configura OLLAMA_API_KEY en el entorno del servidor (no en HTML).
 4. Para local: ejecuta Ollama local en http://127.0.0.1:11434; configura OLLAMA_LOCAL_URL del servidor si difiere.
 5. Selecciona proveedor y modelo en la pantalla. La entrada por teclado será alternativa al micrófono.
@@ -28,3 +28,7 @@ Esta rama es un prototipo en desarrollo; no se considera apto para uso público 
 - Al activarla desde el navegador, el servidor emite una cookie aleatoria `HttpOnly; SameSite=Strict`; el identificador de alumno ya no lo decide el navegador. Las operaciones de memoria requieren cookie y token CSRF, y borran/revocan la sesión.
 - Ollama Cloud utiliza `OLLAMA_API_KEY` solo en el servidor; GitHub Actions REAL ahora está restringido a ejecución manual desde `main` y al environment `daskalov-cloud-test`, que debe protegerse con aprobaciones desde GitHub Settings.
 - El backend escucha en `127.0.0.1` únicamente. NO publicarlo todavía en Internet; faltan autenticación de acceso a Cloud, consentimiento de menores, gestión de costes en despliegue y otras medidas del plan FULL.
+
+## Frontend reproducible S01
+Three.js y Vite se instalan desde `package-lock.json`; en producción el motor 3D va incluido en los assets compilados, no en un CDN.
+`npm run test:e2e` utiliza Playwright Chromium y Firefox (instalar navegadores con `npx playwright install`). GitHub Actions prueba ambos con conversaciones simuladas, sin gastar tokens Ollama.
