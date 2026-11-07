@@ -1,7 +1,10 @@
 import { TurnTrigger } from "./events.js";
+import {streamTurn} from "./conversation.js";
+import {BrowserSpeechQueue} from "./speech.js";
 const $=id=>document.getElementById(id);
 const history=[],turn=new TurnTrigger();
-let busy=false,playing=false,yaw=0,sceneState=null,csrfToken=null;
+let busy=false,playing=false,yaw=0,sceneState=null,csrfToken=null,activeController=null,activeTurn=0;
+const speech=new BrowserSpeechQueue({onSpeaking:active=>{playing=active;}});
 const preferences={provider:readSetting("provider")||"cloud",model:readSetting("model")||"beam"};
 $("provider").value=preferences.provider;
 $("model").value=preferences.model;
@@ -10,41 +13,69 @@ function writeSetting(key,value){try{localStorage.setItem("daskalov_"+key,value)
 function showMessage(role,text){
  const item=document.createElement("div");item.className="message "+role;item.textContent=text;$("history").appendChild(item);$("history").scrollTop=$("history").scrollHeight;
 }
-function say(text,animation="talk"){
- $("speechBubble").textContent="«"+text+"»";
- if(sceneState)sceneState.act(animation);
- if(!$("voiceEnabled").checked||!("speechSynthesis" in window))return;
- speechSynthesis.cancel();
- const utterance=new SpeechSynthesisUtterance(text);
- utterance.lang="es-ES";utterance.rate=0.94;utterance.pitch=0.88;
- const voices=speechSynthesis.getVoices().filter(v=>v.lang.toLowerCase().startsWith("es"));
- if(voices.length)utterance.voice=voices[0];
- utterance.onstart=()=>{playing=true;};
- utterance.onend=utterance.onerror=()=>{playing=false;};
- speechSynthesis.speak(utterance);
-}
 async function send(text,event="dialog"){
- if(busy)return;
- text=String(text).trim();if(!text)return;
+ text=String(text).trim();
+ if(!text)return;
  const provider=$("provider").value,model=$("model").value.trim();
  if(!model){showMessage("error","Selecciona un modelo.");return;}
  const remember=$("remember").checked;
- busy=true;$("sendButton").disabled=true;$("sendButton").textContent="Pensando…";
- if("speechSynthesis" in window)speechSynthesis.cancel();playing=false;
- showMessage("user",event==="turned_around"?"(Te giras para mirar detrás)":text);
+ const turn=++activeTurn;
+ activeController?.abort();
+ speech.cancel();
+ const controller=new AbortController();
+ activeController=controller;
+ busy=true;
+ $("sendButton").disabled=true;
+ $("sendButton").textContent="Pensando…";
+ const prompt=event==="turned_around"?"(Te giras para mirar detrás)":text;
+ showMessage("user",prompt);
+ const answer=showMessage("assistant","Daskalov está pensando…");
  $("speechBubble").textContent="Daskalov está pensando…";
+ let partial="",completed=false;
  try{
   if(remember)await ensureMemorySession();
-  const headers={"content-type":"application/json"};
-  if(remember)headers["x-daskalov-csrf"]=csrfToken;
-  const response=await fetch("/api/chat",{method:"POST",headers,body:JSON.stringify({provider,model,text,event,remember,history:history.slice(-8)})});
-  const result=await response.json();
-  if(!response.ok)throw new Error(result.error||"No se ha podido conectar.");
-  showMessage("assistant",result.reply);say(result.reply,result.animation);
-  history.push({role:"user",content:text},{role:"assistant",content:result.reply});
-  if(history.length>16)history.splice(0,history.length-16);
- }catch(error){showMessage("error",error.message);$("speechBubble").textContent="¡Caramba! No consigo conectar con la IA.";}
- finally{busy=false;$("sendButton").disabled=false;$("sendButton").textContent="Preguntar al profesor";}
+  speech.setEnabled($("voiceEnabled").checked);
+  for await(const eventData of streamTurn({
+   body:{provider,model,text,event,remember,history:history.slice(-8)},
+   signal:controller.signal,
+   csrfToken:remember?csrfToken:null
+  })){
+   if(turn!==activeTurn||controller.signal.aborted)break;
+   if(eventData.type==="started"){
+    answer.textContent="Escuchando al profesor…";
+   }else if(eventData.type==="delta"){
+    partial+=eventData.text;
+    answer.textContent=partial;
+    $("speechBubble").textContent="«"+partial+"»";
+   }else if(eventData.type==="sentence"){
+    speech.speak(eventData.text);
+   }else if(eventData.type==="completed"){
+    completed=true;
+    answer.textContent=eventData.reply;
+    $("speechBubble").textContent="«"+eventData.reply+"»";
+    sceneState?.act(eventData.animation||"talk");
+    history.push({role:"user",content:text},{role:"assistant",content:eventData.reply});
+    if(history.length>16)history.splice(0,history.length-16);
+   }else if(eventData.type==="error"){
+    throw new Error(eventData.error||"Error del profesor.");
+   }
+  }
+  if(!completed&&!controller.signal.aborted)throw Error("La conversación terminó sin respuesta.");
+ }catch(error){
+  if(controller.signal.aborted){
+   answer.textContent=partial?partial+" (interrumpido)":"(interrumpido)";
+   return;
+  }
+  answer.classList.add("error");
+  answer.textContent=error.message;
+  $("speechBubble").textContent="¡Caramba! No consigo conectar con la IA.";
+ }finally{
+  if(turn===activeTurn){
+   busy=false;activeController=null;
+   $("sendButton").disabled=false;
+   $("sendButton").textContent="Preguntar al profesor";
+  }
+ }
 }
 async function refreshMemoryState(){
  try{
@@ -89,6 +120,7 @@ async function refreshModels(){
 }
 $("provider").addEventListener("change",()=>{writeSetting("provider",$("provider").value);refreshModels();});
 $("model").addEventListener("change",()=>writeSetting("model",$("model").value));
+$("voiceEnabled").addEventListener("change",()=>speech.setEnabled($("voiceEnabled").checked));
 $("chatForm").addEventListener("submit",event=>{event.preventDefault();const text=$("question").value;$("question").value="";send(text);});
 $("forgetButton").addEventListener("click",async()=>{
  if(!csrfToken){showMessage("assistant","Este navegador no tiene una sesión de memoria activa.");return;}
@@ -107,7 +139,7 @@ if(SpeechRecognition){
  recognition.onerror=e=>showMessage("error","Micrófono: "+e.error+". Puedes escribir tu pregunta.");
  recognition.onend=()=>{$("micButton").textContent="Micrófono";};
  $("micButton").addEventListener("click",()=>{
-  try{if("speechSynthesis" in window)speechSynthesis.cancel();recognition.start();$("micButton").textContent="Escuchando…";}catch{showMessage("error","No se pudo iniciar el micrófono.");}
+  try{activeController?.abort();speech.cancel();recognition.start();$("micButton").textContent="Escuchando…";}catch{showMessage("error","No se pudo iniciar el micrófono.");}
  });
 }else{$("micButton").disabled=true;$("micButton").title="Reconocimiento de voz no disponible; utiliza el teclado.";}
 async function checkHealth(){

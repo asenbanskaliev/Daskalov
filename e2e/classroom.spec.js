@@ -1,4 +1,13 @@
 import {test,expect} from "@playwright/test";
+const id="00000000-0000-4000-8000-000000000011";
+function mockTurn(reply,animation="talk"){
+ return [
+  {type:"started",requestId:id,sequence:0,provider:"cloud",model:"beam"},
+  {type:"delta",requestId:id,sequence:1,text:reply},
+  {type:"sentence",requestId:id,sequence:2,text:reply},
+  {type:"completed",requestId:id,sequence:3,reply,animation,provider:"cloud",model:"beam"}
+ ].map(x=>JSON.stringify(x)).join("\n")+"\n";
+}
 
 test("WEB-004: se abre aula y el usuario puede utilizar texto incluso sin micrófono",async({page})=>{
  await page.goto("/");
@@ -10,11 +19,11 @@ test("WEB-004: se abre aula y el usuario puede utilizar texto incluso sin micró
 });
 
 test("WEB-004: conversación simulada muestra respuesta de Daskalov sin Ollama ni coste Cloud",async({page})=>{
- await page.route("**/api/chat",async route=>{
+ await page.route("**/api/chat/stream",async route=>{
   const req=route.request().postDataJSON();
   expect(req.text).toContain("matemáticas");
   expect(req).not.toHaveProperty("playerId");
-  await route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({reply:"¡En mis tiempos sumábamos hasta las sillas!",animation:"point_board",provider:"cloud",model:"beam"})});
+  await route.fulfill({status:200,contentType:"application/x-ndjson",body:mockTurn("¡En mis tiempos sumábamos hasta las sillas!","point_board")});
  });
  await page.goto("/");
  await page.locator("#voiceEnabled").uncheck();
@@ -31,7 +40,7 @@ test("WEB-006: si no hay WebGL puede conversar igualmente por texto",async({page
    return Object.getPrototypeOf(HTMLCanvasElement.prototype).getContext?.call(this,type,...rest)||null;
   }});
  });
- await page.route("**/api/chat",route=>route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({reply:"¡Puedes seguir aprendiendo sin gráficos!",animation:"talk",provider:"cloud",model:"beam"})}));
+ await page.route("**/api/chat/stream",route=>route.fulfill({status:200,contentType:"application/x-ndjson",body:mockTurn("¡Puedes seguir aprendiendo sin gráficos!","talk")}));
  await page.goto("/");
  await expect(page.locator("#sceneStatus")).toContainText("3D no disponible");
  await page.locator("#voiceEnabled").uncheck();
