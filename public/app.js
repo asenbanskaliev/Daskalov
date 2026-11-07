@@ -1,7 +1,7 @@
 import { TurnTrigger } from "/events.js";
 const $=id=>document.getElementById(id);
 const history=[],turn=new TurnTrigger();
-let busy=false,playing=false,yaw=0,sceneState=null;
+let busy=false,playing=false,yaw=0,sceneState=null,csrfToken=null;
 const preferences={provider:readSetting("provider")||"cloud",model:readSetting("model")||"beam"};
 $("provider").value=preferences.provider;
 $("model").value=preferences.model;
@@ -28,13 +28,16 @@ async function send(text,event="dialog"){
  text=String(text).trim();if(!text)return;
  const provider=$("provider").value,model=$("model").value.trim();
  if(!model){showMessage("error","Selecciona un modelo.");return;}
- const remember=$("remember").checked,playerId=remember?getPlayerId():undefined;
+ const remember=$("remember").checked;
  busy=true;$("sendButton").disabled=true;$("sendButton").textContent="Pensando…";
  if("speechSynthesis" in window)speechSynthesis.cancel();playing=false;
  showMessage("user",event==="turned_around"?"(Te giras para mirar detrás)":text);
  $("speechBubble").textContent="Daskalov está pensando…";
  try{
-  const response=await fetch("/api/chat",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({provider,model,text,event,remember,playerId,history:history.slice(-8)})});
+  if(remember)await ensureMemorySession();
+  const headers={"content-type":"application/json"};
+  if(remember)headers["x-daskalov-csrf"]=csrfToken;
+  const response=await fetch("/api/chat",{method:"POST",headers,body:JSON.stringify({provider,model,text,event,remember,history:history.slice(-8)})});
   const result=await response.json();
   if(!response.ok)throw new Error(result.error||"No se ha podido conectar.");
   showMessage("assistant",result.reply);say(result.reply,result.animation);
@@ -43,11 +46,35 @@ async function send(text,event="dialog"){
  }catch(error){showMessage("error",error.message);$("speechBubble").textContent="¡Caramba! No consigo conectar con la IA.";}
  finally{busy=false;$("sendButton").disabled=false;$("sendButton").textContent="Preguntar al profesor";}
 }
-function getPlayerId(){
- let id=readSetting("playerId");
- if(!id&&crypto.randomUUID){id=crypto.randomUUID();writeSetting("playerId",id);}
- return id;
+async function refreshMemoryState(){
+ try{
+  const r=await fetch("/api/session");
+  if(!r.ok)throw Error("No se puede comprobar la privacidad.");
+  const state=await r.json();
+  csrfToken=state.active?state.csrfToken:null;
+  $("remember").disabled=!state.memoryAvailable;
+  $("remember").title=state.memoryAvailable?"Memoria opcional en este servidor privado":"Memoria desactivada en este servidor.";
+  $("forgetButton").disabled=!state.active;
+  if(!state.memoryAvailable)$("remember").checked=false;
+ }catch{
+  $("remember").disabled=true;
+  $("forgetButton").disabled=true;
+ }
 }
+async function ensureMemorySession(){
+ if(csrfToken)return;
+ const response=await fetch("/api/session",{method:"POST"});
+ const data=await response.json();
+ if(!response.ok)throw Error(data.error||"La memoria no está disponible.");
+ csrfToken=data.csrfToken;
+ $("forgetButton").disabled=false;
+}
+try{localStorage.removeItem("daskalov_playerId");}catch{}
+$("remember").addEventListener("change",async()=>{
+ if(!$("remember").checked)return;
+ try{await ensureMemorySession();}
+ catch(error){$("remember").checked=false;showMessage("error",error.message);}
+});
 async function refreshModels(){
  const provider=$("provider").value;
  if(provider==="local"&&$("model").value==="beam")$("model").value="";
@@ -64,13 +91,12 @@ $("provider").addEventListener("change",()=>{writeSetting("provider",$("provider
 $("model").addEventListener("change",()=>writeSetting("model",$("model").value));
 $("chatForm").addEventListener("submit",event=>{event.preventDefault();const text=$("question").value;$("question").value="";send(text);});
 $("forgetButton").addEventListener("click",async()=>{
- const playerId=readSetting("playerId");
- if(!playerId){showMessage("assistant","No hay recuerdos persistentes en este navegador.");return;}
+ if(!csrfToken){showMessage("assistant","Este navegador no tiene una sesión de memoria activa.");return;}
  try{
-  const r=await fetch("/api/memory",{method:"DELETE",headers:{"content-type":"application/json"},body:JSON.stringify({playerId})});
+  const r=await fetch("/api/memory",{method:"DELETE",headers:{"content-type":"application/json","x-daskalov-csrf":csrfToken},body:"{}"});
   if(!r.ok)throw new Error("No se ha podido borrar la memoria.");
-  localStorage.removeItem("daskalov_playerId");history.length=0;
-  showMessage("assistant","Los recuerdos guardados de este navegador se han borrado.");
+  csrfToken=null;history.length=0;$("remember").checked=false;$("forgetButton").disabled=true;
+  showMessage("assistant","Los recuerdos almacenados se han borrado y la sesión se ha cerrado.");
  }catch(error){showMessage("error",error.message);}
 });
 let recognition=null;
@@ -155,4 +181,4 @@ window.addEventListener("keydown",e=>{
  }
  if(e.key==="Home")yaw=0;
 });
-checkHealth();refreshModels();create3D();
+checkHealth();refreshModels();refreshMemoryState();create3D();

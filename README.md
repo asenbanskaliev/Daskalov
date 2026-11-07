@@ -21,3 +21,10 @@ Requisito: Node.js 24.
 5. Selecciona proveedor y modelo en la pantalla. La entrada por teclado será alternativa al micrófono.
 
 Esta rama es un prototipo en desarrollo; no se considera apto para uso público por menores hasta completar las medidas de privacidad, moderación y consentimiento.
+
+## Seguridad y memoria (fase S00)
+- Por defecto `DASKALOV_ALLOW_MEMORY=0`: el chat funciona pero no crea perfiles ni recuerdos.
+- Para pruebas privadas con un adulto autorizado en localhost, configurar `DASKALOV_ALLOW_MEMORY=1`. No se ha implementado todavía la verificación de consentimiento parental ni las protecciones necesarias para desplegarlo públicamente.
+- Al activarla desde el navegador, el servidor emite una cookie aleatoria `HttpOnly; SameSite=Strict`; el identificador de alumno ya no lo decide el navegador. Las operaciones de memoria requieren cookie y token CSRF, y borran/revocan la sesión.
+- Ollama Cloud utiliza `OLLAMA_API_KEY` solo en el servidor; GitHub Actions REAL ahora está restringido a ejecución manual desde `main` y al environment `daskalov-cloud-test`, que debe protegerse con aprobaciones desde GitHub Settings.
+- El backend escucha en `127.0.0.1` únicamente. NO publicarlo todavía en Internet; faltan autenticación de acceso a Cloud, consentimiento de menores, gestión de costes en despliegue y otras medidas del plan FULL.
