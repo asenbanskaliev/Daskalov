@@ -85,7 +85,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [ ] **S00.05** Cerrar exposición de Cloud en despliegue público: login/guest con límites, cupos de tokens y concurrencia por sesión.  
   - **Aceptación:** 100 peticiones sin autorización no producen gasto ni degradación.  
   - **TDD:** SEC-005 · **Dep.:** 04.
-- [ ] **S00.06** Definir entornos de prueba y protección de datos para menores; modo demo sin memoria y sin audio persistente.  
+- [x] **S00.06** Definir entornos de prueba y protección de datos para menores; modo demo sin memoria y sin audio persistente.  
   - **Aceptación:** El modo sin consentimiento no escribe audio, perfil ni transcripciones persistentes.  
   - **TDD:** SEC-006 · **Dep.:** 04.
 - [ ] **S00.07** Crear registro de riesgos, presupuesto Cloud, criterios no-go y procedimiento de rotación de credenciales.  
@@ -98,7 +98,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [x] **S01.01** Instalar Three.js con versión fijada, Vite ligero, lockfile npm, builds versionados sin CDN obligatorio.  
   - **Aceptación:** npm ci + npm run build repetibles en Linux/Windows; sin fetch CDN al lanzar.  
   - **TDD:** WEB-001 · **Dep.:** S00.01.
-- [ ] **S01.02** Modularizar app.js en UI, cámara, input, conversation, audio, animación, ajustes y eventos; sin framework pesado.  
+- [x] **S01.02** Modularizar app.js en UI, cámara, input, conversation, audio, animación, ajustes y eventos; sin framework pesado.  
   - **Aceptación:** Cada módulo con contratos públicos y tests; sin regresiones de UX.  
   - **TDD:** WEB-002 · **Dep.:** 01.
 - [x] **S01.03** Crear SPA simple de un solo origen servido por Node con assets compilados, cabeceras y caché coherentes.  
@@ -107,7 +107,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [x] **S01.04** Añadir Playwright Chromium + Firefox: primer render, chat mock, error Ollama, modo texto, micrófono ausente.  
   - **Aceptación:** CI E2E verde en ambos navegadores (sin API keys).  
   - **TDD:** WEB-004 · **Dep.:** 03.
-- [ ] **S01.05** Implementar panel accesible y responsive para IA Cloud/local, voz, permisos, memoria y rendimiento.  
+- [x] **S01.05** Implementar panel accesible y responsive para IA Cloud/local, voz, permisos, memoria y rendimiento.  
   - **Aceptación:** Uso con teclado, foco visible, etiquetas y anchura móvil sin solapes.  
   - **TDD:** WEB-005 · **Dep.:** 02.
 - [x] **S01.06** Detección de capacidades WebGL2, micrófono y audio, con recuperación explícita y fallback textual.  
@@ -116,14 +116,14 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [ ] **S01.07** Política de accesibilidad WCAG 2.2 AA: subtítulos, transcripción, mute, pausas, reduced-motion y contraste.  
   - **Aceptación:** Auditoría axe + manual teclado con cero defectos críticos.  
   - **TDD:** WEB-007 · **Dep.:** 05.
-- [ ] **S01.08** Definir modo offline parcial (demo guiada sin inferencia) y estados de conectividad.  
+- [x] **S01.08** Definir modo offline parcial (demo guiada sin inferencia) y estados de conectividad.  
   - **Aceptación:** Sin red externa puede abrir demo; modo IA no simula respuestas como reales.  
   - **TDD:** WEB-008 · **Dep.:** 06.
 
 ### S02 — Orquestador de conversación y Ollama real Cloud/local
 **Prioridad:** P0 · **Gate:** CONV-READY · **Dependencias:** S00,S01
 
-- [ ] **S02.01** Contratos tipados de turn/session/requestID y eventos streaming: started, delta, sentence, gesture, done, error.  
+- [x] **S02.01** Contratos tipados de turn/session/requestID y eventos streaming: started, delta, sentence, gesture, done, error.  
   - **Aceptación:** Parser y schemas rechazan mensajes incompletos, mezclados y fuera de orden.  
   - **TDD:** LLM-001 · **Dep.:** S01.02.
 - [x] **S02.02** Adaptador Ollama NDJSON con stream=true, lectura incremental UTF-8 y límites de memoria.  
@@ -135,10 +135,10 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [x] **S02.04** SentenceChunker que reconoce puntuación española, topes 80-160 caracteres y flush final.  
   - **Aceptación:** Primer segmento no espera respuesta completa; no pierde signos ni texto.  
   - **TDD:** LLM-004 · **Dep.:** 02.
-- [ ] **S02.05** Modelo/provider health y validación real de disponibilidad; soporte Cloud local con selección desde ajustes.  
+- [x] **S02.05** Modelo/provider health y validación real de disponibilidad; soporte Cloud local con selección desde ajustes.  
   - **Aceptación:** Se informa por qué no hay modelo y se puede cambiar sin reinicio.  
   - **TDD:** LLM-005 · **Dep.:** S01.05.
-- [ ] **S02.06** Fallback explícito y consentido Cloud/local con política local-only sin fuga de contenido.  
+- [x] **S02.06** Fallback explícito y consentido Cloud/local con política local-only sin fuga de contenido.  
   - **Aceptación:** Fallo local sin permiso NO envía mensaje a Cloud; con permiso reintenta una vez.  
   - **TDD:** LLM-006 · **Dep.:** 05.
 - [ ] **S02.07** Resiliencia: timeout por fase, 429/5xx, reconexión, límites tokens, respuestas vacías y cancelación limpia.  
@@ -150,7 +150,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [ ] **S02.09** Smoke REAL Cloud con Ollama Beam y conversación completa, solo en ejecución confiable; local real opcional en runner propio.  
   - **Aceptación:** Prueba Cloud live respalda texto, streaming, cancelación y gestos; local live etiquetada.  
   - **TDD:** LLM-009 · **Dep.:** 07,S00.01.
-- [ ] **S02.10** Métricas de latencia, tokens, coste, estado y errores sin texto personal.  
+- [x] **S02.10** Métricas de latencia, tokens, coste, estado y errores sin texto personal.  
   - **Aceptación:** Se exportan agregados y no mensajes ni secretos en logs.  
   - **TDD:** LLM-010 · **Dep.:** 07.
 
@@ -479,6 +479,31 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - Evidencia Browser E2E Chromium/Firefox: https://github.com/asenbanskaliev/Daskalov/actions/runs/42407451385 (SUCCESS SHA 35e095bc).
 - Regresión detectada y corregida por Playwright en `showMessage` al integrar streaming: fallo https://github.com/asenbanskaliev/Daskalov/actions/runs/42406791890, arreglo https://github.com/asenbanskaliev/Daskalov/actions/runs/42406993550 (SUCCESS).
 - **Pendientes críticos:** S00.01 environment reviewers, S00.05 control de acceso Cloud público, S00.06 tutela de menores, S01.02 modularización completa, S02.09 smoke de streaming real desde código protegido, voz y assets profesionales.
+
+## 4D. Ejecución de la siguiente tanda de nueve mejoras (2026-11-07)
+**Referencia funcional:** SHA `8daeb52fb0c036081c87f38cebf9019ae16dced4`.  
+**CI-fast:** https://github.com/asenbanskaliev/Daskalov/actions/runs/42410836748 **SUCCESS**.  
+**Browser Chromium+Firefox:** https://github.com/asenbanskaliev/Daskalov/actions/runs/42410836750 **SUCCESS**.  
+**Resultado:** ocho contratos completados y uno **PARTIAL**, sin declarar FULL.
+
+| ID | Resultado | Evidencia y alcance |
+|---|---|---|
+| S00.06 | DONE técnico | Demo sin IA por teclado; no micro, ni memoria, ni peticiones chat; pruebas e2e/demo.spec.js (Chromium offline + Firefox funcional). **No** sustituye consentimiento parental S10.02. |
+| S01.02 | DONE | app.js modularizada; scene, camera-input, dom-ui, settings, memory-ui, voice-input, demo, conversation, speech; tests/modularity.test.mjs y browser E2E. |
+| S01.05 | DONE | Panel IA Cloud/local/demo, modelo, estado provider, voz, permisos, calidad, memoria y reduced motion; móvil 390 px, navegación teclado y e2e/accessibility.spec.js. |
+| S01.08 | DONE | Service worker con cache **solo de assets** y demo sin conexión tras primera visita; test de navegación offline en Chromium. No almacena chats en caché. |
+| S02.01 | DONE | shared/turn-protocol.js con tipos JSDoc, schemaVersion, requestId/sequence, tipos started/delta/sentence/gesture/provider-switched/completed/error, whitelist gestos, validación cliente+servidor; tests/turn-protocol.test.mjs. |
+| S02.05 | DONE funcional | /api/models y /api/provider-status consultan Ollama /api/tags y validan formato; selección y estado en UI, tests unit/e2e mock. **S02.09** mantiene pendiente prueba real de Ollama local/Cloud en rama confiable. |
+| S02.06 | DONE | Cloud fallback solo por consentimiento explícito (checkbox en modo local, OFF por defecto), no mezcla texto parcial ni falla silenciosamente a Cloud; tests/fallback.test.mjs, tests/server-fallback.test.mjs, e2e/fallback.spec.js. |
+| S02.07 | PARTIAL | 100 fallos transitorios locales simulados, retry limitado solo antes del primer delta; Cloud no se reintenta automáticamente, existe timeout global 90 s, límites NDJSON/char y errores controlados. Pendiente perfeccionar timeout **por fase** y chaos adicional. |
+| S02.10 | DONE (estimaciones explícitas) | /api/metrics solo desde host local; conteos y p50/p95, tokens **estimados**, coste opcional **estimado** si se configuró tarifa; no PII, chats, cookies ni IP. tests/metrics*.test.mjs. No es facturación real. |
+
+### Mejoras adicionales (sin marcar gate como completo)
+- **S00.05 PARTIAL:** host privado y cuota Cloud agregada 24/día + límites IP, comprobado con 100 peticiones de host externo. **No es autenticación de servicio público**, no usar como gateway.
+- **S00.07 PARTIAL:** simulacro de rotación usando claves ficticias y runbook; la revocación real y traslado de OLLAMA_API_KEY requieren propietario.
+- **S01.07 PARTIAL:** subtítulos, skip link, foco, reducción de animaciones, pausa/reanudación, accesibilidad teclado; falta auditoría integral WCAG 2.2 AA con revisión humana.
+- **S00.01 BLOCKED_EXTERNAL:** falta crear/proteger GitHub Environment `daskalov-cloud-test`, revisores y secretos de environment para smoke seguro; solo manual en main revisada.
+- No se ha fusionado `main`, no se ha gastado API Cloud en los nuevos tests, no se certifica funcionamiento de Ollama local real ni voz búlgara.
 
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |

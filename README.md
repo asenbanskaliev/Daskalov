@@ -32,3 +32,12 @@ Esta rama es un prototipo en desarrollo; no se considera apto para uso público 
 ## Frontend reproducible S01
 Three.js y Vite se instalan desde `package-lock.json`; en producción el motor 3D va incluido en los assets compilados, no en un CDN.
 `npm run test:e2e` utiliza Playwright Chromium y Firefox (instalar navegadores con `npx playwright install`). GitHub Actions prueba ambos con conversaciones simuladas, sin gastar tokens Ollama.
+
+## Modos disponibles tras la segunda tanda
+- **Demo sin IA:** elegir `Demo sin IA · offline` en el proveedor. Está claramente etiquetado como guion de muestra; no usa Ollama, micro ni memoria. Tras la primera carga HTTPS/localhost, el service worker guarda **solo recursos estáticos** para recarga offline (no mensajes del alumno).
+- **Cloud/local:** el modelo disponible se consulta mediante `/api/tags`; `/api/provider-status` muestra conectividad. Si escoges local, un checkbox OFF por defecto permite usar Cloud **solo cuando se autoriza** y no existe texto parcial del modelo local.
+- **Voz y gráficos:** selector de voz del navegador (no garantiza acento búlgaro), pausa/reanudación, calidad baja/media/alta/automática y reducción de movimiento.
+- **Privacidad y coste:** el servidor expone `/api/metrics` solo en modo local, con agregados sin conversaciones; tokens y costes son estimaciones, no la factura real del proveedor. Cuota Cloud inicial 24 solicitudes por proceso y día, insuficiente por sí sola para hosting público.
+- **Estado ODD actualizado:** `odd/tasks/implementacion-full-odd-tdd.md` y `odd/quality/tanda-nueve-siguiente.md`.
+
+**Prohibido publicar este prototipo para menores:** faltan consentimiento/verificación legal, seguridad de hosting, voz licenciada, revisión y configuración de GitHub Environment.

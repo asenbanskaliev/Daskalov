@@ -18,3 +18,11 @@ Fecha de corte: 2026-11-07.
 | FULL | NO ALCANZADO | — |
 
 Las pruebas unitarias con Ollama simulado no demuestran Cloud ni Ollama local real. El último smoke real de Beam anterior al cambio de seguridad permanece en https://github.com/asenbanskaliev/Daskalov/actions/runs/42403138240 y solo acredita aquel SHA anterior. El nuevo workflow Cloud no se ejecutará automáticamente hasta publicarse código revisado en main y configurar Environment protegido.
+
+## Actualización — SHA 8daeb52f (2026-11-07)
+- CI unit/build: https://github.com/asenbanskaliev/Daskalov/actions/runs/42410836748 SUCCESS.
+- Browser E2E Chromium/Firefox: https://github.com/asenbanskaliev/Daskalov/actions/runs/42410836750 SUCCESS.
+- Ocho nuevas tareas DONE: S00.06, S01.02, S01.05, S01.08, S02.01, S02.05, S02.06, S02.10.
+- S02.07 PARTIAL. S00.05, S00.07 y S01.07 siguen PARTIAL por controles y revisiones no realizados.
+- S00.01 BLOCKED_EXTERNAL, sin cambios en main; **seguridad para menores y exposición pública todavía NO APTA**.
+- Estimación de tokens y coste ≠ métrica de facturación de Ollama.
