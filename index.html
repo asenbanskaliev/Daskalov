@@ -60,7 +60,16 @@
         <input id="question" placeholder="Profesor, ¿puedo hablar en clase?" maxlength="700" autocomplete="off" required>
         <div class="actions"><button type="button" id="micButton" class="secondary" title="Hablar por micrófono">Micrófono</button><button type="button" id="stopButton" class="secondary" disabled>Interrumpir</button><button type="submit" id="sendButton">Preguntar al profesor</button></div>
       </form>
-      <div class="privacy"><button id="forgetButton" type="button" class="text-button">Borrar mis recuerdos</button><span>Memoria desactivada por defecto. Sin guardar audio.</span></div>
+      <div class="privacy">
+        <button id="viewMemories" type="button" class="text-button" disabled>Ver y corregir recuerdos</button>
+        <button id="exportMemories" type="button" class="text-button" disabled>Exportar mis datos</button>
+        <button id="forgetButton" type="button" class="text-button">Borrar mis recuerdos</button>
+        <span>Memoria desactivada por defecto. Sin guardar audio.</span>
+      </div>
+      <section id="memoryDetails" class="memory-details" hidden aria-label="Mis recuerdos guardados">
+        <h3>Datos guardados en este servidor</h3>
+        <div id="memoryEntries"></div>
+      </section>
     </aside>
   </main>
   <footer>Prototipo ODD + TDD · Humor ficticio y educativo · La voz con acento búlgaro específico se incorporará en una fase posterior.</footer>

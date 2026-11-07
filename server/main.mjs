@@ -124,6 +124,21 @@ export function createApp({
      return respond(res,200,{provider,reachable:true,models:available.length});
     }catch{return respond(res,200,{provider,reachable:false,models:0});}
    }
+   if((path==="/api/memory/export"||path==="/api/memory/correct"||path==="/api/progress")&&req.method==="POST"){
+    if(!allowMemory)throw new OllamaError("Memoria desactivada en este servidor.",403);
+    const session=requireSession(req,memory);
+    const body=await bodyOf(req);
+    rejectClientPlayerId(body);
+    if(path==="/api/memory/export")return respond(res,200,memory.exportPlayer(session.playerId));
+    if(path==="/api/memory/correct"){
+     if(!memory.correctMemory(session.playerId,body.id,body.content))throw new OllamaError("Recuerdo inexistente o datos inválidos.",404);
+     return respond(res,200,{updated:true});
+    }
+    if(body.readOnly===true)return respond(res,200,{progress:memory.getProgress(session.playerId)});
+    if(!["math","language","history"].includes(body.lessonId)||body.points!==10)throw new OllamaError("Progreso inválido.",400);
+    memory.recordProgress(session.playerId,body.lessonId,body.points);
+    return respond(res,200,{progress:memory.getProgress(session.playerId)});
+   }
    if(path==="/api/memory"&&["POST","DELETE"].includes(req.method)){
     const session=requireSession(req,memory);
     const body=await bodyOf(req);
