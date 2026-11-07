@@ -1,4 +1,5 @@
 import {migrateDatabase} from "./db-migrations.mjs";
+import {redactSensitiveMemory} from "./character.mjs";
 import {DatabaseSync} from "node:sqlite";
 import {mkdirSync} from "node:fs";
 import {dirname} from "node:path";
@@ -37,7 +38,7 @@ export function openMemory(fileName) {
  const privacyUpsert=db.prepare("INSERT INTO privacy_preferences(player_id,memory_enabled) VALUES(?,?) ON CONFLICT(player_id) DO UPDATE SET memory_enabled=excluded.memory_enabled,updated_at=datetime('now')");
 
  return {
-  save(id,role,content){if(!isPlayerId(id)||!["user","assistant"].includes(role))throw new Error("Memoria inválida");insertPlayer.run(id);add.run(id,role,String(content).slice(0,1500));},
+  save(id,role,content){if(!isPlayerId(id)||!["user","assistant"].includes(role))throw new Error("Memoria inválida");insertPlayer.run(id);add.run(id,role,redactSensitiveMemory(content));},
   search(id,query,limit=5){
    if(!isPlayerId(id))return [];
    const size=Math.min(10,Math.max(1,Math.floor(limit)));

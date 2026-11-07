@@ -5,6 +5,7 @@ import {resolve,dirname,join} from "node:path";
 import {fileURLToPath} from "node:url";
 import {normalizeReply,inferAnimation} from "./personality.mjs";
 import {buildContext} from "./context-builder.mjs";
+import {safeDeterministicReply} from "./child-safety.mjs";
 import {chatOllama,streamOllama,listOllamaModels,OllamaError,validateModel,validateProvider} from "./ollama.mjs";
 import {SentenceChunker} from "./stream.mjs";
 import {streamWithOptionalFallback} from "./fallback.mjs";
@@ -158,6 +159,23 @@ export function createApp({
     if(provider==="cloud"&&!isPrivateHost(req.headers.host))throw new OllamaError("Cloud no está habilitado fuera de localhost.",403);
     if(typeof body.text!=="string"||!body.text.trim()||body.text.length>700)throw new OllamaError("Mensaje inválido (1-700 caracteres).",400);
     const event=["dialog","turned_around","interruption","long_silence"].includes(body.event)?body.event:"dialog";
+    const safetyReply=safeDeterministicReply(body.text);
+    if(safetyReply){
+     const reply=normalizeReply(safetyReply);
+     if(path==="/api/chat"){
+      return respond(res,200,{reply,animation:"talk",provider:"safety",model:"deterministic"});
+     }
+     const requestId=randomUUID();
+     res.writeHead(200,{"content-type":"application/x-ndjson; charset=utf-8","cache-control":"no-store","x-content-type-options":"nosniff"});
+     const events=[
+      {type:"started",provider:"safety",model:"deterministic"},
+      {type:"delta",text:reply},
+      {type:"sentence",text:reply},
+      {type:"completed",reply,animation:"talk",provider:"safety",model:"deterministic"}
+     ];
+     events.forEach((item,sequence)=>res.write(JSON.stringify(makeTurnEvent({requestId,sequence,...item}))+"\n"));
+     return res.end();
+    }
     const remember=body.remember===true;
     let session=null;
     if(remember){
