@@ -19,11 +19,11 @@ GATE: CI verde en rama y smoke Cloud real confirmado por separado.
 GATE: pruebas de eventos + smoke de Chromium + revisión visual con FPS medidos en hardware objetivo.
 
 ## F2 — IA configurable
-- [ ] F2-01 Backend: Ollama Cloud (https://ollama.com/api/chat, modelo beam, Bearer env).
+- [x] F2-01 Backend: Ollama Cloud (https://ollama.com/api/chat, modelo beam, Bearer env).
 - [ ] F2-02 Backend: Ollama local (/api/chat); selección de modelo e inspección de modelos instalados.
 - [ ] F2-03 UI selección Cloud/local, errores claros, prueba de conexión y configuración persistente no sensible.
 - [ ] F2-04 Personalidad permanente, contexto de eventos, historial acotado y anti-inyección en contenido externo.
-- [ ] F2-05 Pruebas de contrato mock + integración real Cloud + integración real local opcional.
+- [x] F2-05 Pruebas de contrato mock + integración real Cloud + integración real local opcional.
 GATE: mismo diálogo básico por ambos proveedores cuando disponibles; evidencias etiquetadas.
 
 ## F3 — Voz bidireccional
@@ -68,6 +68,12 @@ F0 -> F1+F2 mocks -> F2 real -> F3 inicial -> F4 -> F5 -> F3 mejorado+F6. Agrupa
 - F3 PARTIAL: Web Speech como STT y TTS de demostración; NO se ha validado la voz búlgara ni latencia de audio.
 - F4 PARTIAL: memoria opt-in + borrado desde UI; pendiente autenticación/consentimiento parental, mejor deduplicación y política de retención validada.
 - Nunca declarar FULL hasta superar también los gates BROWSER, REAL (diálogo + voz) y AUDIT.
+
+## Evidencia de integración REAL con el backend (2026-11-07)
+- Run Cloud E2E: https://github.com/asenbanskaliev/Daskalov/actions/runs/42402678071 (SUCCESS, SHA cbc742c). Respuesta de Beam: 302 caracteres; ciclo completo backend + personalidad + gesto + guardar/leer/borrar memoria en aproximadamente 5,7 s.
+- Incidencia encontrada por TDD: HTTP 200 con content vacío en Beam cuando el razonamiento consumía num_predict. Ajuste: think=false y presupuesto de hasta 2048 tokens para beam, con pruebas de contrato sobre configuración. Dos pruebas E2E fallidas previas no se ocultan; éxito final tras corrección.
+- CI de sintaxis/tests/build: https://github.com/asenbanskaliev/Daskalov/actions/runs/42402683376 (SUCCESS, SHA cbc742c).
+- F2-01 DONE: Cloud real desde el backend. F2-05 DONE: contratos mock y Cloud E2E; Ollama local real se mantiene pendiente en F2-02. Browser 3D/micrófono/TTS reales todavía NO verificados.
 
 ## Evidencias iniciales
 - Repo inicializado en main y rama feat/odd-tdd-web-mvp creada.
