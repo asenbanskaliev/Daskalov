@@ -1,3 +1,5 @@
+import {parseNDJSON} from "./stream.mjs";
+
 export class OllamaError extends Error {
  constructor(message,status=502){super(message);this.name="OllamaError";this.status=status;}
 }
@@ -46,4 +48,44 @@ export async function listOllamaModels({provider,fetchImpl=fetch,env=process.env
   const data=await res.json();
   return Array.isArray(data.models)?data.models.map(m=>m.name).filter(x=>typeof x==="string"):[];
  }catch{throw new OllamaError("No es posible consultar los modelos locales.",502);}
+}
+
+
+// Produces only user-visible text deltas; hidden reasoning is neither emitted nor persisted.
+export async function* streamOllama({provider,model,messages,signal,fetchImpl=fetch,env=process.env}){
+ validateModel(model);
+ const {base,headers}=connection(provider,env);
+ const timeoutSignal=AbortSignal.timeout(90000);
+ const combined=signal?AbortSignal.any([signal,timeoutSignal]):timeoutSignal;
+ let response;
+ try{
+  response=await fetchImpl(base+"/api/chat",{
+   method:"POST",
+   headers:{"content-type":"application/json",...headers},
+   body:JSON.stringify({model,messages,stream:true,think:false,options:{num_predict:model==="beam"?2048:512}}),
+   signal:combined
+  });
+ }catch(error){
+  if(signal?.aborted)throw error;
+  throw new OllamaError("No se ha podido iniciar el flujo de Ollama.",502);
+ }
+ if(!response.ok)throw new OllamaError("Ollama streaming devolvió HTTP "+response.status+".",502);
+ let outputLength=0;
+ try{
+  for await(const event of parseNDJSON(response.body)){
+   if(combined.aborted)throw new OllamaError("Respuesta interrumpida.",499);
+   if(event.error)throw new OllamaError("El proveedor devolvió un error durante la respuesta.",502);
+   const delta=event.message?.content;
+   if(typeof delta==="string"&&delta.length){
+    outputLength+=delta.length;
+    if(outputLength>6000)throw new OllamaError("Respuesta demasiado larga.",502);
+    yield delta;
+   }
+  }
+ }catch(error){
+  if(signal?.aborted)throw error;
+  if(error instanceof OllamaError)throw error;
+  throw new OllamaError("Flujo NDJSON inválido o interrumpido.",502);
+ }
+ if(!outputLength)throw new OllamaError("Ollama no devolvió texto en streaming.",502);
 }
