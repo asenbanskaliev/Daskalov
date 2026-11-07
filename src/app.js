@@ -1,5 +1,5 @@
 import {streamTurn} from "./conversation.js";
-import {BrowserSpeechQueue} from "./speech.js";
+import {createVoiceUI} from "./voice-ui.js";
 import {createClassroomScene} from "./scene.js";
 import {bindCameraKeyboard} from "./camera-input.js";
 import {$,showMessage} from "./dom-ui.js";
@@ -8,25 +8,13 @@ import {createMemoryUI} from "./memory-ui.js";
 import {configureVoiceInput} from "./voice-input.js";
 import {demoReply} from "./demo.js";
 import {createGameUI} from "./game-ui.js";
-import {LocalPiperVoice} from "./tts-local.js";
 
 const history=[];
 let busy=false,playing=false,yaw=0,sceneState=null,activeController=null,activeTurn=0;
-const speech=new BrowserSpeechQueue({onSpeaking:active=>{
- playing=active;
- $("pauseVoice").disabled=!active;
- $("resumeVoice").disabled=active||!speech.enabled;
-}});
-const localSpeech=new LocalPiperVoice({
- onSpeaking:active=>{if($("ttsMode").value==="local")playing=active;},
+const voice=createVoiceUI({
+ find:$,
+ onSpeaking:active=>{playing=active;},
  onError:error=>showMessage("error","Voz Piper local: "+error.message)
-});
-function selectedSpeech(){return $("ttsMode").value==="local"?localSpeech:speech;}
-$("ttsMode").value=readSetting("ttsMode")||"browser";
-$("ttsMode").addEventListener("change",()=>{
- speech.cancel();localSpeech.cancel();
- writeSetting("ttsMode",$("ttsMode").value);
- $("voiceChoice").disabled=$("ttsMode").value!=="browser";
 });
 const settings=createSettingsUI({find:$,showMessage});
 const memoryUI=createMemoryUI({find:$,showMessage,history});
@@ -36,23 +24,6 @@ $("graphicsQuality").addEventListener("change",()=>{
  writeSetting("graphicsQuality",$("graphicsQuality").value);
  sceneState?.setQuality($("graphicsQuality").value);
 });
-function refreshBrowserVoices(){
- const select=$("voiceChoice"),old=select.value;
- select.replaceChildren();
- const defaultOpt=document.createElement("option");
- defaultOpt.value="";defaultOpt.textContent="Voz predeterminada";
- select.append(defaultOpt);
- for(const voice of speech.listVoices()){
-  const opt=document.createElement("option");opt.value=voice.name;opt.textContent=voice.name;
-  select.append(opt);
- }
- select.value=old&&[...select.options].some(x=>x.value===old)?old:"";
-}
-$("voiceChoice").addEventListener("change",()=>speech.setVoiceName($("voiceChoice").value));
-$("pauseVoice").addEventListener("click",()=>{selectedSpeech().pause();$("resumeVoice").disabled=false;});
-$("resumeVoice").addEventListener("click",()=>{selectedSpeech().resume();$("resumeVoice").disabled=true;});
-refreshBrowserVoices();
-window.speechSynthesis?.addEventListener?.("voiceschanged",refreshBrowserVoices);
 $("provider").value=readSetting("provider")||"cloud";
 $("model").value=readSetting("model")||"beam";
 async function send(text,event="dialog"){
@@ -60,7 +31,7 @@ async function send(text,event="dialog"){
  if(!text)return;
  const provider=$("provider").value,model=$("model").value.trim();
  if(provider==="demo"){
-  activeController?.abort();speech.cancel();localSpeech.cancel();
+  activeController?.abort();voice.cancel();
   const answer=demoReply(text,{event});
   showMessage("user",text);
   showMessage("assistant",answer.reply);
@@ -72,7 +43,7 @@ async function send(text,event="dialog"){
  const remember=$("remember").checked;
  const turn=++activeTurn;
  activeController?.abort();
- speech.cancel();localSpeech.cancel();
+ voice.cancel();
  const controller=new AbortController();
  activeController=controller;
  busy=true;
@@ -86,7 +57,7 @@ async function send(text,event="dialog"){
  let partial="",completed=false;
  try{
   if(remember)await memoryUI.ensure();
-  speech.setEnabled($("voiceEnabled").checked);
+  voice.setEnabled($("voiceEnabled").checked);
   for await(const eventData of streamTurn({
    body:{provider,model,text,event,remember,allowFallbackToCloud:provider==="local"&&$("cloudFallback").checked,history:history.slice(-8)},
    signal:controller.signal,
@@ -100,7 +71,7 @@ async function send(text,event="dialog"){
     answer.textContent=partial;
     $("speechBubble").textContent="«"+partial+"»";
    }else if(eventData.type==="sentence"){
-    selectedSpeech().speak(eventData.text);
+    voice.speak(eventData.text);
    }else if(eventData.type==="provider-switched"){
     $("providerStatus").textContent="El modelo local falló. Usando Ollama Cloud con tu autorización.";
    }else if(eventData.type==="completed"){
@@ -137,19 +108,17 @@ try{localStorage.removeItem("daskalov_playerId");}catch{}
 function applyDemoControls(){
  const demo=$("provider").value==="demo";
  if(demo){
-  activeController?.abort();speech.cancel();localSpeech.cancel();
+  activeController?.abort();voice.cancel();
   $("remember").checked=false;$("remember").disabled=true;
-  $("voiceEnabled").checked=false;$("voiceEnabled").disabled=true;localSpeech.setEnabled(false);
+  $("voiceEnabled").checked=false;$("voiceEnabled").disabled=true;voice.setEnabled(false);
   $("micButton").disabled=true;$("autoTurn").checked=false;
  }else{
   $("voiceEnabled").disabled=false;
-  localSpeech.setEnabled($("voiceEnabled").checked);
+  voice.setEnabled($("voiceEnabled").checked);
   $("micButton").disabled=!mic.available;
   memoryUI.refresh();
  }
- $("voiceChoice").disabled=demo;
- $("pauseVoice").disabled=demo||!playing;
- $("resumeVoice").disabled=demo||!speech.enabled;
+ voice.setDemoMode(demo);
   $("demoNotice").hidden=!demo;
 }
 $("provider").addEventListener("change",()=>{
@@ -160,15 +129,15 @@ $("provider").addEventListener("change",()=>{
 $("model").addEventListener("change",()=>writeSetting("model",$("model").value));
 $("stopButton").addEventListener("click",()=>{
  activeController?.abort();
- speech.cancel();
+ voice.cancel();
  $("speechBubble").textContent="(El profesor ha sido interrumpido.)";
 });
-$("voiceEnabled").addEventListener("change",()=>{speech.setEnabled($("voiceEnabled").checked);localSpeech.setEnabled($("voiceEnabled").checked);});
+$("voiceEnabled").addEventListener("change",()=>{voice.setEnabled($("voiceEnabled").checked);voice.setEnabled($("voiceEnabled").checked);});
 $("chatForm").addEventListener("submit",event=>{
  event.preventDefault();const text=$("question").value;$("question").value="";send(text);
 });
 memoryUI.bind();
-const mic=configureVoiceInput({find:$,send,stopSpeech:()=>{activeController?.abort();speech.cancel();localSpeech.cancel();},showMessage});
+const mic=configureVoiceInput({find:$,send,stopSpeech:()=>{activeController?.abort();voice.cancel();},showMessage});
 createGameUI({find:$,onGesture:gesture=>sceneState?.act(gesture)});
 bindCameraKeyboard({
  getYaw:()=>yaw,
