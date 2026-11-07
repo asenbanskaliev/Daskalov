@@ -11,13 +11,22 @@ export function createSTTAdapter({
  if(!STT_MODES.includes(mode))throw Error("Proveedor de reconocimiento de voz desconocido.");
  if(mode==="disabled")return {provider:mode,available:false,start(){return false;},stop(){},dispose(){}};
  if(mode==="localWhisper"){
+  let active=false;
   return {provider:mode,available:typeof localTranscriber==="function",
-   async start(){
-    if(typeof localTranscriber!=="function")return false;
-    onBargeIn();onStatus("Capturando voz local…");
-    try{const text=await localTranscriber();if(text?.trim())onTranscript(text.trim());return true;}
-    catch(error){onError(error);return false;}
-   },stop(){},dispose(){}};
+   get active(){return active;},
+   start(){
+    if(active||typeof localTranscriber!=="function")return false;
+    active=true;
+    onBargeIn();onStatus("Grabando localmente… Pulsa de nuevo para transcribir.");
+    Promise.resolve().then(()=>localTranscriber()).then(text=>{
+     if(active&&text?.trim())onTranscript(text.trim());
+    }).catch(error=>{if(active)onError(error);}).finally(()=>{active=false;onStatus("Micrófono detenido.");});
+    return true;
+   },
+   finish(){localTranscriber?.finish?.();},
+   stop(){active=false;localTranscriber?.cancel?.();onStatus("Micrófono detenido.");},
+   dispose(){this.stop();}
+  };
  }
  if(typeof recognitionFactory!=="function")return {provider:mode,available:false,start(){return false;},stop(){},dispose(){}};
  let recognizer;
