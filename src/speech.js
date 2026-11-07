@@ -1,8 +1,10 @@
 export class BrowserSpeechQueue {
- constructor({synthesis=globalThis.speechSynthesis,Utterance=globalThis.SpeechSynthesisUtterance,onSpeaking=()=>{}}={}){
+ constructor({synthesis=globalThis.speechSynthesis,Utterance=globalThis.SpeechSynthesisUtterance,onSpeaking=()=>{},onSentenceStart=()=>{},onBoundary=()=>{}}={}){
   this.synthesis=synthesis;
   this.Utterance=Utterance;
   this.onSpeaking=onSpeaking;
+  this.onSentenceStart=onSentenceStart;
+  this.onBoundary=onBoundary;
   this.enabled=true;
   this.voiceName="";
   this.generation=0;
@@ -27,7 +29,8 @@ export class BrowserSpeechQueue {
   const selected=voices.find(voice=>voice.name===this.voiceName)||voices[0];
   if(selected)utterance.voice=selected;
   const revision=this.generation;
-  utterance.onstart=()=>{if(this.generation===revision)this.onSpeaking(true);};
+  utterance.onstart=()=>{if(this.generation===revision){this.onSpeaking(true);this.onSentenceStart(String(sentence));}};
+  utterance.onboundary=event=>{if(this.generation===revision)this.onBoundary({text:String(sentence),charIndex:event.charIndex||0,elapsedTime:event.elapsedTime||0});};
   utterance.onend=utterance.onerror=()=>{if(this.generation===revision)this.onSpeaking(false);};
   this.synthesis.speak(utterance);
   return true;

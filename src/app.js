@@ -14,6 +14,7 @@ let busy=false,playing=false,yaw=0,sceneState=null,activeController=null,activeT
 const voice=createVoiceUI({
  find:$,
  onSpeaking:active=>{playing=active;},
+ onViseme:value=>sceneState?.setViseme?.(value),
  onError:error=>showMessage("error","Voz Piper local: "+error.message)
 });
 const settings=createSettingsUI({find:$,showMessage});
@@ -130,6 +131,7 @@ $("model").addEventListener("change",()=>writeSetting("model",$("model").value))
 $("stopButton").addEventListener("click",()=>{
  activeController?.abort();
  voice.cancel();
+ sceneState?.clearSpeech?.();
  $("speechBubble").textContent="(El profesor ha sido interrumpido.)";
 });
 $("voiceEnabled").addEventListener("change",()=>{voice.setEnabled($("voiceEnabled").checked);voice.setEnabled($("voiceEnabled").checked);});

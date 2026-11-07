@@ -1,7 +1,7 @@
 import {AudioQueue} from "./audio-queue.js";
 export class LocalPiperVoice{
- constructor({fetchImpl=fetch,onSpeaking=()=>{},onError=()=>{},AudioQueueFactory=options=>new AudioQueue(options)}={}){
-  this.fetchImpl=fetchImpl;this.onError=onError;
+ constructor({fetchImpl=fetch,onSpeaking=()=>{},onSentenceStart=()=>{},onError=()=>{},AudioQueueFactory=options=>new AudioQueue(options)}={}){
+  this.fetchImpl=fetchImpl;this.onError=onError;this.onSentenceStart=onSentenceStart;
   this.audio=AudioQueueFactory({onSpeaking});
   this.enabled=true;this.epoch=0;this.pending=new Set();
  }
@@ -23,6 +23,7 @@ export class LocalPiperVoice{
    }
    const audio=await response.arrayBuffer();
    if(epoch!==this.epoch||control.signal.aborted)return;
+   this.onSentenceStart(text);
    await this.audio.enqueue(audio);
   })().catch(error=>{
    if(!control.signal.aborted&&epoch===this.epoch)this.onError(error);

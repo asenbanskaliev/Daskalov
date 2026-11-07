@@ -1,19 +1,21 @@
+import {mapSpanishGrapheme} from "./visemes.js";
 import {BrowserSpeechQueue} from "./speech.js";
 import {LocalPiperVoice} from "./tts-local.js";
 import {readSetting,writeSetting} from "./settings.js";
 
-export function createVoiceUI({find,onSpeaking=()=>{},onError=()=>{}}){
+export function createVoiceUI({find,onSpeaking=()=>{},onViseme=()=>{},onError=()=>{}}){
  let enabled=true;
- const speech=new BrowserSpeechQueue({onSpeaking:active=>{
+ const speech=new BrowserSpeechQueue({onSentenceStart:text=>onViseme(mapSpanishGrapheme(text)),onBoundary:({text,charIndex})=>onViseme(mapSpanishGrapheme(text.slice(charIndex,charIndex+3))),onSpeaking:active=>{
   onSpeaking(active);
+  if(!active)onViseme("REST");
   find("pauseVoice").disabled=!active;
   find("resumeVoice").disabled=active||!enabled;
  }});
- const local=new LocalPiperVoice({onSpeaking,onError});
+ const local=new LocalPiperVoice({onSpeaking:active=>{onSpeaking(active);if(!active)onViseme("REST");},onSentenceStart:text=>onViseme(mapSpanishGrapheme(text)),onError});
  const choice=find("ttsMode");
  choice.value=readSetting("ttsMode")||"browser";
  const selected=()=>choice.value==="local"?local:speech;
- function cancel(){speech.cancel();local.cancel();}
+ function cancel(){speech.cancel();local.cancel();onViseme("REST");}
  function populate(){
   const select=find("voiceChoice"),previous=select.value;
   select.replaceChildren();

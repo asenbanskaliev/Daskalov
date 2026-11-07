@@ -1,3 +1,4 @@
+import {normalizeViseme} from "./visemes.js";
 export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeaking=()=>false,getReducedMotion=()=>false,onReady=()=>{},quality="auto"}){
  try{
   const THREE=await import("three");
@@ -43,9 +44,13 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
   box(.2,.82,.2,0,-.43,0,coat,arm);sphere(.13,0,-.85,0,skin,arm);box(.08,.72,.06,0,-1.03,.12,wood,arm);
   function resize(){const w=canvas.clientWidth,h=canvas.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/Math.max(1,h);camera.updateProjectionMatrix();}
   new ResizeObserver(resize).observe(canvas);resize();
-  let animation="talk",until=0;
+  let animation="talk",until=0,viseme="REST";
+  const allowedGestures=new Set(["talk","ruler_desk","point_board","surprised"]);
   const sceneState={
-    act(value){animation=value;until=performance.now()+2400;},
+    act(value){animation=allowedGestures.has(value)?value:"talk";until=performance.now()+2400;},
+    setViseme(value){viseme=normalizeViseme(value);},
+    clearSpeech(){viseme="REST";animation="talk";until=0;},
+    setEmotion(value){if(value==="surprised")this.act("surprised");},
     setQuality(value){currentQuality=value;renderer.setPixelRatio(pixelRatio());resize();}
   };
   onReady(sceneState);
@@ -54,7 +59,10 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
    const active=now<until;
    head.position.y=2.66+(getReducedMotion()?0:Math.sin(now*.0017)*.025);
    arm.rotation.z=active&&!getReducedMotion()&&animation==="ruler_desk"?.6+Math.sin(now*.015)*.36:0;
-   mouth.scale.y=isSpeaking()?.30+Math.abs(Math.sin(now*.02))*.9:.18;
+   const shapes={REST:[1,.18],A:[1,1.25],I:[1.35,.38],E:[1.1,.6],O:[.75,.95],U:[.65,.55],MBP:[.9,.12],FV:[1,.25],L:[1,.55],CHSH:[.8,.45]};
+   const target=isSpeaking()?(shapes[viseme]||shapes.REST):shapes.REST;
+   mouth.scale.x+=(target[0]-mouth.scale.x)*.35;
+   mouth.scale.y+=(target[1]-mouth.scale.y)*.35;
    teacher.rotation.y=getReducedMotion()?0:Math.sin(now*.0004)*.06;
    renderer.render(scene,camera);requestAnimationFrame(frame);
   }
