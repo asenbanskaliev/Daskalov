@@ -41,3 +41,6 @@ Three.js y Vite se instalan desde `package-lock.json`; en producción el motor 3
 - **Estado ODD actualizado:** `odd/tasks/implementacion-full-odd-tdd.md` y `odd/quality/tanda-nueve-siguiente.md`.
 
 **Prohibido publicar este prototipo para menores:** faltan consentimiento/verificación legal, seguridad de hosting, voz licenciada, revisión y configuración de GitHub Environment.
+
+## Voz Piper local opcional
+El selector de TTS mantiene **navegador (gratis)** como predeterminado. Con Piper instalado, configura `DASKALOV_PIPER_BIN` y `DASKALOV_PIPER_MODEL` (ruta del archivo `.onnx`); el backend ejecuta Piper sin shell, envía WAV por el mismo origen y elimina el audio temporal tras leerlo. No existe una voz con acento búlgaro licenciada/validada por defecto. Revisa individualmente licencia del motor y del modelo vocal. Para un ejemplo de CLI con `--output_file` consulta la documentación de Piper: https://tderflinger.github.io/piper-docs/guides/usage/.

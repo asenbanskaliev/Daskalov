@@ -12,6 +12,7 @@ import {retryLocalStream} from "./resilience.mjs";
 import {MetricsCollector} from "./metrics.mjs";
 import {isPrivateHost,UsageBudget} from "./access-policy.mjs";
 import {makeTurnEvent} from "../shared/turn-protocol.js";
+import {synthesizePiper} from "./tts-piper.mjs";
 import {openMemory} from "./memory.mjs";
 import {createSession, getSession, csrfIsValid, isSameSiteRequest, clearSessionCookie} from "./session.mjs";
 
@@ -45,6 +46,7 @@ export function createApp({
  llm=chatOllama,
  streamLlm=streamOllama,
  models=listOllamaModels,
+ ttsSynth=synthesizePiper,
  allowMemory=process.env.DASKALOV_ALLOW_MEMORY==="1",
  maxCallsPerMinute=12,
  maxCallsPerDay=60,
@@ -69,6 +71,18 @@ export function createApp({
     return respond(res,200,metrics.snapshot());
    }
    if(path==="/api/health"&&req.method==="GET")return respond(res,200,{ok:true,cloudConfigured:!!process.env.OLLAMA_API_KEY});
+   if(path==="/api/tts/status"&&req.method==="GET"){
+    return respond(res,200,{available:Boolean(process.env.DASKALOV_PIPER_BIN&&process.env.DASKALOV_PIPER_MODEL),provider:"piper-local"});
+   }
+   if(path==="/api/tts/local"&&req.method==="POST"){
+    if(!isPrivateHost(req.headers.host))throw new OllamaError("Voz local disponible solo desde localhost.",403);
+    const body=await bodyOf(req);
+    if(typeof body.text!=="string"||!body.text.trim()||body.text.length>160)throw new OllamaError("Texto de voz inválido.",400);
+    const wav=await ttsSynth({text:body.text});
+    if(!Buffer.isBuffer(wav)||wav.length>3*1024*1024)throw new OllamaError("Audio local inválido.",502);
+    res.writeHead(200,{"content-type":"audio/wav","cache-control":"no-store","x-content-type-options":"nosniff"});
+    return res.end(wav);
+   }
    if(path==="/api/session"&&req.method==="GET"){
     const active=getSession(req,memory);
     return respond(res,200,{active:Boolean(active),csrfToken:active?.csrfToken||null,memoryAvailable:allowMemory});

@@ -8,6 +8,7 @@ import {createMemoryUI} from "./memory-ui.js";
 import {configureVoiceInput} from "./voice-input.js";
 import {demoReply} from "./demo.js";
 import {createGameUI} from "./game-ui.js";
+import {LocalPiperVoice} from "./tts-local.js";
 
 const history=[];
 let busy=false,playing=false,yaw=0,sceneState=null,activeController=null,activeTurn=0;
@@ -16,6 +17,17 @@ const speech=new BrowserSpeechQueue({onSpeaking:active=>{
  $("pauseVoice").disabled=!active;
  $("resumeVoice").disabled=active||!speech.enabled;
 }});
+const localSpeech=new LocalPiperVoice({
+ onSpeaking:active=>{if($("ttsMode").value==="local")playing=active;},
+ onError:error=>showMessage("error","Voz Piper local: "+error.message)
+});
+function selectedSpeech(){return $("ttsMode").value==="local"?localSpeech:speech;}
+$("ttsMode").value=readSetting("ttsMode")||"browser";
+$("ttsMode").addEventListener("change",()=>{
+ speech.cancel();localSpeech.cancel();
+ writeSetting("ttsMode",$("ttsMode").value);
+ $("voiceChoice").disabled=$("ttsMode").value!=="browser";
+});
 const settings=createSettingsUI({find:$,showMessage});
 const memoryUI=createMemoryUI({find:$,showMessage,history});
 $("graphicsQuality").value=readSetting("graphicsQuality")||"auto";
@@ -37,8 +49,8 @@ function refreshBrowserVoices(){
  select.value=old&&[...select.options].some(x=>x.value===old)?old:"";
 }
 $("voiceChoice").addEventListener("change",()=>speech.setVoiceName($("voiceChoice").value));
-$("pauseVoice").addEventListener("click",()=>{speech.pause();$("resumeVoice").disabled=false;});
-$("resumeVoice").addEventListener("click",()=>{speech.resume();$("resumeVoice").disabled=true;});
+$("pauseVoice").addEventListener("click",()=>{selectedSpeech().pause();$("resumeVoice").disabled=false;});
+$("resumeVoice").addEventListener("click",()=>{selectedSpeech().resume();$("resumeVoice").disabled=true;});
 refreshBrowserVoices();
 window.speechSynthesis?.addEventListener?.("voiceschanged",refreshBrowserVoices);
 $("provider").value=readSetting("provider")||"cloud";
@@ -48,7 +60,7 @@ async function send(text,event="dialog"){
  if(!text)return;
  const provider=$("provider").value,model=$("model").value.trim();
  if(provider==="demo"){
-  activeController?.abort();speech.cancel();
+  activeController?.abort();speech.cancel();localSpeech.cancel();
   const answer=demoReply(text,{event});
   showMessage("user",text);
   showMessage("assistant",answer.reply);
@@ -60,7 +72,7 @@ async function send(text,event="dialog"){
  const remember=$("remember").checked;
  const turn=++activeTurn;
  activeController?.abort();
- speech.cancel();
+ speech.cancel();localSpeech.cancel();
  const controller=new AbortController();
  activeController=controller;
  busy=true;
@@ -88,7 +100,7 @@ async function send(text,event="dialog"){
     answer.textContent=partial;
     $("speechBubble").textContent="«"+partial+"»";
    }else if(eventData.type==="sentence"){
-    speech.speak(eventData.text);
+    selectedSpeech().speak(eventData.text);
    }else if(eventData.type==="provider-switched"){
     $("providerStatus").textContent="El modelo local falló. Usando Ollama Cloud con tu autorización.";
    }else if(eventData.type==="completed"){
@@ -125,12 +137,13 @@ try{localStorage.removeItem("daskalov_playerId");}catch{}
 function applyDemoControls(){
  const demo=$("provider").value==="demo";
  if(demo){
-  activeController?.abort();speech.cancel();
+  activeController?.abort();speech.cancel();localSpeech.cancel();
   $("remember").checked=false;$("remember").disabled=true;
-  $("voiceEnabled").checked=false;$("voiceEnabled").disabled=true;
+  $("voiceEnabled").checked=false;$("voiceEnabled").disabled=true;localSpeech.setEnabled(false);
   $("micButton").disabled=true;$("autoTurn").checked=false;
  }else{
   $("voiceEnabled").disabled=false;
+  localSpeech.setEnabled($("voiceEnabled").checked);
   $("micButton").disabled=!mic.available;
   memoryUI.refresh();
  }
@@ -150,12 +163,12 @@ $("stopButton").addEventListener("click",()=>{
  speech.cancel();
  $("speechBubble").textContent="(El profesor ha sido interrumpido.)";
 });
-$("voiceEnabled").addEventListener("change",()=>speech.setEnabled($("voiceEnabled").checked));
+$("voiceEnabled").addEventListener("change",()=>{speech.setEnabled($("voiceEnabled").checked);localSpeech.setEnabled($("voiceEnabled").checked);});
 $("chatForm").addEventListener("submit",event=>{
  event.preventDefault();const text=$("question").value;$("question").value="";send(text);
 });
 memoryUI.bind();
-const mic=configureVoiceInput({find:$,send,stopSpeech:()=>{activeController?.abort();speech.cancel();},showMessage});
+const mic=configureVoiceInput({find:$,send,stopSpeech:()=>{activeController?.abort();speech.cancel();localSpeech.cancel();},showMessage});
 createGameUI({find:$,onGesture:gesture=>sceneState?.act(gesture)});
 bindCameraKeyboard({
  getYaw:()=>yaw,
