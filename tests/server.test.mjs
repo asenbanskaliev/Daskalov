@@ -1,0 +1,21 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {once} from "node:events";
+import {randomUUID} from "node:crypto";
+import {createApp} from "../server/main.mjs";
+test("servidor real, modelo mock, privacidad opt-in y borrado",async(t)=>{
+ const calls=[];
+ const app=createApp({dbPath:":memory:",llm:async(arg)=>{calls.push(arg);return "¡En mis tiempos hasta la pizarra estudiaba!"},models:async()=>["beam"]});
+ app.server.listen(0,"127.0.0.1");await once(app.server,"listening");
+ t.after(async()=>{await new Promise(done=>app.server.close(done));app.close();});
+ const host="http://127.0.0.1:"+app.server.address().port;
+ const page=await fetch(host+"/");assert.equal(page.status,200);assert.match(await page.text(),/Profesor Daskalov/);
+ const request=(endpoint,data,method="POST")=>fetch(host+endpoint,{method,headers:{"content-type":"application/json"},body:JSON.stringify(data)});
+ const playerId=randomUUID(),base={provider:"cloud",model:"beam",text:"¿Puedo hablar?",event:"dialog",playerId};
+ let response=await request("/api/chat",{...base,remember:false});
+ assert.equal(response.status,200);assert.match((await response.json()).reply,/pizarra/);assert.equal(app.memory.list(playerId).length,0);
+ response=await request("/api/chat",{...base,remember:true});
+ assert.equal(response.status,200);assert.equal(app.memory.list(playerId).length,2);assert.equal(calls.length,2);
+ response=await request("/api/chat",{...base,model:"http://evil",remember:true});assert.equal(response.status,400);
+ response=await request("/api/memory",{playerId},"DELETE");assert.equal(response.status,200);assert.equal(app.memory.list(playerId).length,0);
+});
