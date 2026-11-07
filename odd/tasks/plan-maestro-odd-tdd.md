@@ -5,10 +5,10 @@ Fecha: 2026-11-07. Objetivo: videojuego WEB (no app nativa), profesor 3D con hum
 Un checkbox solo puede estar marcado si existen código real, tests y gate correspondiente superado. Estado PARTIAL se documenta sin marcar la casilla. Cada entrega debe registrar commit, pruebas y limitaciones. No confundir test mock con prueba de Ollama real.
 
 ## F0 — Base web y CI (dependencia de todas)
-- [ ] F0-01 Servidor Node 24 sirve HTML/CSS/JS desde mismo origen, sin exponer secretos.
-- [ ] F0-02 Scripts test/check/build/start y documentación reproducible.
-- [ ] F0-03 GitHub Actions en push/PR: revisión sintáctica, tests, build y artefactos.
-- [ ] F0-04 Gate REAL independiente en Actions con el secreto OLLAMA_API_KEY, timeout, tokens mínimos y sin registrar respuesta ni credenciales.
+- [x] F0-01 Servidor Node 24 sirve HTML/CSS/JS desde mismo origen, sin exponer secretos.
+- [x] F0-02 Scripts test/check/build/start y documentación reproducible.
+- [x] F0-03 GitHub Actions en push/PR: revisión sintáctica, tests, build y artefactos.
+- [x] F0-04 Gate REAL independiente en Actions con el secreto OLLAMA_API_KEY, timeout, tokens mínimos y sin registrar respuesta ni credenciales.
 GATE: CI verde en rama y smoke Cloud real confirmado por separado.
 
 ## F1 — Escenario y comportamiento
@@ -34,7 +34,7 @@ GATE: mismo diálogo básico por ambos proveedores cuando disponibles; evidencia
 GATE: 20 diálogos reales (medir latencia de primer audio, total, errores y calidad de acento).
 
 ## F4 — Memoria tipo Engram sobre SQL
-- [ ] F4-01 SQLite + FTS5, historial y recuerdos separados por jugador, consultas parametrizadas.
+- [x] F4-01 SQLite + FTS5, historial y recuerdos separados por jugador, consultas parametrizadas.
 - [ ] F4-02 Consentimiento explícito, memoria desactivada por defecto, borrar y consultar recuerdos.
 - [ ] F4-03 Recuperación de recuerdos relevantes sin mezclas entre alumnos; deduplicación, TTL y límites.
 - [ ] F4-04 Autobiografía ficticia coherente del profesor separada de los datos personales reales.
@@ -59,6 +59,16 @@ GATE: checklist de lanzamiento + revisión manual de privacidad y costes.
 ## Orden de ejecución
 F0 -> F1+F2 mocks -> F2 real -> F3 inicial -> F4 -> F5 -> F3 mejorado+F6. Agrupar cambios seguros en tandas para reducir ejecuciones del CI; nunca esperar un CI largo para preparar el siguiente bloque, pero no certificar tareas antes de su resultado.
 
+## Estado tras primera tanda (2026-11-07)
+- F0 DONE: CI con sintaxis, tests mock, build web y artefacto: https://github.com/asenbanskaliev/Daskalov/actions/runs/42402282091 (success, SHA 58e233a7).
+- Cloud REAL: GitHub Actions consumió el secreto OLLAMA_API_KEY en una llamada real con el modelo beam: https://github.com/asenbanskaliev/Daskalov/actions/runs/42402282107 (success, SHA 58e233a7). No se registra el contenido ni la clave.
+- F4-01 DONE (infraestructura): SQLite + FTS5, SQL parametrizado, separación player_id y test de lectura/aislamiento/borrado en CI. Falta revisar consentimiento y endurecer retención y semántica para fases siguientes.
+- F1 PARTIAL: aula/profesor 3D procedural, gestos y detección de giro implementados; pendiente browser E2E y revisión visual de FPS.
+- F2 PARTIAL: Cloud/local configurables, contrato de Ollama mock y conexión Cloud directa real probada; pendiente diálogo end-to-end en navegador y prueba real de Ollama local.
+- F3 PARTIAL: Web Speech como STT y TTS de demostración; NO se ha validado la voz búlgara ni latencia de audio.
+- F4 PARTIAL: memoria opt-in + borrado desde UI; pendiente autenticación/consentimiento parental, mejor deduplicación y política de retención validada.
+- Nunca declarar FULL hasta superar también los gates BROWSER, REAL (diálogo + voz) y AUDIT.
+
 ## Evidencias iniciales
 - Repo inicializado en main y rama feat/odd-tdd-web-mvp creada.
-- OLLAMA_API_KEY declarado por el propietario como Repository secret; no comprobable ni visible desde el código. Solo un workflow real puede verificarlo.
+- OLLAMA_API_KEY declarado por el propietario como Repository secret; no comprobable ni visible desde el código. El workflow real ha verificado acceso correcto al secreto sin revelarlo (run 42402282107).
