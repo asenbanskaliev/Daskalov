@@ -3,7 +3,7 @@ export function configureVoiceInput({find,send,stopSpeech,showMessage}){
  if(!SpeechRecognition){
   find("micButton").disabled=true;
   find("micButton").title="No está disponible el reconocimiento de voz. Puedes escribir tu pregunta.";
-  return {stop(){}};
+  return {available:false,stop(){}};
  }
  const recognition=new SpeechRecognition();
  recognition.lang="es-ES";recognition.interimResults=false;recognition.maxAlternatives=1;
@@ -18,5 +18,5 @@ export function configureVoiceInput({find,send,stopSpeech,showMessage}){
    const micStatus=find("micStatus");if(micStatus)micStatus.textContent="Escuchando por micrófono…";
   }catch{showMessage("error","No se pudo iniciar el micrófono.");}
  });
- return {stop(){recognition.abort();}};
+ return {available:true,stop(){recognition.abort();}};
 }

@@ -23,10 +23,11 @@
     <aside class="panel">
       <div class="panel-title"><h2>Habla con el profesor</h2><p>Pregunta lo que quieras; Daskalov improvisará usando Ollama.</p></div>
       <form id="settingsForm" autocomplete="off">
-        <div class="fields"><label for="provider">Proveedor de IA</label><select id="provider"><option value="cloud">Ollama Cloud</option><option value="local">Ollama local</option></select></div>
+        <div class="fields"><label for="provider">Proveedor de IA</label><select id="provider"><option value="cloud">Ollama Cloud</option><option value="local">Ollama local</option><option value="demo">Demo sin IA · offline</option></select></div>
         <div class="fields"><label for="model">Modelo</label><input id="model" list="modelsList" value="beam" spellcheck="false"><datalist id="modelsList"><option value="beam"></option></datalist></div>
         <div class="toggles"><label><input type="checkbox" id="remember"> Recordar conversaciones (opcional)</label><label><input type="checkbox" id="autoTurn"> Reaccionar con IA al girarme</label><label><input type="checkbox" id="voiceEnabled" checked> Leer respuestas en voz alta</label></div>
       </form>
+      <p id="demoNotice" hidden role="status">Demostración sin IA ni conexión: no se envían mensajes ni se graba voz.</p>
       <div id="history" class="history" role="log" aria-live="polite">
         <div class="message assistant">¡Buenos días! Soy el Profesor Daskalov. ¿Qué querías preguntarme?</div>
       </div>

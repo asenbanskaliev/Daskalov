@@ -9,6 +9,7 @@ export function createSettingsUI({find,showMessage}){
   const target=find("providerStatus");
   if(!target)return;
   const provider=find("provider").value;
+  if(provider==="demo"){target.textContent="Sin IA · demostración offline";return;}
   target.textContent="Comprobando "+(provider==="cloud"?"Cloud":"Ollama local")+"…";
   try{
    const response=await fetch("/api/provider-status?provider="+encodeURIComponent(provider));
@@ -19,6 +20,12 @@ export function createSettingsUI({find,showMessage}){
  }
  async function refreshModels(){
   const provider=find("provider").value;
+  if(provider==="demo"){
+   find("model").disabled=true;find("model").value="";find("modelsList").replaceChildren();
+   await refreshProviderStatus();
+   return;
+  }
+  find("model").disabled=false;
   if(provider==="local"&&find("model").value==="beam")find("model").value="";
   if(provider==="cloud"&&!find("model").value)find("model").value="beam";
   try{

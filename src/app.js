@@ -6,6 +6,7 @@ import {$,showMessage} from "./dom-ui.js";
 import {readSetting,writeSetting,createSettingsUI} from "./settings.js";
 import {createMemoryUI} from "./memory-ui.js";
 import {configureVoiceInput} from "./voice-input.js";
+import {demoReply} from "./demo.js";
 
 const history=[];
 let busy=false,playing=false,yaw=0,sceneState=null,activeController=null,activeTurn=0;
@@ -18,6 +19,15 @@ async function send(text,event="dialog"){
  text=String(text).trim();
  if(!text)return;
  const provider=$("provider").value,model=$("model").value.trim();
+ if(provider==="demo"){
+  activeController?.abort();speech.cancel();
+  const answer=demoReply(text,{event});
+  showMessage("user",text);
+  showMessage("assistant",answer.reply);
+  $("speechBubble").textContent="«"+answer.reply+"»";
+  sceneState?.act(answer.animation);
+  return;
+ }
  if(!model){showMessage("error","Selecciona un modelo.");return;}
  const remember=$("remember").checked;
  const turn=++activeTurn;
@@ -82,8 +92,23 @@ async function send(text,event="dialog"){
 }
 
 try{localStorage.removeItem("daskalov_playerId");}catch{}
+function applyDemoControls(){
+ const demo=$("provider").value==="demo";
+ if(demo){
+  activeController?.abort();speech.cancel();
+  $("remember").checked=false;$("remember").disabled=true;
+  $("voiceEnabled").checked=false;$("voiceEnabled").disabled=true;
+  $("micButton").disabled=true;$("autoTurn").checked=false;
+ }else{
+  $("voiceEnabled").disabled=false;
+  $("micButton").disabled=!mic.available;
+  memoryUI.refresh();
+ }
+ $("demoNotice").hidden=!demo;
+}
 $("provider").addEventListener("change",()=>{
  writeSetting("provider",$("provider").value);
+ applyDemoControls();
  settings.refreshModels();
 });
 $("model").addEventListener("change",()=>writeSetting("model",$("model").value));
@@ -97,7 +122,7 @@ $("chatForm").addEventListener("submit",event=>{
  event.preventDefault();const text=$("question").value;$("question").value="";send(text);
 });
 memoryUI.bind();
-configureVoiceInput({find:$,send,stopSpeech:()=>{activeController?.abort();speech.cancel();},showMessage});
+const mic=configureVoiceInput({find:$,send,stopSpeech:()=>{activeController?.abort();speech.cancel();},showMessage});
 bindCameraKeyboard({
  getYaw:()=>yaw,
  setYaw:next=>{yaw=next;},
@@ -105,9 +130,13 @@ bindCameraKeyboard({
 });
 settings.checkHealth();
 settings.refreshModels();
-memoryUI.refresh();
+memoryUI.refresh().then(applyDemoControls);
 createClassroomScene({
  canvas:$("sceneCanvas"),status:$("sceneStatus"),getYaw:()=>yaw,isSpeaking:()=>playing,
  getReducedMotion:()=>window.matchMedia("(prefers-reduced-motion: reduce)").matches,
  onReady:scene=>{sceneState=scene;}
 });
+
+if("serviceWorker" in navigator && (location.protocol==="https:"||["localhost","127.0.0.1"].includes(location.hostname))){
+ navigator.serviceWorker.register("/sw.js").catch(()=>{});
+}

@@ -180,7 +180,7 @@ export function createApp({
      return respond(res,200,{reply,animation:inferAnimation(reply,event),provider,model});
     }finally{inFlight.set(ip,Math.max(0,(inFlight.get(ip)||1)-1));}
    }
-   if(req.method==="GET"&&(path==="/"||path==="/index.html"||/^\/assets\/[A-Za-z0-9_.-]+\.(?:js|css|woff2|png|webp|svg|glb|wasm)$/.test(path))){
+   if(req.method==="GET"&&(path==="/"||path==="/index.html"||path==="/sw.js"||/^\/assets\/[A-Za-z0-9_.-]+\.(?:js|css|woff2|png|webp|svg|glb|wasm)$/.test(path))){
     const assetPath=path==="/"||path==="/index.html"?"index.html":path.slice(1);
     try{
      const data=await readFile(join(root,"dist",assetPath));
