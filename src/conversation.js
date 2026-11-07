@@ -1,4 +1,5 @@
-const VALID_TYPES=new Set(["started","delta","sentence","completed","error"]);
+import {validateTurnEvent} from "../shared/turn-protocol.js";
+// Shared server/browser schema validation handles the allowed event catalogue.
 
 export class TurnProtocolError extends Error {
  constructor(message){super(message);this.name="TurnProtocolError";}
@@ -22,16 +23,11 @@ export async function* streamTurn({body,signal,fetchImpl=fetch,endpoint="/api/ch
  const reader=response.body.getReader(),decoder=new TextDecoder();
  let buffer="",previousSequence=-1,currentRequestId=null,completed=false;
  function validate(event){
-  if(!event||!VALID_TYPES.has(event.type)||typeof event.requestId!=="string"||!Number.isInteger(event.sequence)){
-   throw new TurnProtocolError("Evento de conversación inválido.");
-  }
-  if(event.sequence!==previousSequence+1)throw new TurnProtocolError("Eventos fuera de orden.");
-  if(currentRequestId===null)currentRequestId=event.requestId;
-  if(currentRequestId!==event.requestId)throw new TurnProtocolError("Respuesta de otro turno.");
-  if(["delta","sentence"].includes(event.type)&&typeof event.text!=="string")throw new TurnProtocolError("Texto del fragmento inválido.");
-  if(event.type==="completed"&&typeof event.reply!=="string")throw new TurnProtocolError("Respuesta final inválida.");
+  try{validateTurnEvent(event,{previousSequence,requestId:currentRequestId});}
+  catch{throw new TurnProtocolError("Evento de conversación inválido o fuera de orden.");}
   previousSequence=event.sequence;
-  if(event.type==="completed"||event.type==="error")completed=true;
+  if(currentRequestId===null)currentRequestId=event.requestId;
+  if(["completed","error","cancelled"].includes(event.type))completed=true;
   return event;
  }
  try{

@@ -6,6 +6,8 @@ import {fileURLToPath} from "node:url";
 import {createMessages,normalizeReply,inferAnimation} from "./personality.mjs";
 import {chatOllama,streamOllama,listOllamaModels,OllamaError,validateModel,validateProvider} from "./ollama.mjs";
 import {SentenceChunker} from "./stream.mjs";
+import {isPrivateHost,UsageBudget} from "./access-policy.mjs";
+import {makeTurnEvent} from "../shared/turn-protocol.js";
 import {openMemory} from "./memory.mjs";
 import {createSession, getSession, csrfIsValid, isSameSiteRequest, clearSessionCookie} from "./session.mjs";
 
@@ -42,13 +44,15 @@ export function createApp({
  allowMemory=process.env.DASKALOV_ALLOW_MEMORY==="1",
  maxCallsPerMinute=12,
  maxCallsPerDay=60,
- maxConcurrent=1
+ maxConcurrent=1,
+ maxCloudCallsPerDay=24
 }={}){
  const memory=openMemory(dbPath);
  memory.cleanup();
  const rate=new Map();
  const daily=new Map();
  const inFlight=new Map();
+ const cloudBudget=new UsageBudget({dailyLimit:maxCloudCallsPerDay});
  const server=http.createServer(async(req,res)=>{
   const url=new URL(req.url||"/","http://localhost"),path=url.pathname;
   try{
@@ -72,7 +76,17 @@ export function createApp({
     return respond(res,200,{active:true,csrfToken:active.csrfToken,memoryAvailable:allowMemory});
    }
    if(path==="/api/models"&&req.method==="GET"){
-    return respond(res,200,{models:await models({provider:validateProvider(url.searchParams.get("provider"))})});
+    const provider=validateProvider(url.searchParams.get("provider"));
+    if(provider==="cloud"&&!isPrivateHost(req.headers.host))throw new OllamaError("Cloud solo está disponible en modo privado.",403);
+    return respond(res,200,{models:await models({provider})});
+   }
+   if(path==="/api/provider-status"&&req.method==="GET"){
+    const provider=validateProvider(url.searchParams.get("provider"));
+    if(provider==="cloud"&&!isPrivateHost(req.headers.host))throw new OllamaError("Cloud solo está disponible en modo privado.",403);
+    try{
+     const available=await models({provider});
+     return respond(res,200,{provider,reachable:true,models:available.length});
+    }catch{return respond(res,200,{provider,reachable:false,models:0});}
    }
    if(path==="/api/memory"&&["POST","DELETE"].includes(req.method)){
     const session=requireSession(req,memory);
@@ -90,6 +104,7 @@ export function createApp({
     const body=await bodyOf(req);
     rejectClientPlayerId(body);
     const provider=validateProvider(body.provider),model=validateModel(body.model);
+    if(provider==="cloud"&&!isPrivateHost(req.headers.host))throw new OllamaError("Cloud no está habilitado fuera de localhost.",403);
     if(typeof body.text!=="string"||!body.text.trim()||body.text.length>700)throw new OllamaError("Mensaje inválido (1-700 caracteres).",400);
     const event=["dialog","turned_around","interruption","long_silence"].includes(body.event)?body.event:"dialog";
     const remember=body.remember===true;
@@ -105,6 +120,7 @@ export function createApp({
     const counter=daily.get(ip);
     if(counter?.day===day&&counter.count>=maxCallsPerDay)throw new OllamaError("Cuota diaria alcanzada.",429);
     if((inFlight.get(ip)||0)>=maxConcurrent)throw new OllamaError("Hay otra pregunta en curso.",429);
+    if(provider==="cloud"&&!cloudBudget.reserve(new Date(now)))throw new OllamaError("Presupuesto diario de Cloud alcanzado.",429);
     times.push(now);rate.set(ip,times);
     daily.set(ip,{day,count:(counter?.day===day?counter.count:0)+1});
     inFlight.set(ip,(inFlight.get(ip)||0)+1);
@@ -124,7 +140,7 @@ export function createApp({
       });
       const emit=(type,data={})=>{
        if(!res.destroyed&&!cancellation.signal.aborted){
-        res.write(JSON.stringify({type,requestId,sequence:sequence++,...data})+"\n");
+        res.write(JSON.stringify(makeTurnEvent({type,requestId,sequence:sequence++,...data}))+"\n");
        }
       };
       try{
@@ -145,6 +161,7 @@ export function createApp({
          memory.save(session.playerId,"user",body.text);
          memory.save(session.playerId,"assistant",reply);
         }
+        emit("gesture",{animation:inferAnimation(reply,event)});
         emit("completed",{reply,animation:inferAnimation(reply,event),provider,model});
        }
       }catch(error){
