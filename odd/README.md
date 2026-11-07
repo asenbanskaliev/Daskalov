@@ -1,16 +1,17 @@
-# ODD + TDD — Daskalov
-ODD significa desarrollo orientado a resultados observables: una función solo se completa cuando un usuario puede comprobarla y existen pruebas que lo demuestran.
-TDD: definir una prueba que falla (RED), implementar el mínimo (GREEN), mejorar el código manteniendo la prueba (REFACTOR).
+# ODD + TDD — Profesor Daskalov
 
-Documentos normativos del proyecto:
-- tasks/plan-maestro-odd-tdd.md — fases y checklist ejecutable.
-- architecture/adr-001-web.md — decisiones de tecnología, seguridad y despliegue.
-- character/daskalov-personality.md — identidad, estilo y límites del personaje.
-- quality/matriz-tdd.md — pruebas y gates.
+## Documento rector
+- **[Plan maestro FULL](tasks/implementacion-full-odd-tdd.md)**: backlog completo y dependencias (S00-S12), cada tarea con test y criterio de aceptación.
+- **[Contratos y gates FULL](quality/full-gates-y-contratos.md)**: matriz TDD, seguridad de GitHub Secrets, Browser/E2E, métricas y certificación.
+- **[ADR-002: arquitectura objetivo](architecture/adr-002-arquitectura-full.md)**: streaming IA + audio/visemas, SQLite, identidad y despliegue seguro.
 
-Normas:
-- Trabajar en ramas y PR. No fusionar main sin autorización.
-- Distinguir pruebas mock, pruebas reales de API y revisión manual de voz/gráficos.
-- No marcar tareas como completas sin evidencia reproducible.
-- Optimizar GitHub Actions: gates rápidos para cambios normales; smoke REAL separado con tokens limitados.
-- Ningún secreto o información privada de alumnos se introduce en fixtures, capturas ni logs de CI.
+## Historial previo del MVP (no borrar ni reinterpretar)
+- [Plan maestro inicial](tasks/plan-maestro-odd-tdd.md): tareas F0-F6 y evidencias ya comprobadas.
+- [ADR-001](architecture/adr-001-web.md): arquitectura MVP.
+- [Matriz inicial](quality/matriz-tdd.md): contratos de primera versión.
+- [Personalidad](character/daskalov-personality.md): estilo humorístico y límites de Daskalov.
+
+## Cómo ejecutar
+El documento FULL es una **planificación**, no prueba de implementación. Ninguna de las tareas S00-S12 se considera terminada automáticamente por haber publicado los documentos. Antes de comenzar una tanda: revisar HEAD remoto, CI de ese SHA y riesgos, crear primero tests RED, implementar GREEN, refactorizar, publicar evidencia y marcar únicamente lo realmente verificado.
+
+**Seguridad prioritaria:** no ejecutar código de ramas editables con OLLAMA_API_KEY; proteger acceso a memoria con autenticación/autorización, no con solo playerId; no publicar producto de menores sin revisión.
