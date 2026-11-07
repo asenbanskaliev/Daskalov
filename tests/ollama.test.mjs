@@ -10,7 +10,7 @@ test("Cloud envía Bearer al dominio oficial",async()=>{
  let sent;
  const fetchImpl=async(url,opts)=>{sent={url,opts};return Response.json({message:{content:"¡En mis tiempos había tizas!"}});};
  const reply=await chatOllama({provider:"cloud",model:"beam",messages:[{role:"user",content:"Hola"}],env:{OLLAMA_API_KEY:"FAKE_TEST_ONLY"},fetchImpl});
- assert.match(reply,/tizas/);assert.equal(sent.url,"https://ollama.com/api/chat");assert.equal(sent.opts.headers.Authorization,"Bearer FAKE_TEST_ONLY");assert.equal(JSON.parse(sent.opts.body).stream,false);
+ assert.match(reply,/tizas/);assert.equal(sent.url,"https://ollama.com/api/chat");assert.equal(sent.opts.headers.Authorization,"Bearer FAKE_TEST_ONLY");assert.equal(JSON.parse(sent.opts.body).stream,false);assert.equal(JSON.parse(sent.opts.body).think,false);assert.ok(JSON.parse(sent.opts.body).options.num_predict>=512);
 });
 test("Local consulta modelos y nunca usa secreto Cloud",async()=>{
  let sent;
