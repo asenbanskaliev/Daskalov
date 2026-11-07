@@ -7,6 +7,8 @@ import {createMessages,normalizeReply,inferAnimation} from "./personality.mjs";
 import {chatOllama,streamOllama,listOllamaModels,OllamaError,validateModel,validateProvider} from "./ollama.mjs";
 import {SentenceChunker} from "./stream.mjs";
 import {streamWithOptionalFallback} from "./fallback.mjs";
+import {retryLocalStream} from "./resilience.mjs";
+import {MetricsCollector} from "./metrics.mjs";
 import {isPrivateHost,UsageBudget} from "./access-policy.mjs";
 import {makeTurnEvent} from "../shared/turn-protocol.js";
 import {openMemory} from "./memory.mjs";
@@ -54,11 +56,16 @@ export function createApp({
  const daily=new Map();
  const inFlight=new Map();
  const cloudBudget=new UsageBudget({dailyLimit:maxCloudCallsPerDay});
+ const metrics=new MetricsCollector({cloudUsdPerMillionOutputTokens:process.env.DASKALOV_USD_PER_1M_OUTPUT_TOKENS??null});
  const server=http.createServer(async(req,res)=>{
   const url=new URL(req.url||"/","http://localhost"),path=url.pathname;
   try{
    if(["POST","PUT","PATCH","DELETE"].includes(req.method)&&!isSameSiteRequest(req)){
     throw new OllamaError("Solicitud de otro sitio bloqueada.",403);
+   }
+   if(path==="/api/metrics"&&req.method==="GET"){
+    if(!isPrivateHost(req.headers.host))throw new OllamaError("Métricas solo disponibles en modo privado.",403);
+    return respond(res,200,metrics.snapshot());
    }
    if(path==="/api/health"&&req.method==="GET")return respond(res,200,{ok:true,cloudConfigured:!!process.env.OLLAMA_API_KEY});
    if(path==="/api/session"&&req.method==="GET"){
@@ -131,7 +138,8 @@ export function createApp({
      if(path==="/api/chat/stream"){
       const requestId=randomUUID(),chunker=new SentenceChunker();
       const cancellation=new AbortController();
-      let sequence=0,full="";
+      let sequence=0,full="",finalProvider=provider,finalModel=model,firstTokenMs=null,completedStream=false;
+      const startedMs=Date.now();
       res.once("close",()=>{if(!res.writableEnded)cancellation.abort();});
       res.writeHead(200,{
        "content-type":"application/x-ndjson; charset=utf-8",
@@ -146,9 +154,11 @@ export function createApp({
       };
       try{
        emit("started",{provider,model});
-       let finalProvider=provider,finalModel=model;
+       const effectiveStream=(args)=>body.allowFallbackToCloud===true
+        ?streamLlm(args)
+        :retryLocalStream({provider:args.provider,signal:args.signal,run:()=>streamLlm(args)});
        for await(const packet of streamWithOptionalFallback({
-        provider,model,messages,signal:cancellation.signal,streamLlm,
+        provider,model,messages,signal:cancellation.signal,streamLlm:effectiveStream,
         allowFallbackToCloud:body.allowFallbackToCloud===true,
         reserveCloud:()=>isPrivateHost(req.headers.host)&&cloudBudget.reserve()
        })){
@@ -158,6 +168,7 @@ export function createApp({
          emit("provider-switched",{provider:finalProvider,model:finalModel});
         }
         const text=String(packet.text);
+        if(firstTokenMs===null&&text.length)firstTokenMs=Date.now()-startedMs;
         full+=text;
         if(full.length>6000)throw new OllamaError("Respuesta demasiado larga.",502);
         emit("delta",{text});
@@ -173,12 +184,16 @@ export function createApp({
         }
         emit("gesture",{animation:inferAnimation(reply,event)});
         emit("completed",{reply,animation:inferAnimation(reply,event),provider:finalProvider,model:finalModel});
+        completedStream=true;
        }
       }catch(error){
        if(!cancellation.signal.aborted){
         emit("error",{error:error instanceof OllamaError?error.message:"Error de conexión con el profesor."});
        }
-      }finally{if(!res.destroyed)res.end();}
+      }finally{
+       metrics.record({provider:finalProvider,ok:completedStream,cancelled:cancellation.signal.aborted,durationMs:Date.now()-startedMs,firstTokenMs,outputChars:full.length});
+       if(!res.destroyed)res.end();
+      }
       return;
      }
      const reply=normalizeReply(await llm({provider,model,messages}));
