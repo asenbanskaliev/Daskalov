@@ -16,6 +16,7 @@ export function migrateDatabase(db){
    "CREATE TABLE IF NOT EXISTS privacy_audit(id INTEGER PRIMARY KEY, action TEXT NOT NULL CHECK(action IN('export','correct','delete')), at TEXT NOT NULL DEFAULT(datetime('now')));",
    "INSERT OR IGNORE INTO players(id) SELECT DISTINCT player_id FROM session_credentials;",
    "INSERT OR IGNORE INTO players(id) SELECT DISTINCT player_id FROM memories;",
+   "CREATE TRIGGER IF NOT EXISTS memories_au AFTER UPDATE ON memories BEGIN INSERT INTO memories_fts(memories_fts,rowid,content) VALUES('delete',old.id,old.content); INSERT INTO memories_fts(rowid,content) VALUES(new.id,new.content); END;",
    "INSERT OR IGNORE INTO schema_migrations(version) VALUES(1);",
    "INSERT OR IGNORE INTO schema_migrations(version) VALUES(2);",
    "PRAGMA user_version=2;"
