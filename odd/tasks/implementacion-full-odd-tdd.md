@@ -73,13 +73,13 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [ ] **S00.01** Desactivar ejecución automática con OLLAMA_API_KEY en push de rama editable; pasar a dispatch/trusted main + environment protegido y revisión.  
   - **Aceptación:** Política CI impide secreto en PR/fork o código no revisado.  
   - **TDD:** SEC-001 · **Dep.:** —.
-- [ ] **S00.02** Fijar permisos de GITHUB_TOKEN a mínimo, checkout sin credenciales persistentes, pin de Actions por SHA y control de terceros.  
+- [x] **S00.02** Fijar permisos de GITHUB_TOKEN a mínimo, checkout sin credenciales persistentes, pin de Actions por SHA y control de terceros.  
   - **Aceptación:** Análisis estático de workflows rechaza privilegios y acciones no aprobadas.  
   - **TDD:** SEC-002 · **Dep.:** 01.
-- [ ] **S00.03** Implantar pruebas unitarias y workflow policy que fallen si aparece referencia a secrets en workflows no confiables.  
+- [x] **S00.03** Implantar pruebas unitarias y workflow policy que fallen si aparece referencia a secrets en workflows no confiables.  
   - **Aceptación:** Fixture PR externo nunca recibe credenciales ni expone variables.  
   - **TDD:** SEC-003 · **Dep.:** 01.
-- [ ] **S00.04** Añadir autenticación/autorización de sesiones de memoria antes de permitir acceso fuera de localhost.  
+- [x] **S00.04** Añadir autenticación/autorización de sesiones de memoria antes de permitir acceso fuera de localhost.  
   - **Aceptación:** El UUID de cliente no permite leer/borrar recuerdos ajenos.  
   - **TDD:** SEC-004 · **Dep.:** —.
 - [ ] **S00.05** Cerrar exposición de Cloud en despliegue público: login/guest con límites, cupos de tokens y concurrencia por sesión.  
@@ -445,6 +445,17 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [ ] **S12.08** Cierre de PR/release únicamente con autorización del propietario; no merge automático en main.  
   - **Aceptación:** Rama y estado reproducibles, historial y pruebas preservadas.  
   - **TDD:** REL-008 · **Dep.:** 07.
+
+## 4A. Seguimiento de ejecución — tanda SEC-01 (7/11/2026)
+- **S00.01 — PARTIAL:** retirado disparador push a rama mutable del workflow con OLLAMA_API_KEY; ahora manual y condicionado a main. Falta configurar **GitHub Environment `daskalov-cloud-test` con reviewers** y mover el secreto a ese entorno para el gate completo. Hasta entonces, las pruebas Cloud no vuelven a ejecutarse.
+- **S00.02 — DONE:** GitHub Actions checkout/setup-node/upload-artifact fijados a SHAs publicados para v7; persist-credentials=false; permisos contents: read; test policy verificado.
+- **S00.03 — DONE:** tests/workflow-policy.test.mjs vigila ausencia de secrets en CI normal, triggers peligrosos en Cloud y SHA pinning; ejecutados como unit sin credenciales.
+- **S00.04 — DONE PARA PROTOTIPO PRIVADO:** session_credentials persistentes y tokens de 256 bits por cookie HttpOnly/SameSite Strict, verificación CSRF, playerId derivado del servidor, revocación, tests entre dos jugadores y reinicio. NO habilita publicación pública ni es consentimiento parental.
+- **S00.05 — PARTIAL:** límites por IP/minuto/día y una petición en curso; falta gateway de identidad y cuotas distribuidas para despliegue público.
+- **S00.06 — PARTIAL:** servidor guarda memoria solo si DASKALOV_ALLOW_MEMORY=1, desactivado por defecto; falta flujo real de permisos parentales y evaluación jurídica para menores.
+- **S00.07 — PARTIAL:** creados registros de riesgos y runbook; requieren revisión y ejercitar rotación con responsables.
+- Evidencia GREEN: https://github.com/asenbanskaliev/Daskalov/actions/runs/42405520911 (SHA 1880dc70, SUCCESS). RED intermedio documentado (CI 42405197820) hasta adaptar contratos antiguos.
+- **NO declarar SEC-READY** hasta S00.01, .05, .06 y .07 completados y revisados.
 
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
