@@ -11,7 +11,7 @@ export function configureVoiceInput({find,send,stopSpeech,showMessage}){
   recorder?.cancel();recorder=null;
   const selected=mode?.value||"webSpeech";
   if(selected==="localWhisper"){
-   recorder=new LocalWhisperRecorder();
+   recorder=new LocalWhisperRecorder({vadEnabled:()=>find("vadEnabled")?.checked===true});
   }
   const transcriber=recorder?.available?()=>recorder.start():null;
   if(transcriber){transcriber.finish=()=>recorder.finish();transcriber.cancel=()=>recorder.cancel();}

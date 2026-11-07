@@ -1,3 +1,4 @@
+import {VADTracker} from "./vad.js";
 /**
  * Ephemeral microphone recording for local Whisper. Raw recorded bytes are sent
  * only to this application's same-origin /api/stt/local; never to Cloud.
@@ -8,10 +9,13 @@ export class LocalWhisperRecorder{
   MediaRecorderCtor=globalThis.MediaRecorder,
   fetchImpl=fetch,
   maxDurationMs=12000,
-  maxBytes=2*1024*1024
+  maxBytes=2*1024*1024,
+  vadEnabled=()=>false,
+  AudioContextCtor=globalThis.AudioContext||globalThis.webkitAudioContext
  }={}){
   this.mediaDevices=mediaDevices;this.Recorder=MediaRecorderCtor;this.fetchImpl=fetchImpl;
   this.maxDurationMs=maxDurationMs;this.maxBytes=maxBytes;
+  this.vadEnabled=vadEnabled;this.AudioContextCtor=AudioContextCtor;this.vadInterval=null;this.audioContext=null;
   this.stream=null;this.recorder=null;this.timer=null;this.cancelled=false;this.running=false;
  }
  get available(){return Boolean(this.mediaDevices?.getUserMedia&&this.Recorder);}
@@ -47,8 +51,28 @@ export class LocalWhisperRecorder{
     };
     this.recorder.start(250);
     this.timer=setTimeout(()=>this.finish(),this.maxDurationMs);
+    this.activateVAD(stream);
    });
   }catch(error){this.cleanup();throw error;}
+ }
+ activateVAD(stream){
+  if(!this.vadEnabled()||!this.AudioContextCtor)return;
+  try{
+   this.audioContext=new this.AudioContextCtor();
+   const source=this.audioContext.createMediaStreamSource(stream);
+   const analyser=this.audioContext.createAnalyser();
+   analyser.fftSize=1024;source.connect(analyser);
+   const data=new Uint8Array(analyser.fftSize);
+   const tracker=new VADTracker({maxDurationMs:this.maxDurationMs});
+   this.vadInterval=setInterval(()=>{
+    if(this.recorder?.state!=="recording")return;
+    analyser.getByteTimeDomainData(data);
+    let total=0;
+    for(const byte of data){const v=(byte-128)/128;total+=v*v;}
+    const rms=Math.sqrt(total/data.length);
+    if(tracker.feed(rms,Date.now()).finished)this.finish();
+   },80);
+  }catch{this.audioContext?.close?.();this.audioContext=null;}
  }
  finish(){
   if(this.recorder?.state==="recording")this.recorder.stop();
@@ -59,7 +83,8 @@ export class LocalWhisperRecorder{
   this.cleanup();
  }
  cleanup(){
-  clearTimeout(this.timer);
+  clearTimeout(this.timer);clearInterval(this.vadInterval);this.vadInterval=null;
+  this.audioContext?.close?.();this.audioContext=null;
   for(const track of this.stream?.getTracks?.()||[])track.stop();
   this.stream=null;this.running=false;
  }
