@@ -25,7 +25,7 @@ test("SEC-003: ordinary PR CI does not reference secret values",()=>{
 });
 
 test("SEC-002: all GitHub Actions are pinned to full commit SHAs",()=>{
- for(const name of ["ci.yml","ollama-real.yml","browser-e2e.yml"]){
+ for(const name of ["ci.yml","ollama-real.yml","browser-e2e.yml","security.yml"]){
   const yaml=readFileSync(resolve(".github/workflows",name),"utf8");
   const lines=yaml.split("\n").filter(line=>/uses:\s+/.test(line));
   assert.ok(lines.length>=2,name+": workflows should use pinned actions");
