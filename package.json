@@ -1,0 +1,16 @@
+{
+  "name": "profesor-daskalov",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node server/main.mjs",
+    "dev": "node server/main.mjs",
+    "check": "node --check server/main.mjs && node --check server/ollama.mjs && node --check server/memory.mjs && node --check server/personality.mjs && node --check public/app.js && node --check scripts/ollama-cloud-smoke.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "build": "node scripts/build.mjs"
+  }
+}
