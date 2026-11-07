@@ -1,5 +1,5 @@
 import {LESSONS,createGame} from "./game.js";
-export function createGameUI({find,onGesture=()=>{}}){
+export function createGameUI({find,onGesture=()=>{},onCompleted=()=>{}}){
  const game=createGame({onChange:renderProgress});
  const choices=find("lessonChoices"),answers=find("lessonAnswers");
  function renderProgress(){
@@ -23,6 +23,7 @@ export function createGameUI({find,onGesture=()=>{}}){
     find("lessonFeedback").textContent=result.feedback;
     find("lessonHint").textContent=result.hint;
     onGesture(result.correct?"point_board":"talk");
+    if(result.correct)Promise.resolve(onCompleted(lesson.id)).catch(()=>{});
    });
    answers.append(b);
   }
@@ -38,5 +39,5 @@ export function createGameUI({find,onGesture=()=>{}}){
   choices.append(button);
  }
  renderProgress();
- return {game,choose:id=>renderQuestion(game.start(id))};
+ return {game,choose:id=>renderQuestion(game.start(id)),restore:rows=>game.restore(rows)};
 }

@@ -30,5 +30,13 @@ export function createGame({onChange=()=>{}}={}){
   onChange(snapshot());
   return {correct:false,feedback:"Buen intento. Puedes probar otra vez; no pasa nada por equivocarse.",hint,completed:false};
  }
- return {start,answer,snapshot,get lesson(){return byId.get(current)||null;}};
+ function restore(items){
+  if(!Array.isArray(items))return snapshot();
+  for(const row of items.slice(0,LESSONS.length)){
+   if(byId.has(row.lesson_id)&&row.points===10)completed.add(row.lesson_id);
+  }
+  onChange(snapshot());
+  return snapshot();
+ }
+ return {start,answer,snapshot,restore,get lesson(){return byId.get(current)||null;}};
 }

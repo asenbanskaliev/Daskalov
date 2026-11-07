@@ -18,7 +18,16 @@ const voice=createVoiceUI({
  onError:error=>showMessage("error","Voz Piper local: "+error.message)
 });
 const settings=createSettingsUI({find:$,showMessage});
-const memoryUI=createMemoryUI({find:$,showMessage,history});
+let gameUI=null;
+const memoryUI=createMemoryUI({
+ find:$,showMessage,history,
+ onSession:async token=>{
+  try{
+   const response=await fetch("/api/progress",{method:"POST",headers:{"content-type":"application/json","x-daskalov-csrf":token},body:JSON.stringify({readOnly:true})});
+   if(response.ok)gameUI?.restore((await response.json()).progress);
+  }catch{}
+ }
+});
 $("graphicsQuality").value=readSetting("graphicsQuality")||"auto";
 $("reducedMotion").checked=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 $("graphicsQuality").addEventListener("change",()=>{
@@ -140,7 +149,16 @@ $("chatForm").addEventListener("submit",event=>{
 });
 memoryUI.bind();
 const mic=configureVoiceInput({find:$,send,stopSpeech:()=>{activeController?.abort();voice.cancel();},showMessage});
-createGameUI({find:$,onGesture:gesture=>sceneState?.act(gesture)});
+gameUI=createGameUI({
+ find:$,onGesture:gesture=>sceneState?.act(gesture),
+ onCompleted:async lessonId=>{
+  if(!$("remember").checked)return;
+  try{
+   await memoryUI.ensure();
+   await fetch("/api/progress",{method:"POST",headers:{"content-type":"application/json","x-daskalov-csrf":memoryUI.csrfToken},body:JSON.stringify({lessonId,points:10})});
+  }catch{}
+ }
+});
 bindCameraKeyboard({
  getYaw:()=>yaw,
  setYaw:next=>{yaw=next;},

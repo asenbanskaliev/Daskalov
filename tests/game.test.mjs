@@ -24,3 +24,12 @@ test("GAME-005: errores no humillan, repetición no da doble recompensa",()=>{
  game.start("math");game.answer(LESSONS[0].answer);
  assert.equal(game.snapshot().points,10);
 });
+
+test("GAME-003: progreso autorizado se reanuda sin duplicar puntos",()=>{
+ const old=createGame();old.start("math");old.answer("5");
+ const newGame=createGame();
+ newGame.restore([{lesson_id:"math",points:10},{lesson_id:"math",points:10},{lesson_id:"injected",points:10}]);
+ assert.equal(newGame.snapshot().points,10);
+ newGame.start("math");newGame.answer("5");
+ assert.equal(newGame.snapshot().points,10);
+});

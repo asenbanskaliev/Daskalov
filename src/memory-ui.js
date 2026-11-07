@@ -1,4 +1,4 @@
-export function createMemoryUI({find,showMessage,history}){
+export function createMemoryUI({find,showMessage,history,onSession=()=>{}}){
  let csrfToken=null;
  async function refresh(){
   try{
@@ -15,12 +15,13 @@ export function createMemoryUI({find,showMessage,history}){
   }catch{find("remember").disabled=true;find("forgetButton").disabled=true;}
  }
  async function ensure(){
-  if(csrfToken)return;
+  if(csrfToken){await onSession(csrfToken);return;}
   const response=await fetch("/api/session",{method:"POST"});
   const state=await response.json();
   if(!response.ok)throw Error(state.error||"Memoria no disponible.");
   csrfToken=state.csrfToken;find("forgetButton").disabled=false;
   find("viewMemories").disabled=false;find("exportMemories").disabled=false;
+  await onSession(csrfToken);
  }
  async function forget(){
   if(!csrfToken){showMessage("assistant","No hay sesión de memoria activa.");return;}
