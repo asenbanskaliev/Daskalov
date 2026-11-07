@@ -7,6 +7,7 @@ import {readSetting,writeSetting,createSettingsUI} from "./settings.js";
 import {createMemoryUI} from "./memory-ui.js";
 import {configureVoiceInput} from "./voice-input.js";
 import {demoReply} from "./demo.js";
+import {createGameUI} from "./game-ui.js";
 
 const history=[];
 let busy=false,playing=false,yaw=0,sceneState=null,activeController=null,activeTurn=0;
@@ -155,6 +156,7 @@ $("chatForm").addEventListener("submit",event=>{
 });
 memoryUI.bind();
 const mic=configureVoiceInput({find:$,send,stopSpeech:()=>{activeController?.abort();speech.cancel();},showMessage});
+createGameUI({find:$,onGesture:gesture=>sceneState?.act(gesture)});
 bindCameraKeyboard({
  getYaw:()=>yaw,
  setYaw:next=>{yaw=next;},

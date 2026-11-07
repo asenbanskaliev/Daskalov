@@ -3,7 +3,8 @@ import {randomUUID} from "node:crypto";
 import {readFile} from "node:fs/promises";
 import {resolve,dirname,join} from "node:path";
 import {fileURLToPath} from "node:url";
-import {createMessages,normalizeReply,inferAnimation} from "./personality.mjs";
+import {normalizeReply,inferAnimation} from "./personality.mjs";
+import {buildContext} from "./context-builder.mjs";
 import {chatOllama,streamOllama,listOllamaModels,OllamaError,validateModel,validateProvider} from "./ollama.mjs";
 import {SentenceChunker} from "./stream.mjs";
 import {streamWithOptionalFallback} from "./fallback.mjs";
@@ -134,7 +135,7 @@ export function createApp({
     inFlight.set(ip,(inFlight.get(ip)||0)+1);
     try{
      const memories=remember?memory.search(session.playerId,body.text):[];
-     const messages=createMessages({text:body.text,event,memories,history:body.history});
+     const messages=buildContext({text:body.text,event,memories,history:body.history});
      if(path==="/api/chat/stream"){
       const requestId=randomUUID(),chunker=new SentenceChunker();
       const cancellation=new AbortController();

@@ -29,6 +29,8 @@
         <p id="providerStatus" class="field-help" role="status" aria-live="polite">Comprobando proveedor…</p>
         <div class="fields"><label for="model">Modelo</label><input id="model" list="modelsList" value="beam" spellcheck="false"><datalist id="modelsList"><option value="beam"></option></datalist></div>
         <div class="fields"><label for="graphicsQuality">Calidad gráfica</label><select id="graphicsQuality"><option value="auto">Automática</option><option value="low">Baja (más fluida)</option><option value="medium">Media</option><option value="high">Alta</option></select></div>
+        <div class="fields"><label for="sttMode">Reconocimiento de voz</label><select id="sttMode"><option value="webSpeech">Navegador (puede usar servicio de voz externo)</option><option value="disabled">Solo teclado · sin micrófono</option><option value="localWhisper">Whisper local (requiere instalar servidor)</option></select></div>
+        <p class="field-help">El dictado del navegador puede enviar audio a su proveedor. La opción local requiere instalar un servicio aparte; el juego no guarda las grabaciones.</p>
         <div class="fields"><label for="voiceChoice">Voz española del navegador</label><select id="voiceChoice"><option value="">Voz predeterminada</option></select></div>
         <div class="toggles"><label><input type="checkbox" id="reducedMotion"> Reducir animaciones</label></div>
         <div class="toggles"><label id="cloudFallbackRow" hidden><input type="checkbox" id="cloudFallback"> Permitir enviar mi pregunta a Ollama Cloud si falla el modelo local</label><label><input type="checkbox" id="remember"> Recordar conversaciones (opcional)</label><label><input type="checkbox" id="autoTurn"> Reaccionar con IA al girarme</label><label><input type="checkbox" id="voiceEnabled" checked> Leer respuestas en voz alta</label></div>
@@ -37,7 +39,18 @@
       <p id="micStatus" class="field-help" role="status">Micrófono apagado. Puedes escribir.</p>
       <p id="memoryPermission" class="field-help">La memoria solo se activa con autorización válida en un servidor privado.</p>
       <p id="demoNotice" hidden role="status">Demostración sin IA ni conexión: no se envían mensajes ni se graba voz.</p>
-      <div id="history" class="history" role="log" aria-live="polite">
+      <section id="lessonPanel" class="lesson-panel" aria-label="Misiones educativas">
+        <div class="lesson-heading"><h3>Retos de clase</h3><p id="gameProgress" aria-live="polite">0 de 3 misiones completadas · 0 puntos</p></div>
+        <div id="lessonChoices" class="lesson-choices" role="group" aria-label="Elige una materia"></div>
+        <div id="lessonActivity" class="lesson-activity" hidden>
+          <p id="lessonGoal" class="lesson-goal"></p>
+          <p id="lessonQuestion" class="lesson-question"></p>
+          <div id="lessonAnswers" class="lesson-answers" role="group" aria-label="Elige una respuesta"></div>
+          <p id="lessonFeedback" class="lesson-feedback" role="status"></p>
+          <p id="lessonHint" class="lesson-hint"></p>
+        </div>
+      </section>
+            <div id="history" class="history" role="log" aria-live="polite">
         <div class="message assistant">¡Buenos días! Soy el Profesor Daskalov. ¿Qué querías preguntarme?</div>
       </div>
       <form id="chatForm" class="chat-form">
