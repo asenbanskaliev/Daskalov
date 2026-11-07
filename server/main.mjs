@@ -13,6 +13,7 @@ import {MetricsCollector} from "./metrics.mjs";
 import {isPrivateHost,UsageBudget} from "./access-policy.mjs";
 import {makeTurnEvent} from "../shared/turn-protocol.js";
 import {synthesizePiper} from "./tts-piper.mjs";
+import {transcribeLocalWhisper,readAudioRequest} from "./stt-whisper.mjs";
 import {openMemory} from "./memory.mjs";
 import {createSession, getSession, csrfIsValid, isSameSiteRequest, clearSessionCookie} from "./session.mjs";
 
@@ -47,6 +48,7 @@ export function createApp({
  streamLlm=streamOllama,
  models=listOllamaModels,
  ttsSynth=synthesizePiper,
+ sttTranscriber=transcribeLocalWhisper,
  allowMemory=process.env.DASKALOV_ALLOW_MEMORY==="1",
  maxCallsPerMinute=12,
  maxCallsPerDay=60,
@@ -71,6 +73,15 @@ export function createApp({
     return respond(res,200,metrics.snapshot());
    }
    if(path==="/api/health"&&req.method==="GET")return respond(res,200,{ok:true,cloudConfigured:!!process.env.OLLAMA_API_KEY});
+   if(path==="/api/stt/status"&&req.method==="GET"){
+    return respond(res,200,{available:Boolean(process.env.DASKALOV_WHISPER_URL),provider:"whisper-local",recordingPersisted:false});
+   }
+   if(path==="/api/stt/local"&&req.method==="POST"){
+    if(!isPrivateHost(req.headers.host))throw new OllamaError("Transcripción local permitida solo desde localhost.",403);
+    const {audio,mime}=await readAudioRequest(req);
+    const transcript=await sttTranscriber({audio,mime});
+    return respond(res,200,{transcript});
+   }
    if(path==="/api/tts/status"&&req.method==="GET"){
     return respond(res,200,{available:Boolean(process.env.DASKALOV_PIPER_BIN&&process.env.DASKALOV_PIPER_MODEL),provider:"piper-local"});
    }
