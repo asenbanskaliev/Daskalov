@@ -1,6 +1,10 @@
 import {test,expect} from "@playwright/test";
 test.beforeEach(async({page})=>{
- await page.route("**/api/models?*",route=>route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({models:["beam","qwen2.5:7b"]})}));
+ await page.route("**/api/models?*",route=>{
+  const provider=new URL(route.request().url()).searchParams.get("provider");
+  const models=provider==="local"?["qwen2.5:7b"]:["beam"];
+  return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({models})});
+ });
 });
 const id="00000000-0000-4000-8000-000000000011";
 function mockTurn(reply,animation="talk"){
@@ -77,4 +81,15 @@ test("LLM-005: el catálogo de modelos depende del proveedor elegido",async({pag
  await expect(page.locator("#model")).toHaveValue("qwen2.5:7b");
  await page.locator("#provider").selectOption("cloud");
  await expect(page.locator("#model")).toHaveValue("beam");
+});
+
+test("LLM-003: el botón Interrumpir está disponible en la interfaz y vuelve a reposo",async({page})=>{
+ await page.route("**/api/chat/stream",route=>route.fulfill({status:200,contentType:"application/x-ndjson",body:mockTurn("¡Respuesta de prueba!")}));
+ await page.goto("/");
+ await expect(page.locator("#stopButton")).toBeDisabled();
+ await page.locator("#voiceEnabled").uncheck();
+ await page.locator("#question").fill("Hola profesor");
+ await page.locator("#sendButton").click();
+ await expect(page.getByRole("log")).toContainText("¡Respuesta de prueba!");
+ await expect(page.locator("#stopButton")).toBeDisabled();
 });

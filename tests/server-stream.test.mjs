@@ -31,3 +31,37 @@ test("LLM-007: error del upstream se devuelve como evento controlado y no bloque
  assert.ok(!error.error.includes("private-secret"));
  const health=await fetch(host+"/api/health");assert.equal(health.status,200);
 });
+
+test("LLM-003: al cancelar un stream antes del final no se conserva conversación",async(t)=>{
+ const {getSession}=await import("../server/session.mjs");
+ let started=false,aborted=false;
+ const app=createApp({dbPath:":memory:",allowMemory:true,streamLlm:async function*({signal}){
+  started=true;
+  yield "¡Primera frase!";
+  await Promise.race([
+   new Promise(resolve=>signal.addEventListener("abort",resolve,{once:true})),
+   new Promise(resolve=>setTimeout(resolve,1500))
+  ]);
+  aborted=signal.aborted;
+  if(!signal.aborted)yield "No debería guardarse tras cancelar.";
+ }});
+ app.server.listen(0,"127.0.0.1");await once(app.server,"listening");
+ t.after(async()=>{await new Promise(done=>app.server.close(done));app.close();});
+ const base="http://127.0.0.1:"+app.server.address().port;
+ const session=await fetch(base+"/api/session",{method:"POST"});
+ const token=(await session.json()).csrfToken,cookie=session.headers.get("set-cookie").split(";")[0];
+ const cancellation=new AbortController();
+ const response=await fetch(base+"/api/chat/stream",{
+  method:"POST",signal:cancellation.signal,
+  headers:{"content-type":"application/json","x-daskalov-csrf":token,cookie},
+  body:JSON.stringify({provider:"local",model:"qwen2.5:7b",text:"Hola profesor",remember:true})
+ });
+ assert.equal(response.status,200);
+ await response.body.getReader().read();
+ cancellation.abort();
+ for(let i=0;i<20&&!aborted;i++)await new Promise(resolve=>setTimeout(resolve,50));
+ assert.equal(started,true);
+ assert.equal(aborted,true);
+ const player=getSession({headers:{cookie}},app.memory).playerId;
+ assert.equal(app.memory.list(player).length,0);
+});

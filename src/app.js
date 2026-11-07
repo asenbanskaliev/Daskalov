@@ -27,6 +27,7 @@ async function send(text,event="dialog"){
  activeController=controller;
  busy=true;
  $("sendButton").disabled=true;
+ $("stopButton").disabled=false;
  $("sendButton").textContent="Pensando…";
  const prompt=event==="turned_around"?"(Te giras para mirar detrás)":text;
  showMessage("user",prompt);
@@ -74,6 +75,7 @@ async function send(text,event="dialog"){
   if(turn===activeTurn){
    busy=false;activeController=null;
    $("sendButton").disabled=false;
+   $("stopButton").disabled=true;
    $("sendButton").textContent="Preguntar al profesor";
   }
  }
@@ -124,6 +126,12 @@ async function refreshModels(){
 }
 $("provider").addEventListener("change",()=>{writeSetting("provider",$("provider").value);refreshModels();});
 $("model").addEventListener("change",()=>writeSetting("model",$("model").value));
+$("stopButton").addEventListener("click",()=>{
+ activeController?.abort();
+ speech.cancel();
+ $("speechBubble").textContent="(El profesor ha sido interrumpido.)";
+});
+
 $("voiceEnabled").addEventListener("change",()=>speech.setEnabled($("voiceEnabled").checked));
 $("chatForm").addEventListener("submit",event=>{event.preventDefault();const text=$("question").value;$("question").value="";send(text);});
 $("forgetButton").addEventListener("click",async()=>{
