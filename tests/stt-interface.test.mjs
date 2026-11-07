@@ -20,3 +20,16 @@ test("STT-006: new recognition cancels previous TTS before active microphone",()
  adapter.start();
  assert.equal(cancelled,1);
 });
+
+test("STT-001: contrato parcial/final sin enviar una sílaba incompleta como pregunta",()=>{
+ let fake,final=[],partial=[];
+ const adapter=createSTTAdapter({mode:"webSpeech",recognitionFactory:()=>{
+  fake={start(){},abort(){}};return fake;
+ },onTranscript:t=>final.push(t),onPartial:t=>partial.push(t)});
+ adapter.start();
+ fake.onresult({resultIndex:0,results:[{0:{transcript:"La piza"},isFinal:false}]});
+ assert.deepEqual(final,[]);
+ assert.deepEqual(partial,["La piza"]);
+ fake.onresult({resultIndex:0,results:[{0:{transcript:"La pizarra"},isFinal:true}]});
+ assert.deepEqual(final,["La pizarra"]);
+});

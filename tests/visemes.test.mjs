@@ -28,3 +28,12 @@ test("AV-007: 20 retrasos y orden invertido nunca corrompen línea de tiempo",()
  assert.equal(frames.at(-1).atMs,2100);
  assert.ok(frames.every((v,i)=>i===0||v.atMs>=frames[i-1].atMs));
 });
+
+test("AV-001/002: emociones y pronunciación de nombres no generan visemas extraños",()=>{
+ for(const name of ["Daskalov","Petar","Bulgaria","Pamplona"]){
+  assert.ok(VISEMES.includes(mapSpanishGrapheme(name)));
+ }
+ const timeline=new AudioTimeline();timeline.begin("dialog-01");
+ const result=timeline.append({requestId:"dialog-01",fragmentId:"sentence",text:"¡Buenos días!",audioStartMs:100,durationMs:500,emotion:"surprised"});
+ assert.equal(result.emotion,"surprised");
+});

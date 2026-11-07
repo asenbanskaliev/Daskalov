@@ -20,6 +20,7 @@ export function configureVoiceInput({find,send,stopSpeech,showMessage}){
    localTranscriber:transcriber,
    recognitionFactory:Recognition?()=>new Recognition():null,
    onTranscript:send,
+   onPartial:text=>{if(find("micStatus"))find("micStatus").textContent="Dictado parcial: "+text.slice(0,100);},
    onBargeIn:stopSpeech,
    onStatus:status,
    onError:error=>showMessage("error",error.message+" Puedes escribir tu pregunta.")

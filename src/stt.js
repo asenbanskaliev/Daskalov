@@ -4,6 +4,7 @@ export function createSTTAdapter({
  recognitionFactory=null,
  localTranscriber=null,
  onTranscript=()=>{},
+ onPartial=()=>{},
  onStatus=()=>{},
  onError=()=>{},
  onBargeIn=()=>{}
@@ -32,11 +33,15 @@ export function createSTTAdapter({
  let recognizer;
  try{recognizer=recognitionFactory();}catch{return {provider:mode,available:false,start(){return false;},stop(){},dispose(){}};}
  recognizer.lang="es-ES";
- recognizer.interimResults=false;
+ recognizer.interimResults=true;
  recognizer.maxAlternatives=1;
  recognizer.onresult=event=>{
-  const text=event?.results?.[0]?.[0]?.transcript;
-  if(typeof text==="string"&&text.trim())onTranscript(text.trim());
+  for(let i=event.resultIndex||0;i<(event.results?.length||0);i++){
+   const text=event.results[i]?.[0]?.transcript;
+   if(typeof text!=="string"||!text.trim())continue;
+   if(event.results[i].isFinal===false)onPartial(text.trim());
+   else onTranscript(text.trim());
+  }
  };
  recognizer.onerror=event=>{onError(new Error("Reconocimiento: "+String(event?.error||"error")+"."));onStatus("Micrófono detenido.");};
  recognizer.onend=()=>onStatus("Micrófono detenido.");

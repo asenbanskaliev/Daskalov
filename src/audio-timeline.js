@@ -6,7 +6,7 @@ export class AudioTimeline{
   if(typeof requestId!=="string"||requestId.length>100||!requestId)throw Error("requestId requerido.");
   this.reset();this.requestId=requestId;
  }
- append({requestId,fragmentId,text,audioStartMs,durationMs,visemes}){
+ append({requestId,fragmentId,text,audioStartMs,durationMs,visemes,emotion="neutral"}){
   if(this.cancelled||requestId!==this.requestId)throw Error("Audio de otra conversación.");
   if(typeof fragmentId!=="string"||!fragmentId||this.fragments.some(x=>x.fragmentId===fragmentId))throw Error("Fragmento duplicado.");
   const start=Number(audioStartMs),duration=Number(durationMs);
@@ -18,7 +18,8 @@ export class AudioTimeline{
     return {atMs:v.atMs,viseme:normalizeViseme(v.viseme)};
    }).sort((a,b)=>a.atMs-b.atMs):
    estimateVisemeFrames(text,duration,{startMs:start});
-  this.fragments.push({requestId,fragmentId,audioStartMs:start,durationMs:duration,frames,approximate:!visemes?.length});
+  const allowedEmotions=new Set(["neutral","happy","explaining","surprised","annoyed_comical"]);
+  this.fragments.push({requestId,fragmentId,audioStartMs:start,durationMs:duration,frames,emotion:allowedEmotions.has(emotion)?emotion:"neutral",approximate:!visemes?.length});
   return this.fragments.at(-1);
  }
  at(timeMs){
