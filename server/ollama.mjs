@@ -24,11 +24,16 @@ export async function chatOllama({provider,model,messages,fetchImpl=fetch,env=pr
  const {base,headers}=connection(provider,env);
  let response;
  try {
-  response=await fetchImpl(base+"/api/chat",{method:"POST",headers:{"content-type":"application/json",...headers},body:JSON.stringify({model,messages,stream:false,think:false,options:{num_predict:512}}),signal:AbortSignal.timeout(90000)});
+  response=await fetchImpl(base+"/api/chat",{method:"POST",headers:{"content-type":"application/json",...headers},body:JSON.stringify({model,messages,stream:false,think:false,options:{num_predict:model==="beam"?2048:512}}),signal:AbortSignal.timeout(90000)});
  }catch{throw new OllamaError("No se ha podido conectar con Ollama.",502);}
  if(!response.ok)throw new OllamaError("Ollama devolvió HTTP "+response.status+".",502);
  let data;try{data=await response.json();}catch{throw new OllamaError("Ollama devolvió JSON inválido.",502);}
- if(typeof data.message?.content!=="string"||!data.message.content.trim())throw new OllamaError("Ollama no devolvió texto.",502);
+ if(typeof data.message?.content!=="string"||!data.message.content.trim()){
+  const reason=String(data.done_reason||"desconocido").slice(0,30);
+  const tokens=Number.isFinite(data.eval_count)?data.eval_count:"?";
+  const thoughts=typeof data.message?.thinking==="string"?data.message.thinking.length:0;
+  throw new OllamaError("Ollama no devolvió respuesta final (reason="+reason+", tokens="+tokens+", thinking_chars="+thoughts+").",502);
+ }
  return data.message.content;
 }
 export async function listOllamaModels({provider,fetchImpl=fetch,env=process.env}) {
