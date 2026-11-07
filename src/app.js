@@ -9,10 +9,10 @@ import {configureVoiceInput} from "./voice-input.js";
 import {demoReply} from "./demo.js";
 import {createGameUI} from "./game-ui.js";
 import {configureDevMetrics} from "./metrics-ui.js";
-import {ClassroomReactions} from "./classroom-events.js";
-
+import {configureClassroomEvents} from "./classroom-ui.js";
+import {registerOfflineWorker} from "./offline-worker.js";
 const history=[];
-let busy=false,playing=false,yaw=0,sceneState=null,activeController=null,activeTurn=0;
+let playing=false,yaw=0,sceneState=null,activeController=null,activeTurn=0;
 const voice=createVoiceUI({
  find:$,
  onSpeaking:active=>{playing=active;},
@@ -58,7 +58,6 @@ async function send(text,event="dialog"){
  voice.cancel();
  const controller=new AbortController();
  activeController=controller;
- busy=true;
  $("sendButton").disabled=true;
  $("stopButton").disabled=false;
  $("sendButton").textContent="Pensando…";
@@ -108,15 +107,13 @@ async function send(text,event="dialog"){
   $("speechBubble").textContent="¡Caramba! No consigo conectar con la IA.";
  }finally{
   if(turn===activeTurn){
-   busy=false;activeController=null;
+   activeController=null;
    $("sendButton").disabled=false;
    $("stopButton").disabled=true;
    $("sendButton").textContent="Preguntar al profesor";
   }
  }
 }
-
-try{localStorage.removeItem("daskalov_playerId");}catch{}
 function applyDemoControls(){
  const demo=$("provider").value==="demo";
  if(demo){
@@ -145,7 +142,7 @@ $("stopButton").addEventListener("click",()=>{
  sceneState?.clearSpeech?.();
  $("speechBubble").textContent="(El profesor ha sido interrumpido.)";
 });
-$("voiceEnabled").addEventListener("change",()=>{voice.setEnabled($("voiceEnabled").checked);voice.setEnabled($("voiceEnabled").checked);});
+$("voiceEnabled").addEventListener("change",()=>{voice.setEnabled($("voiceEnabled").checked);});
 $("raiseHand").addEventListener("click",()=>{
  sceneState?.act("raise_hand");
  send("Profesor, levanto la mano para preguntar.","hand_raised");
@@ -171,20 +168,9 @@ bindCameraKeyboard({
  setYaw:next=>{yaw=next;},
  onTurn:()=>{if($("autoTurn").checked)send("Me he girado a mirar a mis compañeros.","turned_around");}
 });
-const classroom=new ClassroomReactions();
-$("classroomEvents").addEventListener("click",event=>{
- const button=event.target.closest("button[data-classroom-event]");
- if(!button)return;
- const response=classroom.react(button.dataset.classroomEvent);
- if(!response){
-  $("classroomFeedback").textContent="Espera un momento antes de repetir ese evento.";
-  return;
- }
- voice.cancel();
- $("classroomFeedback").textContent=response.reply;
- $("speechBubble").textContent="«"+response.reply+"»";
- sceneState?.act(response.gesture);
- if($("voiceEnabled").checked&&$("provider").value!=="demo")voice.speak(response.reply);
+configureClassroomEvents({
+ find:$,onVoiceCancel:()=>voice.cancel(),onGesture:gesture=>sceneState?.act(gesture),
+ onVoice:text=>{if($("voiceEnabled").checked&&$("provider").value!=="demo")voice.speak(text);}
 });
 configureDevMetrics({find:$});
 settings.checkHealth();
@@ -196,7 +182,4 @@ createClassroomScene({
  quality:$("graphicsQuality").value,
  onReady:scene=>{sceneState=scene;}
 });
-
-if("serviceWorker" in navigator && (location.protocol==="https:"||["localhost","127.0.0.1"].includes(location.hostname))){
- navigator.serviceWorker.register("/sw.js").catch(()=>{});
-}
+registerOfflineWorker();
