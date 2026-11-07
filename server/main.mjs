@@ -14,6 +14,7 @@ import {isPrivateHost,UsageBudget} from "./access-policy.mjs";
 import {makeTurnEvent} from "../shared/turn-protocol.js";
 import {synthesizePiper} from "./tts-piper.mjs";
 import {transcribeLocalWhisper,readAudioRequest} from "./stt-whisper.mjs";
+import {installSecurityHeaders} from "./security-headers.mjs";
 import {openMemory} from "./memory.mjs";
 import {createSession, getSession, csrfIsValid, isSameSiteRequest, clearSessionCookie} from "./session.mjs";
 
@@ -63,6 +64,7 @@ export function createApp({
  const cloudBudget=new UsageBudget({dailyLimit:maxCloudCallsPerDay});
  const metrics=new MetricsCollector({cloudUsdPerMillionOutputTokens:process.env.DASKALOV_USD_PER_1M_OUTPUT_TOKENS??null});
  const server=http.createServer(async(req,res)=>{
+  installSecurityHeaders(res);
   const url=new URL(req.url||"/","http://localhost"),path=url.pathname;
   try{
    if(["POST","PUT","PATCH","DELETE"].includes(req.method)&&!isSameSiteRequest(req)){
