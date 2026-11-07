@@ -9,6 +9,7 @@ import {configureVoiceInput} from "./voice-input.js";
 import {demoReply} from "./demo.js";
 import {createGameUI} from "./game-ui.js";
 import {configureDevMetrics} from "./metrics-ui.js";
+import {ClassroomReactions} from "./classroom-events.js";
 
 const history=[];
 let busy=false,playing=false,yaw=0,sceneState=null,activeController=null,activeTurn=0;
@@ -169,6 +170,21 @@ bindCameraKeyboard({
  getYaw:()=>yaw,
  setYaw:next=>{yaw=next;},
  onTurn:()=>{if($("autoTurn").checked)send("Me he girado a mirar a mis compañeros.","turned_around");}
+});
+const classroom=new ClassroomReactions();
+$("classroomEvents").addEventListener("click",event=>{
+ const button=event.target.closest("button[data-classroom-event]");
+ if(!button)return;
+ const response=classroom.react(button.dataset.classroomEvent);
+ if(!response){
+  $("classroomFeedback").textContent="Espera un momento antes de repetir ese evento.";
+  return;
+ }
+ voice.cancel();
+ $("classroomFeedback").textContent=response.reply;
+ $("speechBubble").textContent="«"+response.reply+"»";
+ sceneState?.act(response.gesture);
+ if($("voiceEnabled").checked&&$("provider").value!=="demo")voice.speak(response.reply);
 });
 configureDevMetrics({find:$});
 settings.checkHealth();

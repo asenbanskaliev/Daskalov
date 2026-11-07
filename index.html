@@ -41,6 +41,17 @@
       <p id="micStatus" class="field-help" role="status">Micrófono apagado. Puedes escribir.</p>
       <p id="memoryPermission" class="field-help">La memoria solo se activa con autorización válida en un servidor privado.</p>
       <p id="demoNotice" hidden role="status">Demostración sin IA ni conexión: no se envían mensajes ni se graba voz.</p>
+      <section class="classroom-reactions" aria-label="Eventos del aula">
+        <h3>¿Qué pasa en clase?</h3>
+        <div id="classroomEvents" class="classroom-event-buttons">
+          <button type="button" data-classroom-event="cold">Hace frío</button>
+          <button type="button" data-classroom-event="phone">Suena un móvil</button>
+          <button type="button" data-classroom-event="silence">Hay silencio</button>
+          <button type="button" data-classroom-event="board">Ir a la pizarra</button>
+          <button type="button" data-classroom-event="desk">Regla en la mesa</button>
+        </div>
+        <p id="classroomFeedback" role="status"></p>
+      </section>
       <section id="lessonPanel" class="lesson-panel" aria-label="Misiones educativas">
         <div class="lesson-heading"><h3>Retos de clase</h3><p id="gameProgress" aria-live="polite">0 de 3 misiones completadas · 0 puntos</p></div>
         <div id="lessonChoices" class="lesson-choices" role="group" aria-label="Elige una materia"></div>
