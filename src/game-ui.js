@@ -1,5 +1,5 @@
 import {LESSONS,createGame} from "./game.js";
-export function createGameUI({find,onGesture=()=>{},onCompleted=()=>{}}){
+export function createGameUI({find,onGesture=()=>{},onQuestion=()=>{},onCompleted=()=>{}}){
  const game=createGame({onChange:renderProgress});
  const choices=find("lessonChoices"),answers=find("lessonAnswers");
  function renderProgress(){
@@ -14,6 +14,7 @@ export function createGameUI({find,onGesture=()=>{},onCompleted=()=>{}}){
   find("lessonActivity").hidden=false;
   find("lessonGoal").textContent="Objetivo: "+lesson.objective;
   find("lessonQuestion").textContent=lesson.question;
+  onQuestion(lesson.question);
   answers.replaceChildren();
   for(const option of lesson.options){
    const b=document.createElement("button");

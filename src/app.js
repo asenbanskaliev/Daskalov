@@ -144,6 +144,11 @@ $("stopButton").addEventListener("click",()=>{
  $("speechBubble").textContent="(El profesor ha sido interrumpido.)";
 });
 $("voiceEnabled").addEventListener("change",()=>{voice.setEnabled($("voiceEnabled").checked);voice.setEnabled($("voiceEnabled").checked);});
+$("raiseHand").addEventListener("click",()=>{
+ sceneState?.act("raise_hand");
+ send("Profesor, levanto la mano para preguntar.","hand_raised");
+});
+$("lookForward").addEventListener("click",()=>{yaw=0;sceneState?.act("talk");});
 $("chatForm").addEventListener("submit",event=>{
  event.preventDefault();const text=$("question").value;$("question").value="";send(text);
 });

@@ -9,6 +9,7 @@ const prompts=[
  {re:/pizarra|deberes|escuela/i,reply:"¡La pizarra era nuestra tecnología espacial! Aprende algo nuevo, pero no te comas la tiza.",animation:"point_board"}
 ];
 export function demoReply(text,{event="dialog"}={}){
+ if(event==="hand_raised")return {reply:"¡Mano levantada, mente despierta! ¡Pregunta, que aquí nadie necesita permiso para tener curiosidad!",animation:"raise_hand"};
  if(event==="turned_around")return {reply:"¡Te he visto girarte! ¡Hasta las sillas se han sorprendido! Vuelve a la pizarra, que estamos en clase.",animation:"ruler_desk"};
  const found=prompts.find(item=>item.re.test(String(text)));
  return found?{reply:found.reply,animation:found.animation}:{reply:"¡Soy el Profesor Daskalov! Esta es una demostración sin IA ni conexión. Para hablar libremente conmigo, elige Ollama Cloud o local.",animation:"talk"};

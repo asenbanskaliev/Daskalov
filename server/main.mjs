@@ -158,7 +158,7 @@ export function createApp({
     const provider=validateProvider(body.provider),model=validateModel(body.model);
     if(provider==="cloud"&&!isPrivateHost(req.headers.host))throw new OllamaError("Cloud no está habilitado fuera de localhost.",403);
     if(typeof body.text!=="string"||!body.text.trim()||body.text.length>700)throw new OllamaError("Mensaje inválido (1-700 caracteres).",400);
-    const event=["dialog","turned_around","interruption","long_silence"].includes(body.event)?body.event:"dialog";
+    const event=["dialog","turned_around","interruption","long_silence","hand_raised"].includes(body.event)?body.event:"dialog";
     const safetyReply=safeDeterministicReply(body.text);
     if(safetyReply){
      const reply=normalizeReply(safetyReply);

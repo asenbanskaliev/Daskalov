@@ -6,7 +6,8 @@ const EVENTS=Object.freeze({
  dialog:"El alumno habla normalmente en clase.",
  turned_around:"El alumno se gira: reacciona con una broma breve sin intimidar.",
  interruption:"El alumno interrumpe: contesta amablemente.",
- long_silence:"El alumno está en silencio: ofrece una invitación sin presión."
+ long_silence:"El alumno está en silencio: ofrece una invitación sin presión.",
+ hand_raised:"El alumno ha levantado la mano para preguntar; atiéndele con respeto y un comentario teatral breve."
 });
 function clean(input,max){
  return String(input??"").replace(/[\u0000-\u001f\u007f]/g," ").replace(/[\u202a-\u202e\u2066-\u2069]/g,"").slice(0,max);

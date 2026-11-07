@@ -1,11 +1,13 @@
+import {AdaptiveQuality} from "./performance-profile.js";
 import {normalizeViseme} from "./visemes.js";
 export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeaking=()=>false,getReducedMotion=()=>false,onReady=()=>{},quality="auto"}){
  try{
   const THREE=await import("three");
   const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
   let currentQuality=quality;
-  const qualityScale={low:0.7,medium:1,high:1.5,auto:1.25};
-  const pixelRatio=()=>Math.min(window.devicePixelRatio||1,qualityScale[currentQuality]||1.25);
+  const adaptive=new AdaptiveQuality();
+  const qualityScale={low:0.7,medium:1,high:1.5};
+  const pixelRatio=()=>Math.min(window.devicePixelRatio||1,currentQuality==="auto"?adaptive.ratio:qualityScale[currentQuality]||1.25);
   renderer.setPixelRatio(pixelRatio());renderer.setClearColor(0x738475);
   const scene=new THREE.Scene();scene.background=new THREE.Color(0x718778);
   const camera=new THREE.PerspectiveCamera(55,1,0.1,100);
@@ -26,6 +28,22 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
   const chalkTexture=new THREE.CanvasTexture(chalkCanvas);
   const chalk=new THREE.Mesh(new THREE.PlaneGeometry(4.6,2),new THREE.MeshBasicMaterial({map:chalkTexture,transparent:true}));
   chalk.position.set(0,3.4,-7.42);scene.add(chalk);
+  function setBlackboardMessage(message){
+   const words=String(message||"").slice(0,140).split(/\s+/),lines=[];
+   let current="";
+   for(const word of words){
+    const next=(current?current+" ":"")+word;
+    if(next.length>28){if(current)lines.push(current);current=word;}
+    else current=next;
+   }
+   if(current)lines.push(current);
+   ctx.clearRect(0,0,512,220);
+   ctx.fillStyle="#eee0b6";ctx.textAlign="center";
+   ctx.font="bold 26px Georgia";
+   for(const [index,line] of lines.slice(0,5).entries())ctx.fillText(line,256,40+index*38);
+   chalkTexture.needsUpdate=true;
+  }
+
   for(let i=-1;i<=1;i++){const x=i*2.45;box(1.55,.14,.9,x,.8,2.1,wood);box(.1,.75,.1,x-.64,.37,1.75,black);box(.1,.75,.1,x+.64,.37,1.75,black);}
   box(2.8,.2,1.2,2,1,-3.3,wood);box(.14,1,.14,.9,.45,-3.3,wood);box(.14,1,.14,3.1,.45,-3.3,wood);
   const teacher=new THREE.Group();teacher.position.set(-0.8,0,-3.4);scene.add(teacher);
@@ -45,20 +63,28 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
   function resize(){const w=canvas.clientWidth,h=canvas.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/Math.max(1,h);camera.updateProjectionMatrix();}
   new ResizeObserver(resize).observe(canvas);resize();
   let animation="talk",until=0,viseme="REST";
-  const allowedGestures=new Set(["talk","ruler_desk","point_board","surprised"]);
+  const allowedGestures=new Set(["talk","ruler_desk","point_board","surprised","raise_hand"]);
   const sceneState={
     act(value){animation=allowedGestures.has(value)?value:"talk";until=performance.now()+2400;},
     setViseme(value){viseme=normalizeViseme(value);},
     clearSpeech(){viseme="REST";animation="talk";until=0;},
     setEmotion(value){if(value==="surprised")this.act("surprised");},
-    setQuality(value){currentQuality=value;renderer.setPixelRatio(pixelRatio());resize();}
+    setQuality(value){currentQuality=value;renderer.setPixelRatio(pixelRatio());resize();},
+    setBlackboardMessage
   };
   onReady(sceneState);
+  let lastFrame=0;
   function frame(now){
+   if(lastFrame&&currentQuality==="auto"){
+    const sample=adaptive.sample(now-lastFrame);
+    if(sample?.changed){renderer.setPixelRatio(pixelRatio());resize();}
+   }
+   lastFrame=now;
    camera.rotation.set(0,getYaw(),0);
    const active=now<until;
    head.position.y=2.66+(getReducedMotion()?0:Math.sin(now*.0017)*.025);
-   arm.rotation.z=active&&!getReducedMotion()&&animation==="ruler_desk"?.6+Math.sin(now*.015)*.36:0;
+   arm.rotation.z=active&&!getReducedMotion()
+    ?animation==="ruler_desk"?.6+Math.sin(now*.015)*.36:animation==="raise_hand"?-2:0:0;
    const shapes={REST:[1,.18],A:[1,1.25],I:[1.35,.38],E:[1.1,.6],O:[.75,.95],U:[.65,.55],MBP:[.9,.12],FV:[1,.25],L:[1,.55],CHSH:[.8,.45]};
    const target=isSpeaking()?(shapes[viseme]||shapes.REST):shapes.REST;
    mouth.scale.x+=(target[0]-mouth.scale.x)*.35;
