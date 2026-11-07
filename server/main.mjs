@@ -6,6 +6,7 @@ import {fileURLToPath} from "node:url";
 import {createMessages,normalizeReply,inferAnimation} from "./personality.mjs";
 import {chatOllama,streamOllama,listOllamaModels,OllamaError,validateModel,validateProvider} from "./ollama.mjs";
 import {SentenceChunker} from "./stream.mjs";
+import {streamWithOptionalFallback} from "./fallback.mjs";
 import {isPrivateHost,UsageBudget} from "./access-policy.mjs";
 import {makeTurnEvent} from "../shared/turn-protocol.js";
 import {openMemory} from "./memory.mjs";
@@ -145,9 +146,18 @@ export function createApp({
       };
       try{
        emit("started",{provider,model});
-       for await(const delta of streamLlm({provider,model,messages,signal:cancellation.signal})){
+       let finalProvider=provider,finalModel=model;
+       for await(const packet of streamWithOptionalFallback({
+        provider,model,messages,signal:cancellation.signal,streamLlm,
+        allowFallbackToCloud:body.allowFallbackToCloud===true,
+        reserveCloud:()=>isPrivateHost(req.headers.host)&&cloudBudget.reserve()
+       })){
         if(cancellation.signal.aborted)break;
-        const text=String(delta);
+        if(packet.provider!==finalProvider){
+         finalProvider=packet.provider;finalModel=packet.model;
+         emit("provider-switched",{provider:finalProvider,model:finalModel});
+        }
+        const text=String(packet.text);
         full+=text;
         if(full.length>6000)throw new OllamaError("Respuesta demasiado larga.",502);
         emit("delta",{text});
@@ -162,7 +172,7 @@ export function createApp({
          memory.save(session.playerId,"assistant",reply);
         }
         emit("gesture",{animation:inferAnimation(reply,event)});
-        emit("completed",{reply,animation:inferAnimation(reply,event),provider,model});
+        emit("completed",{reply,animation:inferAnimation(reply,event),provider:finalProvider,model:finalModel});
        }
       }catch(error){
        if(!cancellation.signal.aborted){

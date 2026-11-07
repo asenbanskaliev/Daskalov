@@ -31,7 +31,7 @@
         <div class="fields"><label for="graphicsQuality">Calidad gráfica</label><select id="graphicsQuality"><option value="auto">Automática</option><option value="low">Baja (más fluida)</option><option value="medium">Media</option><option value="high">Alta</option></select></div>
         <div class="fields"><label for="voiceChoice">Voz española del navegador</label><select id="voiceChoice"><option value="">Voz predeterminada</option></select></div>
         <div class="toggles"><label><input type="checkbox" id="reducedMotion"> Reducir animaciones</label></div>
-        <div class="toggles"><label><input type="checkbox" id="remember"> Recordar conversaciones (opcional)</label><label><input type="checkbox" id="autoTurn"> Reaccionar con IA al girarme</label><label><input type="checkbox" id="voiceEnabled" checked> Leer respuestas en voz alta</label></div>
+        <div class="toggles"><label id="cloudFallbackRow" hidden><input type="checkbox" id="cloudFallback"> Permitir enviar mi pregunta a Ollama Cloud si falla el modelo local</label><label><input type="checkbox" id="remember"> Recordar conversaciones (opcional)</label><label><input type="checkbox" id="autoTurn"> Reaccionar con IA al girarme</label><label><input type="checkbox" id="voiceEnabled" checked> Leer respuestas en voz alta</label></div>
       </form>
       <div class="voice-actions"><button type="button" id="pauseVoice" class="secondary" disabled>Pausar voz</button><button type="button" id="resumeVoice" class="secondary" disabled>Reanudar voz</button></div>
       <p id="micStatus" class="field-help" role="status">Micrófono apagado. Puedes escribir.</p>

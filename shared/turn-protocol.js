@@ -1,11 +1,11 @@
 /**
- * @typedef {"started"|"delta"|"sentence"|"gesture"|"completed"|"cancelled"|"error"} TurnEventType
+ * @typedef {"started"|"delta"|"sentence"|"gesture"|"provider-switched"|"completed"|"cancelled"|"error"} TurnEventType
  * @typedef {"talk"|"ruler_desk"|"point_board"|"surprised"} AllowedGesture
  * @typedef {{schemaVersion:1,type:TurnEventType,requestId:string,sequence:number,text?:string,reply?:string,animation?:AllowedGesture,error?:string,provider?:string,model?:string}} TurnEvent
  * Shared wire contract for Node and the browser. Never execute generated LLM content.
  */
 export const TURN_SCHEMA_VERSION = 1;
-export const TURN_EVENT_TYPES = Object.freeze(["started","delta","sentence","gesture","completed","cancelled","error"]);
+export const TURN_EVENT_TYPES = Object.freeze(["started","delta","sentence","gesture","provider-switched","completed","cancelled","error"]);
 export const ALLOWED_GESTURES = Object.freeze(["talk","ruler_desk","point_board","surprised"]);
 const TYPES=new Set(TURN_EVENT_TYPES);
 const GESTURES=new Set(ALLOWED_GESTURES);

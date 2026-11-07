@@ -9,6 +9,8 @@ export function createSettingsUI({find,showMessage}){
   const target=find("providerStatus");
   if(!target)return;
   const provider=find("provider").value;
+  const row=find("cloudFallbackRow");
+  if(row){row.hidden=provider!=="local";if(provider!=="local")find("cloudFallback").checked=false;}
   if(provider==="demo"){target.textContent="Sin IA · demostración offline";return;}
   target.textContent="Comprobando "+(provider==="cloud"?"Cloud":"Ollama local")+"…";
   try{

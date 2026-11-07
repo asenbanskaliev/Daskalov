@@ -75,7 +75,7 @@ async function send(text,event="dialog"){
   if(remember)await memoryUI.ensure();
   speech.setEnabled($("voiceEnabled").checked);
   for await(const eventData of streamTurn({
-   body:{provider,model,text,event,remember,history:history.slice(-8)},
+   body:{provider,model,text,event,remember,allowFallbackToCloud:provider==="local"&&$("cloudFallback").checked,history:history.slice(-8)},
    signal:controller.signal,
    csrfToken:remember?memoryUI.csrfToken:null
   })){
@@ -88,6 +88,8 @@ async function send(text,event="dialog"){
     $("speechBubble").textContent="«"+partial+"»";
    }else if(eventData.type==="sentence"){
     speech.speak(eventData.text);
+   }else if(eventData.type==="provider-switched"){
+    $("providerStatus").textContent="El modelo local falló. Usando Ollama Cloud con tu autorización.";
    }else if(eventData.type==="completed"){
     completed=true;
     answer.textContent=eventData.reply;
