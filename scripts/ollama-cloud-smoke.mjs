@@ -43,7 +43,10 @@ if(!process.env.OLLAMA_API_KEY){
   if(after.active!==false)throw new Error("La sesión de memoria no se revocó.");
   console.log("PASS E2E: Ollama Cloud "+model+", personaje Daskalov, gesto, SQL y borrado; elapsed_ms="+(Date.now()-started)+", reply_chars="+reply.reply.length);
  }catch(error){
-  console.error("FAIL: integración E2E Cloud: "+error.name+" "+error.message);
+  // Do not log upstream body or exceptions: model/vendor errors may include
+  // raw prompts, endpoints or authorization headers.
+  const category=error?.name==="TimeoutError"||error?.name==="AbortError"?"timeout":"integration-error";
+  console.error("FAIL: integración E2E Cloud ("+category+"). No se registran prompts ni errores del proveedor.");
   process.exitCode=1;
  }finally{
   await new Promise(done=>app.server.close(done));

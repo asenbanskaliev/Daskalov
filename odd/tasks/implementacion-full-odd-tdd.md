@@ -739,6 +739,10 @@ S11.07/S01.07 **PARTIAL avanzado**: `e2e/keyboard-accessibility.spec.js` prueba 
 
 S04.08 **PARTIAL**: `scripts/voice-validation.mjs` exige que cada evaluador independiente puntúe **tanto VOICE_A como VOICE_B, una sola vez**. Se rechaza que tres personas califiquen solamente una voz (antes se admitía), que una persona duplique votos o que un informe incompleto parezca comparativo. El resultado indica `pairedJudges` y `completePairedPanel`, pero **siempre** `externalReviewVerified:false` y requiere licencia. `tests/voice-validation.test.mjs` cubre casos correctos e informes falsamente completos. Siguen faltando actores/voz real, hablantes búlgaros y juez pedagógico; S04.08 permanece abierta.
 
+## 4AI. Redacción del smoke real Ollama Cloud — 8 noviembre 2026
+
+S00.01/S02.09/S10.07 **PARTIAL**: el script de prueba real `scripts/ollama-cloud-smoke.mjs` no imprime mensajes de excepciones de Ollama, ya que podrían contener fragmentos de prompt, URL privada o credenciales. El error informa únicamente si fue timeout o fallo de integración, sin registrar el contenido. `tests/cloud-smoke-log-policy.test.mjs` comprueba el contrato. El smoke de Cloud sigue condicionado a credencial de Environment con consentimiento y ejecución en `main`, que no se ha llevado a cabo.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|
