@@ -1,5 +1,5 @@
 import {AdaptiveQuality} from "./performance-profile.js";
-import {normalizeViseme} from "./visemes.js";
+import {normalizeViseme,visemeBlendshapeWeights} from "./visemes.js";
 import {loadLowPolyAvatar} from "./avatar-loader.js";
 import {createAvatarAnimator} from "./avatar-animation.js";
 import {GestureDirector} from "./gesture-director.js";
@@ -109,14 +109,30 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
    if(!avatarAnimator)arm.rotation.z=armAngle;
    const shapes={REST:[1,.18],A:[1,1.25],I:[1.35,.38],E:[1.1,.6],O:[.75,.95],U:[.65,.55],MBP:[.9,.12],FV:[1,.25],L:[1,.55],CHSH:[.8,.45]};
    const target=isSpeaking()?(shapes[viseme]||shapes.REST):shapes.REST;
-   const activeMouth=avatar?.mouth||mouth;
-   const baseX=avatar?.mouth?.userData.baseX||1,baseY=avatar?.mouth?.userData.baseY||1;
-   if(avatar&&!avatar.mouth.userData.baseX){
-    avatar.mouth.userData.baseX=avatar.mouth.scale.x;
-    avatar.mouth.userData.baseY=avatar.mouth.scale.y;
+   const liveViseme=isSpeaking()?viseme:"REST";
+   if(avatar?.mouth?.morphTargetInfluences&&avatar.mouth.morphTargetDictionary){
+    const morphs=avatar.mouth.morphTargetInfluences;
+    const dictionary=avatar.mouth.morphTargetDictionary;
+    const targetWeights=visemeBlendshapeWeights(liveViseme);
+    const blink=getReducedMotion()?0:(Math.sin(now*.0018)>0.994?1:0);
+    for(const [name,index] of Object.entries(dictionary)){
+     const target=name in targetWeights?targetWeights[name]:
+      name==="browRaise"&&currentGesture==="surprised"?.75:
+      name==="browFrown"&&currentGesture==="ruler_desk"?.4:
+      name==="blinkLeft"||name==="blinkRight"?blink:
+      name==="smile"&&currentGesture==="talk"?.25:0;
+     morphs[index]+=(target-morphs[index])*.4;
+    }
+   }else{
+    const activeMouth=avatar?.mouth||mouth;
+    const baseX=avatar?.mouth?.userData.baseX||1,baseY=avatar?.mouth?.userData.baseY||1;
+    if(avatar&&!avatar.mouth.userData.baseX){
+     avatar.mouth.userData.baseX=avatar.mouth.scale.x;
+     avatar.mouth.userData.baseY=avatar.mouth.scale.y;
+    }
+    activeMouth.scale.x+=(baseX*target[0]-activeMouth.scale.x)*.35;
+    activeMouth.scale.y+=(baseY*target[1]-activeMouth.scale.y)*.35;
    }
-   activeMouth.scale.x+=(baseX*target[0]-activeMouth.scale.x)*.35;
-   activeMouth.scale.y+=(baseY*target[1]-activeMouth.scale.y)*.35;
    const turn=getReducedMotion()?0:Math.sin(now*.0004)*.06;
    (avatar?.root||teacher).rotation.y=turn;
    renderer.render(scene,camera);requestAnimationFrame(frame);

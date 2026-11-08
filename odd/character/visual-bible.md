@@ -15,3 +15,11 @@ Rig target for approved future asset: hips/spine/neck/head, both upper/lower arm
 LOD: current GLB under 250 KB; future low quality ≤30k triangles, medium ≤80k, high only with measured FPS and texture budget. No realistic skin textures on very weak GPUs.
 
 License and rights: original purely procedural placeholder in this repository. Any later purchased/generated mesh, animation or voice needs explicit per-asset rights and documented provenance before publication.
+
+## Rigged original avatar v0.2
+- `public/assets/daskalov-lowpoly.glb` replaced with an original, 72 KB GLB 2.0: 7 real skeleton joints, skin weights, inverse bind matrices, vertex-colored materials, UV coordinates and textured-ready geometry.
+- The face mesh `Daskalov_Mouth` exposes 12 named morph targets: mouthOpen, mouthWide, mouthNarrow, lipsClosed, lowerLipBite, tongueUp, lipsForward, browRaise, browFrown, blinkLeft, blinkRight, smile.
+- Three.js GLTFLoader and AnimationMixer use named nodes Daskalov_Head, Daskalov_ArmRight, Daskalov_Torso; when GLB is invalid the procedural character remains visible.
+- Mouth shapes now respond to the AudioClock via facial morph weights. This is a stylized rig with synthetic viseme timings, **not** an actor-calibrated or professionally lip-synced model.
+- All meshes/materials are original procedural geometry with no downloaded external asset, voice or licensed texture dependency.
+- S05.02 and S05.03 implementation can be technically checked, but production 3D gate still requires visual/manual review, measured VRAM/FPS and art-direction approval.

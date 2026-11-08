@@ -13,11 +13,21 @@ test("GFX-001/002: embedded 3D model is small GLB v2 with editable named parts",
  assert.equal(gltf.asset.version,"2.0");
  assert.equal(gltf.scene,0);
  assert.ok(gltf.meshes.length<=30);
- assert.ok(gltf.nodes.length>=20);
+ assert.ok(gltf.nodes.length>=12);
  for(const name of ["Daskalov_Head","Daskalov_Mouth","Daskalov_Torso","Daskalov_ArmRight"]){
   assert.ok(gltf.nodes.some(n=>n.name===name),name);
  }
- assert.equal(gltf.skins,undefined,"Asset is an honest unrigged placeholder");
- assert.ok(gltf.materials.length>3);
+ assert.equal(gltf.skins.length,1,"GLB has a real skin");
+ assert.ok(gltf.skins[0].joints.length>=7,"Arms, legs, head and torso bones");
+ const rigged=gltf.meshes.find(m=>m.name==="Daskalov_ClothesSkinned").primitives[0];
+ assert.ok(rigged.attributes.JOINTS_0!==undefined);
+ assert.ok(rigged.attributes.WEIGHTS_0!==undefined);
+ assert.ok(rigged.attributes.TEXCOORD_0!==undefined,"UVs");
+ const facial=gltf.meshes.find(m=>m.name==="Daskalov_FacialMorphs");
+ assert.ok(facial);
+ assert.equal(facial.primitives[0].targets.length,12);
+ assert.ok(facial.extras.targetNames.includes("blinkLeft"));
+ assert.ok(facial.extras.targetNames.includes("mouthOpen"));
+ assert.ok(gltf.materials.length>=1);
  assert.ok(gltf.buffers[0].uri===undefined,"No external buffers allowed");
 });
