@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {createSTTAdapter,STT_MODES} from "../src/stt.js";
 test("STT-001: interfaz webSpeech/localWhisper/disabled con contratos homogéneos",()=>{
- assert.deepEqual(STT_MODES,["webSpeech","localWhisper","disabled"]);
+ assert.deepEqual(STT_MODES,["webSpeech","localWhisper","cloudWhisper","disabled"]);
  const disabled=createSTTAdapter({mode:"disabled"});
  assert.equal(disabled.available,false);
  assert.equal(typeof disabled.start,"function");
@@ -32,4 +32,15 @@ test("STT-001: contrato parcial/final sin enviar una sílaba incompleta como pre
  assert.deepEqual(partial,["La piza"]);
  fake.onresult({resultIndex:0,results:[{0:{transcript:"La pizarra"},isFinal:true}]});
  assert.deepEqual(final,["La pizarra"]);
+});
+
+test("STT-005: Cloud shares transcript contract but never falls back implicitly",async()=>{
+ let invoked=0,final=[],cancelled=0;
+ const cloud=createSTTAdapter({mode:"cloudWhisper",localTranscriber:async()=>{invoked++;return "Profesor Daskalov";},onTranscript:s=>final.push(s),onBargeIn:()=>cancelled++});
+ assert.equal(cloud.available,true);
+ assert.equal(cloud.start(),true);
+ await new Promise(r=>setImmediate(r));
+ assert.deepEqual(final,["Profesor Daskalov"]);
+ assert.equal(invoked,1);assert.equal(cancelled,1);
+ cloud.stop();
 });
