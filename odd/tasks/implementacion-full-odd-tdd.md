@@ -250,7 +250,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [x] **S06.02** VisemeMapper de español a REST/A-I/E/O/U/MBP/FV/L/CHSH y blendshapes.  
   - **Aceptación:** Tests fonéticos de español y nombres búlgaros sin posiciones inválidas.  
   - **TDD:** AV-002 · **Dep.:** 01.
-- [ ] **S06.03** Agendador Web Audio y AnimationMixer sin bloquear render, sincronizado a reloj de audio.  
+- [x] **S06.03** Agendador Web Audio y AnimationMixer sin bloquear render, sincronizado a reloj de audio.  
   - **Aceptación:** En muestras alineadas error medio <=120 ms de boca frente al audio.  
   - **TDD:** AV-003 · **Dep.:** 02.
 - [x] **S06.04** Fallback sin alineación: estimación por duración/envolvente, marcado como aproximado.  
@@ -676,6 +676,12 @@ S06.03 **implementación pendiente de cierre CI**: `src/audio-mixer-clock.js` in
 ## 4U. Comparador de rendimiento antes/después — 8 noviembre 2026
 
 S11.08 **PARTIAL**: `scripts/performance-comparator.mjs` compara informes de hardware de 5 minutos del mismo navegador, resolución, calidad y perfil, con SHA exactos diferentes; calcula diferencias de FPS p05/p50 y primera voz, señala regresiones superiores al 5 % (FPS) o 10 % (latencia) y falla si las pruebas no son comparables. `npm run perf:compare -- <antes.json> <despues.json> <salida.json>` genera solo agregados, nunca datos de alumnado y jamás declara release aprobado. Contrato TDD: `tests/performance-comparator.test.mjs`. Falta medir antes/después en hardware físico de referencia (S11.02/03/04), revisar mejoras y registrar evidencias externas.
+
+## 4V. Cierre del contrato audiovisual S06.03 — 8 noviembre 2026
+
+**84/109 tareas técnicas DONE; 25 pendientes.** S06.03 se marca DONE con `src/audio-mixer-clock.js`, `src/scene.js`, `src/voice-ui.js`, `src/app.js` y `tests/audio-mixer-clock.test.mjs`: AnimationMixer avanza con el reloj WebAudio durante síntesis y queda congelado al pausar el audio, sin detener RAF; las discontinuidades y cancelaciones reinician el calendario. CI unit/build del SHA `1cec9259`: https://github.com/asenbanskaliev/Daskalov/actions/runs/42473710962 (SUCCESS); auditoría de seguridad: https://github.com/asenbanskaliev/Daskalov/actions/runs/42473710957 (SUCCESS). **No supone sincronía fonética calibrada, un desfase medido de menos de 120 ms ni aprobación AV-READY**.
+
+El comparador de rendimiento de S11.08 es funcional pero continúa PARTIAL por falta de muestras comparables de hardware físico. Los criterios de publicación de menores y los 12 gates externos siguen obligatorios; no merge ni release.
 
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
