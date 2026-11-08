@@ -21,7 +21,11 @@ test("AI-011: API credential required for private remote model catalog and statu
  assert.equal(res.status,200);
  assert.deepEqual((await res.json()).models,["deepseek/deepseek-chat:free"]);
  assert.equal(calls[0].apiKey,key);
- assert.equal((await fetch(url+"/api/provider-status?provider=nvidia",{headers:{"x-daskalov-provider-key":"nvapi-test-12345"}})).status,200);
+ const status=await fetch(url+"/api/provider-status?provider=nvidia",{headers:{"x-daskalov-provider-key":"nvapi-test-12345"}});
+ assert.equal(status.status,200);
+ const json=await status.json();
+ assert.equal(json.catalogOnly,true);
+ assert.equal(json.inferenceVerified,false);
 });
 test("AI-011: remote chat and streaming dispatch to correct API key with no fallback",async t=>{
  const {url,calls}=await setup(t),key="nvapi-test-12345";

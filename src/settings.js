@@ -51,7 +51,7 @@ export function createSettingsUI({find,showMessage,fetchImpl=fetch}){
    const response=await fetchImpl("/api/provider-status?provider="+encodeURIComponent(selected),{headers:providerHeaders(selected)});
    const data=await response.json();
    if(provider()!==selected)return;
-   target.textContent=data.reachable?"Conectado · "+data.models+" modelos":"No se pudo conectar: revisa la API key y el acceso.";
+   target.textContent=data.reachable?(isExternalProvider(selected)?"Catálogo accesible · "+data.models+" modelos (inferencia sin verificar)":"Conectado · "+data.models+" modelos"):"No se pudo conectar: revisa la API key y el acceso.";
   }catch{if(provider()===selected)target.textContent="Conexión no disponible.";}
  }
  async function refreshModels(){

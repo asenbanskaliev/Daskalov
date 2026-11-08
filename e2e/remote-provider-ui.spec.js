@@ -28,7 +28,7 @@ test("AI-011: OpenRouter from UI loads models, filters catalog, sends ephemeral 
  await expect(page.locator("#providerStatus")).toContainText("clave API");
  await page.locator("#providerApiKey").fill("sk-or-v1-browser-example");
  await page.locator("#saveProviderKey").click();
- await expect(page.locator("#providerStatus")).toContainText("Conectado");
+ await expect(page.locator("#providerStatus")).toContainText("Catálogo accesible");
  expect(sentKey).toBe("sk-or-v1-browser-example");
  await expect(page.locator("#providerApiKey")).toBeEmpty();
  await page.locator("#modelSearch").fill("qwen");

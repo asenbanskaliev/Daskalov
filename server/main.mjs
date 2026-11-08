@@ -205,8 +205,8 @@ export function createApp({
     if(provider==="cloud"&&!isPrivateClient(req))throw new OllamaError("Cloud solo está disponible en modo privado.",403);
     try{
      const available=isRemoteProvider(provider)?await remoteModels({provider,apiKey:remoteKeyFor(provider)}):await models({provider});
-     return respond(res,200,{provider,reachable:true,models:available.length});
-    }catch{return respond(res,200,{provider,reachable:false,models:0});}
+     return respond(res,200,{provider,reachable:true,models:available.length,catalogOnly:isRemoteProvider(provider),inferenceVerified:false});
+    }catch{return respond(res,200,{provider,reachable:false,models:0,catalogOnly:isRemoteProvider(provider),inferenceVerified:false});}
    }
    if(path==="/api/memory/reindex"&&req.method==="POST"){
     if(!allowMemory)throw new OllamaError("Memoria privada no habilitada.",403);
