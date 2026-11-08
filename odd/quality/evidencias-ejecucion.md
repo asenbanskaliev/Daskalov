@@ -40,3 +40,12 @@ Las pruebas unitarias con Ollama simulado no demuestran Cloud ni Ollama local re
 - Rendimiento sintético (100 conversaciones y 10 sesiones): https://github.com/asenbanskaliev/Daskalov/actions/runs/42461893207 SUCCESS.
 - Último navegador del GLB: https://github.com/asenbanskaliev/Daskalov/actions/runs/42462595065 PENDIENTE, no declarar aprobado.
 - Control release: npm run gate:status informa, npm run gate:full falla salvo 109/109 y evidencia firmada externa.
+
+## Corte 2026-11-08 — 64/109 contratos técnicos verificados
+- Se reconcilian 12 cierres de la tanda Engram, GLB AnimationMixer, eventos, riesgos, stress y documentación.
+- CI rápido/build: https://github.com/asenbanskaliev/Daskalov/actions/runs/42464685879 SUCCESS.
+- Seguridad: https://github.com/asenbanskaliev/Daskalov/actions/runs/42464685878 SUCCESS.
+- Rendimiento sintético: https://github.com/asenbanskaliev/Daskalov/actions/runs/42464685880 SUCCESS.
+- Chromium/Firefox: https://github.com/asenbanskaliev/Daskalov/actions/runs/42464485893 SUCCESS, SHA anterior para UI estable.
+- S07.06 completado como **funcionalidad opcional mock-verificada**; prueba proveedor real sigue S02.09. S08.06 mantiene PARTIAL por falta de LLM/humano reales.
+- Quedan 45 tareas; FULL, SEC-PUBLIC y VOICE-READY no están aprobados.

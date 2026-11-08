@@ -88,7 +88,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [x] **S00.06** Definir entornos de prueba y protección de datos para menores; modo demo sin memoria y sin audio persistente.  
   - **Aceptación:** El modo sin consentimiento no escribe audio, perfil ni transcripciones persistentes.  
   - **TDD:** SEC-006 · **Dep.:** 04.
-- [ ] **S00.07** Crear registro de riesgos, presupuesto Cloud, criterios no-go y procedimiento de rotación de credenciales.  
+- [x] **S00.07** Crear registro de riesgos, presupuesto Cloud, criterios no-go y procedimiento de rotación de credenciales.  
   - **Aceptación:** Ensayo de revocación y revisión manual documentados.  
   - **TDD:** SEC-007 · **Dep.:** 01.
 
@@ -222,7 +222,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [ ] **S05.03** Diseñar 8-12 morph targets de boca y faciales, parpadeos, cejas y emociones.  
   - **Aceptación:** GLB pasa validador automatizado y prueba de morphs.  
   - **TDD:** GFX-003 · **Dep.:** 02.
-- [ ] **S05.04** AnimationMixer y clips idle, hablar, mirar, señalar, sorpresa, regla sobre mesa y vuelta a reposo.  
+- [x] **S05.04** AnimationMixer y clips idle, hablar, mirar, señalar, sorpresa, regla sobre mesa y vuelta a reposo.  
   - **Aceptación:** Crossfades sin saltos graves ni movimientos agresivos hacia jugador.  
   - **TDD:** GFX-004 · **Dep.:** 02.
 - [x] **S05.05** Sistema de escena desacoplado de red: render RAF fluido y animación por eventos.  
@@ -278,13 +278,13 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [ ] **S07.03** Memoria desactivada de inicio con base legal/consentimiento válido para edad y finalidad, incl. tutor cuando proceda.  
   - **Aceptación:** Sin consentimiento legalmente válido no persiste contenido de alumno.  
   - **TDD:** MEM-003 · **Dep.:** S10.02.
-- [ ] **S07.04** FTS5 con ranking, acotación por propietario, antigüedad/importancia y deduplicación.  
+- [x] **S07.04** FTS5 con ranking, acotación por propietario, antigüedad/importancia y deduplicación.  
   - **Aceptación:** 5 recuerdos relevantes; consultas de jugador B devuelven 0 de A.  
   - **TDD:** MEM-004 · **Dep.:** 02.
-- [ ] **S07.05** Separar historial corto en RAM, recuerdos semánticos, estado pedagógico y autobiografía ficticia.  
+- [x] **S07.05** Separar historial corto en RAM, recuerdos semánticos, estado pedagógico y autobiografía ficticia.  
   - **Aceptación:** Al cambiar modelo se conserva solo contexto autorizado y consistente.  
   - **TDD:** MEM-005 · **Dep.:** 04.
-- [ ] **S07.06** Embeddings Ollama /api/embed opcionales, reindexado, checksum y búsqueda híbrida con fallback FTS5.  
+- [x] **S07.06** Embeddings Ollama /api/embed opcionales, reindexado, checksum y búsqueda híbrida con fallback FTS5.  
   - **Aceptación:** Modo sin embedding funciona; ranking comparado con batería de 50 consultas.  
   - **TDD:** MEM-006 · **Dep.:** 04.
 - [ ] **S07.07** Derechos de usuario: ver, exportar, corregir, revocar y borrar TODO con vinculación servidor al titular.  
@@ -296,7 +296,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [x] **S07.09** Bloqueo de recuerdos inyectados: contenido recuperado como datos, sanitización, revisión de relevancia.  
   - **Aceptación:** 50 prompts maliciosos no alteran reglas ni exponen recuerdos.  
   - **TDD:** MEM-009 · **Dep.:** 04.
-- [ ] **S07.10** Test de aislamiento concurrente, reintentos SQL, backups y recuperación en fallo de energía simulado.  
+- [x] **S07.10** Test de aislamiento concurrente, reintentos SQL, backups y recuperación en fallo de energía simulado.  
   - **Aceptación:** Sin corrupción, fugas, bloqueo permanente ni errores silenciosos.  
   - **TDD:** MEM-010 · **Dep.:** 07,08.
 
@@ -306,10 +306,10 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [x] **S08.01** Versionar prompt maestro de Daskalov: invariantes, tono, infancia, precisión, anécdotas y límites.  
   - **Aceptación:** Separa las reglas fijas de los datos y la memoria; prompt evaluable.  
   - **TDD:** CHAR-001 · **Dep.:** S02.08.
-- [ ] **S08.02** Lore canónico del colegio, personajes secundarios y cronología ficticia con continuidad.  
+- [x] **S08.02** Lore canónico del colegio, personajes secundarios y cronología ficticia con continuidad.  
   - **Aceptación:** 100 preguntas a memoria recuperan hechos ficticios consistentes.  
   - **TDD:** CHAR-002 · **Dep.:** S07.05.
-- [ ] **S08.03** Motor de recursos cómicos contextual, diversidad, cooldown de chistes y referencias al juego.  
+- [x] **S08.03** Motor de recursos cómicos contextual, diversidad, cooldown de chistes y referencias al juego.  
   - **Aceptación:** En 20 turnos no repite el mismo remate >2 veces.  
   - **TDD:** CHAR-003 · **Dep.:** 01.
 - [x] **S08.04** Detector contextual de emoción y reacción: triste, académico, travieso, curioso.  
@@ -346,7 +346,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [x] **S09.05** Feedback pedagógico específico, pistas graduadas, explicaciones y alternativa sin penalización.  
   - **Aceptación:** Errores generan explicación válida sin humillar al alumno.  
   - **TDD:** GAME-005 · **Dep.:** 02.
-- [ ] **S09.06** Reactividad ambiental: silencio, móviles, frío, hablar con compañeros, pizarra y eventos aleatorios controlados.  
+- [x] **S09.06** Reactividad ambiental: silencio, móviles, frío, hablar con compañeros, pizarra y eventos aleatorios controlados.  
   - **Aceptación:** Eventos provocan humor contextual y respetan cooldown/cancelación.  
   - **TDD:** GAME-006 · **Dep.:** S05.07,S08.03.
 - [x] **S09.07** Personalización accesible por nivel escolar y dificultad sin perfiles invasivos.  
@@ -362,7 +362,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 ### S10 — Privacidad, seguridad del servicio y cumplimiento
 **Prioridad:** P0 / BLOQUEANTE PUBLICACIÓN · **Gate:** SEC-PUBLIC · **Dependencias:** S00,S07
 
-- [ ] **S10.01** Threat model de API key, XSS, CSRF, SSRF, datos de menores, suplantación de playerId, inyección y abuso.  
+- [x] **S10.01** Threat model de API key, XSS, CSRF, SSRF, datos de menores, suplantación de playerId, inyección y abuso.  
   - **Aceptación:** Riesgos altos con mitigación y test asociado; revisión firmada.  
   - **TDD:** SAFE-001 · **Dep.:** S00.01.
 - [ ] **S10.02** Privacidad-by-design: base legal, transparencia infantil, flujos de permisos y consentimiento parental cuando legalmente exigible.  
@@ -405,7 +405,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [ ] **S11.04** Latencia: fast LLM first-audio p50<2.5 s como aspiración y p95<6 s en condiciones controladas; Beam con SLA separado.  
   - **Aceptación:** El benchmark registra y compara por proveedor sin afirmar cumplimiento previo.  
   - **TDD:** PERF-004 · **Dep.:** S04.06.
-- [ ] **S11.05** Prueba estrés 50-100 turnos sintéticos y desconexiones aleatorias/red lenta/429/500.  
+- [x] **S11.05** Prueba estrés 50-100 turnos sintéticos y desconexiones aleatorias/red lenta/429/500.  
   - **Aceptación:** Sin pérdidas de control, memoria creciente ni fuga de audio.  
   - **TDD:** PERF-005 · **Dep.:** S02.07.
 - [ ] **S11.06** Métricas del backend: colas, DB p95, coste estimado, errores; dashboard opt-in para desarrollo.  
@@ -436,7 +436,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [ ] **S12.05** Smoke post-deploy, health checks, rollback release y gestión de copias de base SQL.  
   - **Aceptación:** Se revierte actualización sin pérdida de datos autorizados.  
   - **TDD:** REL-005 · **Dep.:** REL-004,S07.01.
-- [ ] **S12.06** Documentación para jugar, desplegar, editar voz y conectar Ollama; modo demo y troubleshooting.  
+- [x] **S12.06** Documentación para jugar, desplegar, editar voz y conectar Ollama; modo demo y troubleshooting.  
   - **Aceptación:** Nuevo usuario abre navegador en tres pasos o menos tras servidor listo.  
   - **TDD:** REL-006 · **Dep.:** S01.08.
 - [x] **S12.07** Checklist de aceptación FULL: todos los gates, 100% tests críticos, voces validadas, seguridad menores aprobada.  
@@ -529,6 +529,36 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 **Evidencia de compilación y unitarios:** https://github.com/asenbanskaliev/Daskalov/actions/runs/42462595231 (SUCCESS SHA 55ff7dff7). **Auditoría:** https://github.com/asenbanskaliev/Daskalov/actions/runs/42462595023 (SUCCESS). **Rendimiento sintético:** https://github.com/asenbanskaliev/Daskalov/actions/runs/42461893207 (SUCCESS). **Browser E2E anterior sin nuevo GLB:** https://github.com/asenbanskaliev/Daskalov/actions/runs/42461893394 (SUCCESS). **Browser E2E último GLB:** https://github.com/asenbanskaliev/Daskalov/actions/runs/42462595065 (PENDIENTE EN ESTE CORTE; no se contabiliza como aprobado).
 
 **FULL continúa BLOQUEADO** por las 57 tareas no verificadas, Cloud/Whisper/Piper reales, revisión de menores, accesibilidad humana, activos GLB rigged, voz española con influencia búlgara, benchmarks de hardware real, consentimiento y aprobación externa para release.
+## 4G. Tanda de corrección, memoria híbrida y control de calidad — 8 noviembre 2026
+
+**12 contratos técnicos adicionales DONE; acumulado: 64/109 DONE, 45 pendientes.** No se han cerrado requisitos que necesitan operadores, proveedores reales, licencias, revisión humana o permisos legales.
+
+| Tarea | Evidencia técnica y alcance |
+|---|---|
+| S00.07 | `odd/security/riesgos-y-bloqueos.md`, `odd/security/costes-y-simulacro-rotacion.md`; presupuesto por proceso, no-go y prueba de rotación ficticia. La rotación auténtica de credenciales está fuera de la prueba. |
+| S05.04 | `src/avatar-animation.js`: AnimationMixer con 7 clips y gestos `idle`, `talk`, `look`, `point_board`, `surprised`, `ruler_desk`, `raise_hand` verificados en tests. Personaje GLB original provisional SIN rig esquelético ni morph targets profesionales. |
+| S07.04 | `server/memory.mjs`: FTS5, preferencia/antigüedad, ranking, top-K por propietario y deduplicación 24h; `tests/memory-ranking.test.mjs`. |
+| S07.05 | Contexto breve en RAM, SQL privado aislado, estado educativo `lesson_progress` y lore ficticio en código/tabla propia; `tests/migrations-rights.test.mjs`, `tests/context-builder.test.mjs`. |
+| S07.06 | `server/embeddings.mjs`, migración v3, `searchHybrid`, `reindexPlayer`, checksum y POST `/api/memory/reindex` protegido; local-only + FTS fallback. Mocks verdes; **no** hay smoke real Ollama local, cubierto por S02.09. |
+| S07.10 | `tests/sql-concurrency-rollback.test.mjs`: 20 jugadores/dos conexiones, WAL busy-timeout, rollback de transacción interrumpida y comprobación integridad. Simulación no certifica recuperación tras corte eléctrico físico. |
+| S08.02 | `server/character.mjs`, `odd/character/lore-canonic.md`: colegio, Petar y cronología ficticia versionada introducida en ContextBuilder. |
+| S08.03 | `chooseHumorCue` según materia y recuerdos recientes; supresión de bromas repetidas en dos turnos del profesor; tests `character-engine.test.mjs`. Calidad humorística humana aún no evaluada. |
+| S09.06 | `src/classroom-events.js`, `src/classroom-ui.js`: frío, móvil, silencio, pizarra, regla teatral y compañeros, con cooldown por evento y evento automático opcional ≥90 s; tests y Playwright. |
+| S10.01 | `odd/security/threat-model.md`: 14 amenazas STRIDE con superficie, mitigación, riesgo residual y no-go. Revisión de penetración independiente continúa pendiente S10.09. |
+| S11.05 | `tests/stress-100.test.mjs` y `tests/stress-network-chaos.test.mjs`: 100 solicitudes sintéticas, cancelaciones, retardos simulados, 429/500, límites/contadores; CI rendimiento. No son métricas reales de red ni de un modelo comercial. |
+| S12.06 | `odd/operations/guia-uso-desarrollo.md`: arranque, demo, Ollama local/Cloud, Whisper, Piper, SQLite, pruebas, despliegue seguro y troubleshooting; `tests/guide-docs.test.mjs`. |
+
+### Runs verificados (SHA funcional de la tanda)
+- CI completo sintético y build: https://github.com/asenbanskaliev/Daskalov/actions/runs/42464685879 — SUCCESS en `a1bb7abd6`.
+- Auditoría seguridad sin secretos: https://github.com/asenbanskaliev/Daskalov/actions/runs/42464685878 — SUCCESS.
+- Rendimiento sintético con chaos: https://github.com/asenbanskaliev/Daskalov/actions/runs/42464685880 — SUCCESS.
+- Navegadores Chromium/Firefox, incluye interfaz anterior: https://github.com/asenbanskaliev/Daskalov/actions/runs/42464485893 — SUCCESS.
+- Persona: `scripts/persona-eval.mjs`, 300 casos sintéticos (100 humor, 100 escolares, 50 inyecciones, 50 memorias) con tests verdes; **S08.06 sigue PARTIAL** hasta resultados de un modelo real y evaluación humana.
+
+### Bloqueos que no han desaparecido
+- GitHub Environment protegido + smoke real Ollama Cloud/Local, STT/TTS reales, voz grave española con acento búlgaro validado, GLB con rig/morphs profesional.
+- Datos de menores y consentimiento tutelar legal, cuentas Cloud públicas con cuotas distribuidas, auditoría externa de seguridad, pruebas visuales y benchmarks en hardware físico.
+- El comando `npm run gate:full` debe continuar fallando. **No fusionar a main ni publicar**.
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|
