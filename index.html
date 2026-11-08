@@ -20,10 +20,62 @@
       <p class="sr-only" id="sceneDescription">Aula virtual. Puedes mirar a los lados con las flechas del teclado o concentrarte en la conversación mediante los controles laterales.</p>
       <div class="scene-status" id="sceneStatus" role="status">Preparando aula 3D…</div>
       <div class="stage-label"><strong>AULA 01</strong><span>Usa ← → para mirar a los lados</span></div>
+      
+      <div class="stage-toolbar" role="group" aria-label="Controles de vista del aula">
+        <button type="button" class="stage-tool" id="settingsToggle" aria-expanded="false" aria-controls="settingsDrawer" aria-label="Abrir configuración" title="Abrir configuración"><span aria-hidden="true" class="tool-icon">⚙</span><span class="tool-label">Ajustes</span></button>
+        <button type="button" class="stage-tool" id="lessonsToggle" aria-expanded="true" aria-controls="activityHub" aria-label="Ocultar retos" title="Ocultar retos"><span aria-hidden="true" class="tool-icon">▤</span><span class="tool-label">Retos</span></button>
+        <button type="button" class="stage-tool" id="historyToggle" aria-expanded="true" aria-controls="history" aria-label="Ocultar historial" title="Ocultar historial"><span aria-hidden="true" class="tool-icon">☰</span><span class="tool-label">Historial</span></button>
+        <button type="button" class="stage-tool" id="fullscreenToggle" aria-pressed="false" aria-label="Activar pantalla completa" title="Activar pantalla completa"><span aria-hidden="true" class="tool-icon" id="fullscreenIcon">⛶</span><span class="tool-label" id="fullscreenLabel">Pantalla completa</span></button>
+      </div>
       <div class="speech" id="speechBubble" aria-live="polite">«¡Bienvenido! ¡En mis tiempos hasta las tizas llegaban puntuales!»</div>
     </section>
-    <aside class="panel">
-      <div class="panel-title"><h2>Habla con el profesor</h2><p>Pregunta lo que quieras; Daskalov improvisará usando Ollama.</p></div>
+    <aside class="panel" id="conversationPanel" aria-label="Conversación y actividades del profesor">
+      <div class="panel-title"><h2>Habla con el profesor</h2><p>Pregúntale por texto o mediante el micrófono cuando esté habilitado.</p></div>
+      <div id="history" class="history" role="log" aria-live="polite">
+        <div class="message assistant">¡Buenos días! Soy el Profesor Daskalov. ¿Qué querías preguntarme?</div>
+      </div>
+      <form id="chatForm" class="chat-form">
+        <label class="sr-only" for="question">Escribe una pregunta</label>
+        <input id="question" placeholder="Profesor, ¿puedo hablar en clase?" maxlength="700" autocomplete="off" required>
+        <div class="actions"><button type="button" id="micButton" class="secondary" title="Hablar por micrófono">Micrófono</button><button type="button" id="raiseHand" class="secondary">Levantar la mano</button><button type="button" id="lookForward" class="secondary">Mirar al frente</button><button type="button" id="stopButton" class="secondary" disabled>Interrumpir</button><button type="submit" id="sendButton">Preguntar al profesor</button></div>
+      </form>
+      <p id="micStatus" class="field-help" role="status">Micrófono apagado. Puedes escribir.</p>
+      <div class="voice-actions"><button type="button" id="pauseVoice" class="secondary" disabled>Pausar voz</button><button type="button" id="resumeVoice" class="secondary" disabled>Reanudar voz</button></div>
+      <p id="demoNotice" hidden role="status">Demostración sin IA ni conexión: no se envían mensajes ni se graba voz.</p>
+      <div id="activityHub" class="activity-hub">
+        <section id="lessonPanel" class="lesson-panel" aria-label="Misiones educativas">
+        <div class="lesson-heading"><h3>Retos de clase</h3><p id="gameProgress" aria-live="polite">0 de 3 misiones completadas · 0 puntos</p></div>
+        <div class="fields"><label for="lessonDifficulty">Nivel del reto (sin recopilar edad ni datos personales)</label>
+          <select id="lessonDifficulty"><option value="basic">Principiante</option><option value="standard" selected>Intermedio</option><option value="advanced">Avanzado</option></select>
+        </div>
+        <div id="lessonChoices" class="lesson-choices" role="group" aria-label="Elige una materia"></div>
+        <div id="lessonActivity" class="lesson-activity" hidden>
+          <p id="lessonGoal" class="lesson-goal"></p>
+          <p id="lessonQuestion" class="lesson-question"></p>
+          <div id="lessonAnswers" class="lesson-answers" role="group" aria-label="Elige una respuesta"></div>
+          <p id="lessonFeedback" class="lesson-feedback" role="status"></p>
+          <p id="lessonHint" class="lesson-hint"></p>
+        </div>
+      </section>
+        <section class="classroom-reactions" aria-label="Eventos del aula">
+        <h3>¿Qué pasa en clase?</h3>
+        <div id="classroomEvents" class="classroom-event-buttons">
+          <button type="button" data-classroom-event="cold">Hace frío</button>
+          <button type="button" data-classroom-event="phone">Suena un móvil</button><button type="button" data-classroom-event="talking">Hablan compañeros</button>
+          <button type="button" data-classroom-event="silence">Hay silencio</button>
+          <button type="button" data-classroom-event="board">Ir a la pizarra</button>
+          <button type="button" data-classroom-event="desk">Regla en la mesa</button>
+        </div>
+        <label class="field-help"><input type="checkbox" id="classroomAutoEvents"> Activar situaciones ocasionales del aula (máximo una cada 90 segundos)</label>
+        <p id="classroomFeedback" role="status"></p>
+      </section>
+      </div>
+    </aside>
+    <div id="drawerBackdrop" class="drawer-backdrop" aria-hidden="true" hidden></div>
+    <aside id="settingsDrawer" class="settings-drawer" role="dialog" aria-modal="true" aria-labelledby="settingsHeading" hidden>
+      <div class="drawer-heading"><div><h2 id="settingsHeading">Configuración del aula</h2><p class="field-help">Proveedor, voz, privacidad y preferencias</p></div>
+        <button type="button" id="settingsClose" class="secondary drawer-close" aria-label="Cerrar configuración" title="Cerrar configuración">✕</button>
+      </div>
       <form id="settingsForm" autocomplete="off">
         <div class="fields"><label for="provider">Proveedor de IA</label><select id="provider"><option value="cloud">Ollama Cloud</option><option value="local">Ollama local</option><option value="openrouter">OpenRouter.ai</option><option value="nvidia">NVIDIA Build · NIM</option><option value="demo">Demo sin IA · offline</option></select></div>
         <p id="providerStatus" class="field-help" role="status" aria-live="polite">Comprobando proveedor…</p>
@@ -59,44 +111,7 @@
         <div class="toggles"><label><input type="checkbox" id="reducedMotion"> Reducir animaciones</label></div>
         <div class="toggles"><label id="cloudFallbackRow" hidden><input type="checkbox" id="cloudFallback"> Permitir enviar mi pregunta a Ollama Cloud si falla el modelo local</label><label><input type="checkbox" id="remember"> Recordar conversaciones (opcional; al desmarcar se borran los recuerdos y el progreso guardado)</label><label><input type="checkbox" id="autoTurn"> Reaccionar con IA al girarme</label><label><input type="checkbox" id="voiceEnabled"> Leer respuestas en voz alta</label></div>
       </form>
-      <div class="voice-actions"><button type="button" id="pauseVoice" class="secondary" disabled>Pausar voz</button><button type="button" id="resumeVoice" class="secondary" disabled>Reanudar voz</button></div>
-      <p id="micStatus" class="field-help" role="status">Micrófono apagado. Puedes escribir.</p>
       <p id="memoryPermission" class="field-help">La memoria solo se activa con autorización válida en un servidor privado.</p>
-      <p id="demoNotice" hidden role="status">Demostración sin IA ni conexión: no se envían mensajes ni se graba voz.</p>
-      <section class="classroom-reactions" aria-label="Eventos del aula">
-        <h3>¿Qué pasa en clase?</h3>
-        <div id="classroomEvents" class="classroom-event-buttons">
-          <button type="button" data-classroom-event="cold">Hace frío</button>
-          <button type="button" data-classroom-event="phone">Suena un móvil</button><button type="button" data-classroom-event="talking">Hablan compañeros</button>
-          <button type="button" data-classroom-event="silence">Hay silencio</button>
-          <button type="button" data-classroom-event="board">Ir a la pizarra</button>
-          <button type="button" data-classroom-event="desk">Regla en la mesa</button>
-        </div>
-        <label class="field-help"><input type="checkbox" id="classroomAutoEvents"> Activar situaciones ocasionales del aula (máximo una cada 90 segundos)</label>
-        <p id="classroomFeedback" role="status"></p>
-      </section>
-      <section id="lessonPanel" class="lesson-panel" aria-label="Misiones educativas">
-        <div class="lesson-heading"><h3>Retos de clase</h3><p id="gameProgress" aria-live="polite">0 de 3 misiones completadas · 0 puntos</p></div>
-        <div class="fields"><label for="lessonDifficulty">Nivel del reto (sin recopilar edad ni datos personales)</label>
-          <select id="lessonDifficulty"><option value="basic">Principiante</option><option value="standard" selected>Intermedio</option><option value="advanced">Avanzado</option></select>
-        </div>
-        <div id="lessonChoices" class="lesson-choices" role="group" aria-label="Elige una materia"></div>
-        <div id="lessonActivity" class="lesson-activity" hidden>
-          <p id="lessonGoal" class="lesson-goal"></p>
-          <p id="lessonQuestion" class="lesson-question"></p>
-          <div id="lessonAnswers" class="lesson-answers" role="group" aria-label="Elige una respuesta"></div>
-          <p id="lessonFeedback" class="lesson-feedback" role="status"></p>
-          <p id="lessonHint" class="lesson-hint"></p>
-        </div>
-      </section>
-            <div id="history" class="history" role="log" aria-live="polite">
-        <div class="message assistant">¡Buenos días! Soy el Profesor Daskalov. ¿Qué querías preguntarme?</div>
-      </div>
-      <form id="chatForm" class="chat-form">
-        <label class="sr-only" for="question">Escribe una pregunta</label>
-        <input id="question" placeholder="Profesor, ¿puedo hablar en clase?" maxlength="700" autocomplete="off" required>
-        <div class="actions"><button type="button" id="micButton" class="secondary" title="Hablar por micrófono">Micrófono</button><button type="button" id="raiseHand" class="secondary">Levantar la mano</button><button type="button" id="lookForward" class="secondary">Mirar al frente</button><button type="button" id="stopButton" class="secondary" disabled>Interrumpir</button><button type="submit" id="sendButton">Preguntar al profesor</button></div>
-      </form>
       <details id="devMetrics" class="dev-metrics">
         <summary>Herramientas de diagnóstico (solo desarrollo)</summary>
         <p>Únicamente valores agregados: latencias, errores y coste estimado. No se muestran conversaciones.</p>
@@ -114,8 +129,7 @@
         <div id="memoryEntries"></div>
       </section>
     </aside>
-  </main>
-  <footer>Prototipo ODD + TDD · Humor ficticio y educativo · La voz con acento búlgaro específico se incorporará en una fase posterior.</footer>
+  </main>  <footer>Prototipo ODD + TDD · Humor ficticio y educativo · La voz con acento búlgaro específico se incorporará en una fase posterior.</footer>
 </div>
 <script type="module" src="/src/app.js"></script>
 </body>

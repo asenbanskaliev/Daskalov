@@ -12,6 +12,8 @@ import {configureDevMetrics} from "./metrics-ui.js";
 import {configureClassroomEvents} from "./classroom-ui.js";
 import {registerOfflineWorker} from "./offline-worker.js";
 import {restoreGameProgress} from "./progress-restore.js";
+import {createAulaMode} from "./aula-mode.js";
+createAulaMode({find:$});
 const history=[];
 let playing=false,yaw=0,sceneState=null,activeController=null,activeTurn=0;
 const voice=createVoiceUI({
