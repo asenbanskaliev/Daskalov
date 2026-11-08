@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {validateNvidiaLive} from "../scripts/nvidia-real-smoke-ci.mjs";
+import {validateNvidiaLive,pickNvidiaModel} from "../scripts/nvidia-real-smoke-ci.mjs";
 test("AI-012: NVIDIA real smoke makes precisely two synthetic calls and outputs no response",async()=>{
  let calls=0;
  const result=await validateNvidiaLive({
@@ -26,4 +26,11 @@ test("AI-012: secret used only by marker-only branch push (no PR)",()=>{
  assert.match(yaml,/persist-credentials: false/);
  assert.doesNotMatch(yaml,/^\s*(pull_request|pull_request_target|schedule|workflow_dispatch|workflow_run):/m);
  assert.doesNotMatch(yaml,/git push|npm publish|write-all/);
+});
+
+test("AI-012: live probe selects only a catalog-listed suitable chat model",()=>{
+ assert.equal(pickNvidiaModel(["retired/obsolete","nvidia/nemotron-3-super-120b-a12b","deepseek-ai/deepseek-v4-flash"]),"deepseek-ai/deepseek-v4-flash");
+ assert.equal(pickNvidiaModel(["meta/llama-3.3-70b-instruct"]),"meta/llama-3.3-70b-instruct");
+ assert.equal(pickNvidiaModel(["unknown/image-model"]),null);
+ assert.equal(pickNvidiaModel(["bad//path"]),null);
 });
