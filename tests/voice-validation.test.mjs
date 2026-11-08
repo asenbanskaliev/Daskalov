@@ -20,8 +20,15 @@ test("TTS-003: engine RTF comparison never claims unverified licenses",()=>{
  assert.equal(report.kokoro.allLicensesVerified,false);
 });
 test("TTS-008: blind voice rubric requires three unique judges and valid 1-5 votes",()=>{
- const votes=[1,2,3].map(i=>({judgeId:"J"+i,voiceId:"VOICE_A",intelligibility:4,naturalness:3,pronunciation:4,educationalAppropriateness:5}));
+ const votes=[1,2,3].flatMap(i=>["VOICE_A","VOICE_B"].map(voiceId=>({judgeId:"J"+i,voiceId,intelligibility:4,naturalness:3,pronunciation:4,educationalAppropriateness:5})));
  assert.equal(blindVoicePanel(votes).byVoice.VOICE_A.votes,3);
  assert.equal(blindVoicePanel(votes).licenseAuditStillRequired,true);
+ assert.equal(blindVoicePanel(votes).completePairedPanel,true);
+ assert.equal(blindVoicePanel(votes).pairedJudges,3);
+ assert.equal(blindVoicePanel(votes).externalReviewVerified,false);
  assert.throws(()=>blindVoicePanel(votes.slice(0,2)),/tres/);
+ assert.throws(()=>blindVoicePanel(votes.filter(x=>x.voiceId==="VOICE_A")),/ambas voces/);
+ const duplicated=[...votes];duplicated[1]={...duplicated[0]};
+ assert.throws(()=>blindVoicePanel(duplicated),/duplicado/);
+
 });

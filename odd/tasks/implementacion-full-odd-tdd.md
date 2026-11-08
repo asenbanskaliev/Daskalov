@@ -735,6 +735,10 @@ S05.09 **PARTIAL avanzado**: `e2e/visual-regression.spec.js` genera capturas PNG
 
 S11.07/S01.07 **PARTIAL avanzado**: `e2e/keyboard-accessibility.spec.js` prueba envío de texto, navegación de las tres materias y respuestas activadas por teclas Enter, sin WebGL ni APIs de micrófono en móvil de 320 px, con reduced-motion y sin desbordamiento. `tests/visual-review-artifacts.test.mjs` protege privacidad y cobertura básica de artefactos. Falta auditoría real con NVDA/VoiceOver, zoom y personas en dispositivos físicos.
 
+## 4AH. Panel de voz ciego emparejado y sin aprobaciones falsas — 8 noviembre 2026
+
+S04.08 **PARTIAL**: `scripts/voice-validation.mjs` exige que cada evaluador independiente puntúe **tanto VOICE_A como VOICE_B, una sola vez**. Se rechaza que tres personas califiquen solamente una voz (antes se admitía), que una persona duplique votos o que un informe incompleto parezca comparativo. El resultado indica `pairedJudges` y `completePairedPanel`, pero **siempre** `externalReviewVerified:false` y requiere licencia. `tests/voice-validation.test.mjs` cubre casos correctos e informes falsamente completos. Siguen faltando actores/voz real, hablantes búlgaros y juez pedagógico; S04.08 permanece abierta.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|

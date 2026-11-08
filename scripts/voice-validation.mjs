@@ -75,12 +75,21 @@ export function blindVoicePanel(votes){
  if(!Array.isArray(votes)||votes.length<3)throw Error("Mínimo tres evaluadores independientes.");
  const judges=new Set(votes.map(x=>x.judgeId));
  if(judges.size<3)throw Error("Evaluación ciega requiere tres evaluadores distintos.");
+ if(votes.length!==judges.size*2)throw Error("Cada evaluador debe puntuar ambas voces, una sola vez.");
  for(const x of votes){
   if(!/^[A-Z0-9_-]{1,32}$/.test(x.judgeId)||!["VOICE_A","VOICE_B"].includes(x.voiceId))throw Error("Identificador inválido.");
   for(const field of ["intelligibility","naturalness","pronunciation","educationalAppropriateness"]){
    if(!Number.isInteger(x[field])||x[field]<1||x[field]>5)throw Error("Rúbrica fuera de 1 a 5.");
   }
  }
+ const pairs=new Map();
+ for(const vote of votes){
+  const set=pairs.get(vote.judgeId)||new Set();
+  if(set.has(vote.voiceId))throw Error("Voto duplicado de una voz para el mismo evaluador.");
+  set.add(vote.voiceId);pairs.set(vote.judgeId,set);
+ }
+ for(const voices of pairs.values())if(voices.size!==2||!voices.has("VOICE_A")||!voices.has("VOICE_B"))
+  throw Error("Panel ciego incompleto: falta evaluar ambas voces.");
  const byVoice={};
  for(const id of ["VOICE_A","VOICE_B"]){
   const found=votes.filter(x=>x.voiceId===id);
@@ -91,7 +100,7 @@ export function blindVoicePanel(votes){
   }
   byVoice[id]={votes:found.length,means};
  }
- return {blind:true,byVoice,licenseAuditStillRequired:true};
+ return {blind:true,pairedJudges:judges.size,completePairedPanel:true,byVoice,licenseAuditStillRequired:true,externalReviewVerified:false};
 }
 async function main(){
  const [mode,inputFile,outputFile]=process.argv.slice(2);
