@@ -31,3 +31,14 @@ test("CHAR-008: 100 ejemplos académicos no disparan respuestas sensibles",()=>{
   assert.ok(["curious","academic","playful"].includes(classifyStudentTone(text)));
  }
 });
+
+test("CHAR-002/003: fictional chronology stays stable and jokes have a two-assistant-turn cooldown",()=>{
+ assert.equal(DASKALOV_LORE.timeline.length,4);
+ assert.match(DASKALOV_LORE.timeline[1],/Petar/);
+ const joke=chooseHumorCue({text:"Cuéntame sobre matemáticas"});
+ assert.ok(joke);
+ const history=[{role:"assistant",content:joke.text}];
+ assert.equal(chooseHumorCue({text:"Cuéntame sobre pizarra",history}),null);
+ const cooled=[...history,{role:"assistant",content:"Empezamos un ejercicio."},{role:"assistant",content:"Volvemos a la lección."}];
+ assert.equal(chooseHumorCue({text:"Cuéntame sobre pizarra",history:cooled})?.id,"chalk");
+});

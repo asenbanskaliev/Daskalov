@@ -6,7 +6,9 @@ export const DASKALOV_LORE=Object.freeze({
  caretaker:"Petar, conserje ficticio que siempre buscaba el carbón.",
  blackboard:"La pizarra imaginaria protesta si nadie presta atención.",
  ruler:"La regla golpea únicamente la mesa, de forma teatral, nunca a una persona.",
- canon:"Todo relato sobre sus tiempos escolares es ficción cómica; no se presenta como hecho histórico."
+ canon:"Todo relato sobre sus tiempos escolares es ficción cómica; no se presenta como hecho histórico.",
+ timeline:["Llegada con maleta de tizas al Colegio de la Tiza Eterna","Petar buscó carbón mientras Daskalov dibujó la chimenea para enseñar el invierno","Un teléfono del despacho sonó durante la clase y la pizarra ganó la competición de silencio","El colegio actual combina pizarras, pupitres y misiones educativas"]
+
 });
 export const HUMOR_BANK=Object.freeze([
  {id:"chalk",topic:/tiza|pizarra|escuela|clase/i,text:"La pizarra de mi escuela tenía más paciencia que todo el claustro."},
@@ -24,7 +26,9 @@ export function classifyStudentTone(text){
 }
 export function chooseHumorCue({text,history=[]}={}){
  if(classifyStudentTone(text)==="distressed")return null;
- const used=new Set((Array.isArray(history)?history:[]).filter(x=>x?.role==="assistant").flatMap(x=>HUMOR_BANK.filter(j=>String(x.content||"").includes(j.text)).map(j=>j.id)));
+ const previousAssistant=(Array.isArray(history)?history:[]).filter(x=>x?.role==="assistant").slice(-2);
+ if(previousAssistant.some(row=>HUMOR_BANK.some(j=>String(row.content||"").includes(j.text))))return null;
+  const used=new Set((Array.isArray(history)?history:[]).filter(x=>x?.role==="assistant").flatMap(x=>HUMOR_BANK.filter(j=>String(x.content||"").includes(j.text)).map(j=>j.id)));
  const candidates=HUMOR_BANK.filter(j=>j.topic.test(String(text||""))&&!used.has(j.id));
  return candidates.length?candidates[0]:null;
 }
