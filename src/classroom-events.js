@@ -3,8 +3,8 @@ const SCENARIOS=Object.freeze({
  phone:{reply:"¡Ese teléfono está más nervioso que el conserje Petar en el examen de historia! Siléncialo y continuamos.",gesture:"talk"},
  silence:{reply:"Clase silenciosa... ¡Milagro! ¿Alguien quiere participar? No pasa nada si necesitas pensar.",gesture:"talk"},
  board:{reply:"¡A la pizarra! Aquí los errores se corrigen y nadie tiene que avergonzarse.",gesture:"point_board"},
- talking:{reply:"¡Veo conversaciones por los pupitres! Seguro que la pizarra quiere participar también. Turno de escuchar.",gesture:"talk"},
- desk:{reply:"¡Atención! La regla golpea la mesa, no al alumnado. ¡PUM teatral y seguimos!",gesture:"ruler_desk"}
+ desk:{reply:"¡Atención! La regla golpea la mesa, no al alumnado. ¡PUM teatral y seguimos!",gesture:"ruler_desk"},
+ talking:{reply:"¡Veo conversaciones por los pupitres! Seguro que la pizarra quiere participar también. Turno de escuchar.",gesture:"talk"}
 });
 export const CLASSROOM_EVENTS=Object.freeze(Object.keys(SCENARIOS));
 export class ClassroomReactions{
