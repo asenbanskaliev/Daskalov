@@ -49,3 +49,10 @@ Las pruebas unitarias con Ollama simulado no demuestran Cloud ni Ollama local re
 - Chromium/Firefox: https://github.com/asenbanskaliev/Daskalov/actions/runs/42464485893 SUCCESS, SHA anterior para UI estable.
 - S07.06 completado como **funcionalidad opcional mock-verificada**; prueba proveedor real sigue S02.09. S08.06 mantiene PARTIAL por falta de LLM/humano reales.
 - Quedan 45 tareas; FULL, SEC-PUBLIC y VOICE-READY no están aprobados.
+
+## Reconcilación 8 noviembre 2026 — 74/109
+- Los 10 IDs de la sección 4G alcanzaron los contratos técnicos, con pruebas automatizadas y CI rápido verde.
+- https://github.com/asenbanskaliev/Daskalov/actions/runs/42467411741 unit/build SUCCESS.
+- https://github.com/asenbanskaliev/Daskalov/actions/runs/42467411676 seguridad SUCCESS.
+- https://github.com/asenbanskaliev/Daskalov/actions/runs/42467411860 navegador PENDIENTE EN ESTE CORTE.
+- Los gates externos de menores, rendimiento real, Cloud y voz autorizada no están certificados. FULL=NO.

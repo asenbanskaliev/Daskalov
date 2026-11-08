@@ -197,7 +197,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [ ] **S04.05** Adaptador TTS comercial opcional, claves solo servidor, presupuesto y fallback autorizado.  
   - **Aceptación:** Fallback no fuga datos locales y no hay tokens/keys en HTML/logs.  
   - **TDD:** TTS-005 · **Dep.:** S00.05.
-- [ ] **S04.06** AudioQueue Web Audio con prebuffer, streaming, cancelación, limpieza y reanudación.  
+- [x] **S04.06** AudioQueue Web Audio con prebuffer, streaming, cancelación, limpieza y reanudación.  
   - **Aceptación:** 20 turnos consecutivos sin mezclas, huecos largos ni URLs objeto filtradas.  
   - **TDD:** TTS-006 · **Dep.:** 04,S02.03.
 - [ ] **S04.07** Diseñar identidad vocal: voz grave, ligeramente ronca, español claro con influencia búlgara; actor autorizado y derechos.  
@@ -216,10 +216,10 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [x] **S05.01** Definir bible visual Daskalov y aula: proporciones, expresividad, paleta, rig, licencia y LOD.  
   - **Aceptación:** Revisión visual aprobada con hoja de referencia; no activos sin permiso comercial.  
   - **TDD:** GFX-001 · **Dep.:** S01.01.
-- [ ] **S05.02** Crear/importar GLB optimizado, estructura nombrada, esqueleto, materiales y UVs; conservar procedural de fallback.  
+- [x] **S05.02** Crear/importar GLB optimizado, estructura nombrada, esqueleto, materiales y UVs; conservar procedural de fallback.  
   - **Aceptación:** GLTFLoader abre el modelo y detecta huesos y blendshapes esperados.  
   - **TDD:** GFX-002 · **Dep.:** 01.
-- [ ] **S05.03** Diseñar 8-12 morph targets de boca y faciales, parpadeos, cejas y emociones.  
+- [x] **S05.03** Diseñar 8-12 morph targets de boca y faciales, parpadeos, cejas y emociones.  
   - **Aceptación:** GLB pasa validador automatizado y prueba de morphs.  
   - **TDD:** GFX-003 · **Dep.:** 02.
 - [x] **S05.04** AnimationMixer y clips idle, hablar, mirar, señalar, sorpresa, regla sobre mesa y vuelta a reposo.  
@@ -247,7 +247,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [x] **S06.01** Contrato AudioTimeline con requestID, fragmento, audioStart, duration, phonemes/visemes y emoción.  
   - **Aceptación:** Todos los tiempos son monotónicos y comparables; faltantes gestionados.  
   - **TDD:** AV-001 · **Dep.:** S04.06,S05.03.
-- [ ] **S06.02** VisemeMapper de español a REST/A-I/E/O/U/MBP/FV/L/CHSH y blendshapes.  
+- [x] **S06.02** VisemeMapper de español a REST/A-I/E/O/U/MBP/FV/L/CHSH y blendshapes.  
   - **Aceptación:** Tests fonéticos de español y nombres búlgaros sin posiciones inválidas.  
   - **TDD:** AV-002 · **Dep.:** 01.
 - [ ] **S06.03** Agendador Web Audio y AnimationMixer sin bloquear render, sincronizado a reloj de audio.  
@@ -256,7 +256,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [x] **S06.04** Fallback sin alineación: estimación por duración/envolvente, marcado como aproximado.  
   - **Aceptación:** Con Web Speech se anima aproximado y no se promete lip-sync exacto.  
   - **TDD:** AV-004 · **Dep.:** 03.
-- [ ] **S06.05** Gestos/emoción: comandos permitidos, selección determinista y prioridades frente a eventos de juego.  
+- [x] **S06.05** Gestos/emoción: comandos permitidos, selección determinista y prioridades frente a eventos de juego.  
   - **Aceptación:** Nunca ejecuta gestos desconocidos ni instrucciones textuales de modelo.  
   - **TDD:** AV-005 · **Dep.:** S05.04.
 - [x] **S06.06** Barge-in/cancel limpia boca, cejas, audio, gestos y subtítulos anteriores.  
@@ -374,7 +374,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [x] **S10.04** CSP, Permissions-Policy, CORS estricto, headers, protección CSRF y salida escapada.  
   - **Aceptación:** Pruebas XSS/CSRF y CSP sin fallos críticos.  
   - **TDD:** SAFE-004 · **Dep.:** S01.03.
-- [ ] **S10.05** Rate limiting distribuible, cuotas de coste/tokens, rechazo de prompt excesivo y conexiones simultáneas.  
+- [x] **S10.05** Rate limiting distribuible, cuotas de coste/tokens, rechazo de prompt excesivo y conexiones simultáneas.  
   - **Aceptación:** Prueba de carga mantiene costes por sesión dentro de cuota.  
   - **TDD:** SAFE-005 · **Dep.:** S00.05.
 - [ ] **S10.06** Análisis dependencias/lockfile/SBOM, licencias del modelo 3D, TTS, voces y software.  
@@ -383,7 +383,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [ ] **S10.07** No logs de audio ni texto de menores: observabilidad agregada, gestión de borrados y backup seguro.  
   - **Aceptación:** Inspección de logs y artefactos CI sin PII.  
   - **TDD:** SAFE-007 · **Dep.:** S07.07.
-- [ ] **S10.08** Políticas de uso, accesibilidad y respuesta ante solicitudes de supresión o incidentes.  
+- [x] **S10.08** Políticas de uso, accesibilidad y respuesta ante solicitudes de supresión o incidentes.  
   - **Aceptación:** Procedimiento y simulacro reproducible.  
   - **TDD:** SAFE-008 · **Dep.:** 02,07.
 - [ ] **S10.09** Revisión independiente previa al despliegue de Internet y prohibición de publicación abierta sin aprobarla.  
@@ -393,7 +393,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 ### S11 — Rendimiento, estabilidad y observabilidad
 **Prioridad:** P1 · **Gate:** PERF-READY · **Dependencias:** S02,S04,S05,S06
 
-- [ ] **S11.01** Medir tiempo a primer token, primer audio, total LLM, RTF TTS, gaps de audio y cancelaciones.  
+- [x] **S11.01** Medir tiempo a primer token, primer audio, total LLM, RTF TTS, gaps de audio y cancelaciones.  
   - **Aceptación:** Métricas anónimas reproducibles con percentiles p50/p95.  
   - **TDD:** PERF-001 · **Dep.:** S02.10.
 - [ ] **S11.02** Presupuesto 3D de GLB/texturas/draw calls/VRAM, y benchmark Chrome/Edge/Firefox.  
@@ -408,7 +408,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [x] **S11.05** Prueba estrés 50-100 turnos sintéticos y desconexiones aleatorias/red lenta/429/500.  
   - **Aceptación:** Sin pérdidas de control, memoria creciente ni fuga de audio.  
   - **TDD:** PERF-005 · **Dep.:** S02.07.
-- [ ] **S11.06** Métricas del backend: colas, DB p95, coste estimado, errores; dashboard opt-in para desarrollo.  
+- [x] **S11.06** Métricas del backend: colas, DB p95, coste estimado, errores; dashboard opt-in para desarrollo.  
   - **Aceptación:** No se transmite PII por defecto; export JSON agregado.  
   - **TDD:** PERF-006 · **Dep.:** S10.07.
 - [ ] **S11.07** Rondas accesibilidad móviles y navegador sin micro/WebGL con regresión visual.  
@@ -442,7 +442,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [x] **S12.07** Checklist de aceptación FULL: todos los gates, 100% tests críticos, voces validadas, seguridad menores aprobada.  
   - **Aceptación:** No se declara FULL sin evidencias reales de cada gate y revisión humana.  
   - **TDD:** REL-007 · **Dep.:** 01-06.
-- [ ] **S12.08** Cierre de PR/release únicamente con autorización del propietario; no merge automático en main.  
+- [x] **S12.08** Cierre de PR/release únicamente con autorización del propietario; no merge automático en main.  
   - **Aceptación:** Rama y estado reproducibles, historial y pruebas preservadas.  
   - **TDD:** REL-008 · **Dep.:** 07.
 
@@ -559,6 +559,34 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - GitHub Environment protegido + smoke real Ollama Cloud/Local, STT/TTS reales, voz grave española con acento búlgaro validado, GLB con rig/morphs profesional.
 - Datos de menores y consentimiento tutelar legal, cuentas Cloud públicas con cuotas distribuidas, auditoría externa de seguridad, pruebas visuales y benchmarks en hardware físico.
 - El comando `npm run gate:full` debe continuar fallando. **No fusionar a main ni publicar**.
+## 4G. Tanda ODD + TDD — 8 noviembre 2026, rig facial, voz, límites y métricas
+
+**10 contratos técnicos adicionales verificados** (64 → 74 DONE de 109; **35 siguen pendientes**). Esta cifra NO certifica FULL, ni voz licenciada, ni seguridad para menores, ni benchmark de hardware o Cloud real. Solo se marcaron DONE los contratos demostrables en código y pruebas automáticas.
+
+| ID | Implementación técnica y pruebas de aceptación |
+|---|---|
+| S04.06 | `src/audio-queue.js`, `src/tts-local.js`: Web Audio serializado con prebuffer concurrente, orden estable, decodificación de WAV fragmentado, cancel/pause/resume y limpieza; `tests/audio-queue.test.mjs`, `tests/tts-stream-order.test.mjs`. No se afirma que Piper real haga PCM continuo. |
+| S05.02 | GLB original `public/assets/daskalov-lowpoly.glb` 72 KB, esqueleto de siete huesos, materiales con colores por vértice, UV e inverse bind, fallback procedural; `tests/lowpoly-glb.test.mjs` y `tests/morph-animation-contract.test.mjs`. |
+| S05.03 | 12 morph targets faciales nombrados (boca, cejas, ojos, sonrisa) cargados en Three.js; tests GFX-003 y AV-002. Rig estilizado, no voz actor calibrada. |
+| S06.02 | `src/visemes.js` mapa de los diez visemas del español a nombres reales de morph; `src/scene.js` los anima, con fallback; `tests/audio-clock-sync.test.mjs`. |
+| S06.05 | `src/gesture-director.js`: whitelist y prioridad safety/player/lesson/llm/ambient con caducidad; `tests/gesture-director.test.mjs`. |
+| S10.05 | `server/usage-ledger.mjs`: quotas diarias y concurrentes distribuidas por SQLite compartido, HMAC sin IP en claro, estimaciones conservadoras de tokens y expiración de leases; `tests/usage-ledger.test.mjs`. No autoriza exposición pública sin login real. |
+| S10.08 | `odd/security/use-privacy-incident-policy.md`: política de uso, acceso, incidentes y supresión, con roles y límites, `tests/use-policy.test.mjs`; revisión legal real sigue S10.02 y S10.09. |
+| S11.01 | `MetricsCollector` más `VoiceMetrics`: primer token, primer audio, tiempo total LLM, RTF TTS, gaps, STT/TTS y cancelaciones, `tests/metrics.test.mjs`, `tests/voice-metrics.test.mjs`. Medición disponible, metas reales no certificadas. |
+| S11.06 | `src/metrics-ui.js` dashboard opt-in, backend agregado de DB p95, errores, colas, costes estimados, sin texto ni audio; pruebas unitarias y Playwright. |
+| S12.08 | CI y `scripts/full-release-gate.mjs` no fusionan ni despliegan, y el PR permanece draft hasta autorización del propietario; `tests/no-auto-release.test.mjs`. |
+
+### Evidencia de ejecución
+- Unit, contracts and build exactos de la tanda: https://github.com/asenbanskaliev/Daskalov/actions/runs/42467411741 — SUCCESS.
+- Security audit sin secretos: https://github.com/asenbanskaliev/Daskalov/actions/runs/42467411676 — SUCCESS.
+- Browser E2E exacto de la tanda: https://github.com/asenbanskaliev/Daskalov/actions/runs/42467411860 — **PENDIENTE AL CIERRE DE ESTE CORTE**; no se marca aprobado hasta completar.
+- Synthetic performance anterior: https://github.com/asenbanskaliev/Daskalov/actions/runs/42466261582 — SUCCESS; mide mocks, NO hardware real.
+
+### Bloqueos aún vigentes
+- OLLAMA_API_KEY/Environment de GitHub requiere configuración del propietario fuera del código; nunca usarlo en ramas editables.
+- Voz, acento búlgaro, licencias, comparación Piper/Kokoro, 20 audios reales, panel ciego, revisión de menores y docentes deben ejecutarse con personas y recursos autorizados.
+- Los backups históricos pueden contener recuerdos ya eliminados y precisan gestión de supresión jurídica; no declarar MEM-READY.
+- FPS hardware y WCAG AA exigen equipos reales/revisión humana. `npm run gate:full` sigue fallando correctamente hasta 109/109 más 12 gates firmados.
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|
