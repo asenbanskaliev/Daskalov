@@ -6,6 +6,7 @@ import {fileURLToPath} from "node:url";
 import {normalizeReply,inferAnimation} from "./personality.mjs";
 import {buildContext} from "./context-builder.mjs";
 import {safeDeterministicReply} from "./child-safety.mjs";
+import {moderateProfessorOutput} from "./output-moderation.mjs";
 import {chatOllama,streamOllama,listOllamaModels,OllamaError,validateModel,validateProvider} from "./ollama.mjs";
 import {SentenceChunker} from "./stream.mjs";
 import {streamWithOptionalFallback} from "./fallback.mjs";
@@ -245,7 +246,7 @@ export function createApp({
      if(path==="/api/chat/stream"){
       const requestId=randomUUID(),chunker=new SentenceChunker();
       const cancellation=new AbortController();
-      let sequence=0,full="",finalProvider=provider,finalModel=model,firstTokenMs=null,completedStream=false;
+      let sequence=0,full="",raw="",finalProvider=provider,finalModel=model,firstTokenMs=null,completedStream=false;
       const startedMs=Date.now();
       res.once("close",()=>{if(!res.writableEnded)cancellation.abort();});
       res.writeHead(200,{
@@ -276,15 +277,25 @@ export function createApp({
         }
         const text=String(packet.text);
         if(firstTokenMs===null&&text.length)firstTokenMs=Date.now()-startedMs;
-        full+=text;
-        if(full.length>6000)throw new OllamaError("Respuesta demasiado larga.",502);
-        emit("delta",{text});
-        for(const sentence of chunker.push(text))emit("sentence",{text:sentence});
+        raw+=text;
+        if(raw.length>6000)throw new OllamaError("Respuesta demasiado larga.",502);
+        // Do not expose unmoderated raw tokens to the browser or TTS.
+        for(const sentence of chunker.push(text)){
+         const safe=moderateProfessorOutput(sentence).text;
+         full+=(full?" ":"")+safe;
+         emit("delta",{text:(full.length>safe.length?" ":"")+safe});
+         emit("sentence",{text:safe});
+        }
        }
        if(!cancellation.signal.aborted){
+        for(const sentence of chunker.flush()){
+         const safe=moderateProfessorOutput(sentence).text;
+         full+=(full?" ":"")+safe;
+         emit("delta",{text:(full.length>safe.length?" ":"")+safe});
+         emit("sentence",{text:safe});
+        }
         const reply=normalizeReply(full);
         if(!reply)throw new OllamaError("Ollama no devolvió texto.",502);
-        for(const sentence of chunker.flush())emit("sentence",{text:sentence});
         if(remember){
          memory.save(session.playerId,"user",body.text);
          memory.save(session.playerId,"assistant",reply);
@@ -303,7 +314,7 @@ export function createApp({
       }
       return;
      }
-     const reply=normalizeReply(await llm({provider,model,messages}));
+     const reply=normalizeReply(moderateProfessorOutput(await llm({provider,model,messages})).text);
      if(!reply)throw new OllamaError("El profesor no ha respondido.",502);
      if(remember){
       memory.save(session.playerId,"user",body.text);
