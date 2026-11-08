@@ -22,3 +22,12 @@ test("TTS-005: browser cannot speak Cloud without an opt-in; consent is never pe
  assert.doesNotMatch(ui,/writeSetting\("cloudTtsConsent"/);
  voice.cancel();
 });
+
+test("VAL-02: TTS silenciado existe en UI y nunca deriva a browser speech",()=>{
+ const html=readFileSync("index.html","utf8"),ui=readFileSync("src/voice-ui.js","utf8");
+ assert.match(html,/<option value="disabled">Sin voz/);
+ assert.match(ui,/const silent=createTTSProvider\("disabled"\)/);
+ assert.match(ui,/choice\.value==="disabled"\?silent/);
+ const disabled=createTTSProvider("disabled",{browser:{speak:()=>{throw Error("Cannot speak in disabled mode");}}});
+ assert.equal(disabled.speak("Mensaje de prueba"),false);
+});

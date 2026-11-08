@@ -4,6 +4,7 @@ import {LocalPiperVoice} from "./tts-local.js";
 import {AudioLipSync} from "./audio-lipsync.js";
 import {VoiceMetrics} from "./voice-metrics.js";
 import {readSetting,writeSetting} from "./settings.js";
+import {createTTSProvider} from "./tts-provider.js";
 
 export function createVoiceUI({find,onSpeaking=()=>{},onViseme=()=>{},onAudioClock=()=>{},onError=()=>{}}){
  let enabled=true;
@@ -49,7 +50,8 @@ export function createVoiceUI({find,onSpeaking=()=>{},onViseme=()=>{},onAudioClo
  });
  const choice=find("ttsMode");
  choice.value=readSetting("ttsMode")||"browser";
- const selected=()=>choice.value==="local"?local:choice.value==="cloud"?cloud:speech;
+ const silent=createTTSProvider("disabled");
+ const selected=()=>choice.value==="disabled"?silent:choice.value==="local"?local:choice.value==="cloud"?cloud:speech;
  function cancel(){stats.cancel();speech.cancel();local.cancel();cloud.cancel();lipActive=false;if(lipFrame)window.cancelAnimationFrame(lipFrame);lipFrame=0;lip.cancel();onAudioClock(null);onViseme("REST");}
  function populate(){
   const select=find("voiceChoice"),previous=select.value;
@@ -65,11 +67,12 @@ export function createVoiceUI({find,onSpeaking=()=>{},onViseme=()=>{},onAudioClo
  choice.addEventListener("change",()=>{
   cancel();writeSetting("ttsMode",choice.value);
   find("voiceChoice").disabled=choice.value!=="browser";
+  if(choice.value==="disabled"){find("pauseVoice").disabled=true;find("resumeVoice").disabled=true;}
   updateCostInfo();
  });
  function updateCostInfo(){
   const note=find("ttsCostInfo");
-  if(note)note.textContent=choice.value==="cloud"?"Cloud TTS: proveedor de pago; máximo 10 peticiones diarias en este servidor privado, previa autorización.":choice.value==="local"?"Piper local: no usa Cloud, consume recursos del equipo y requiere licencia de voz.":"Voz del navegador: puede utilizar servicios del sistema; sin cargo desde la aplicación.";
+  if(note)note.textContent=choice.value==="disabled"?"Sin voz: las respuestas solo aparecen como texto; no se reproduce audio.":choice.value==="cloud"?"Cloud TTS: proveedor de pago; máximo 10 peticiones diarias en este servidor privado, previa autorización.":choice.value==="local"?"Piper local: no usa Cloud, consume recursos del equipo y requiere licencia de voz.":"Voz del navegador: puede utilizar servicios del sistema; sin cargo desde la aplicación.";
  }
  updateCostInfo();
  find("cloudTtsConsent")?.addEventListener("change",()=>{
