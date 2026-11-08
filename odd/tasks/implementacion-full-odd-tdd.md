@@ -673,6 +673,10 @@ S12.05 sigue abierta: el drill automatizado de backup/SQLite es real en CI, pero
 
 S06.03 **implementación pendiente de cierre CI**: `src/audio-mixer-clock.js` integra el reloj `AudioContext.currentTime` en `AnimationMixer.update` durante reproducción. Una pausa suspende el avance de los clips aunque siga RAF; el cierre/cancelación reinicia el reloj, se limitan saltos temporales y se conserva RAF para idle. `src/voice-ui.js` publica el reloj al empezar los fragmentos Piper/Cloud, `src/app.js` lo dirige a `src/scene.js`. Tests: `tests/audio-mixer-clock.test.mjs`. Esto no acredita desfase físico medio menor de 120 ms ni calidad de voz, que seguirán bloqueadas para AV-READY.
 
+## 4U. Comparador de rendimiento antes/después — 8 noviembre 2026
+
+S11.08 **PARTIAL**: `scripts/performance-comparator.mjs` compara informes de hardware de 5 minutos del mismo navegador, resolución, calidad y perfil, con SHA exactos diferentes; calcula diferencias de FPS p05/p50 y primera voz, señala regresiones superiores al 5 % (FPS) o 10 % (latencia) y falla si las pruebas no son comparables. `npm run perf:compare -- <antes.json> <despues.json> <salida.json>` genera solo agregados, nunca datos de alumnado y jamás declara release aprobado. Contrato TDD: `tests/performance-comparator.test.mjs`. Falta medir antes/después en hardware físico de referencia (S11.02/03/04), revisar mejoras y registrar evidencias externas.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|

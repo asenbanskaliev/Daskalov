@@ -27,7 +27,8 @@
     "backup:prune": "node scripts/secure-backup-cli.mjs prune",
     "eval:persona:baseline": "node scripts/persona-baseline.mjs",
     "eval:voice": "node scripts/voice-validation.mjs",
-    "security:licenses": "node scripts/license-inventory.mjs"
+    "security:licenses": "node scripts/license-inventory.mjs",
+    "perf:compare": "node scripts/performance-comparator.mjs"
   },
   "dependencies": {
     "three": "0.187.0"
