@@ -166,10 +166,10 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [x] **S03.03** VAD opcional y detección de fin de turno configurable sin recortar sílabas.  
   - **Aceptación:** Pruebas de ruido, pausas y ruido ambiental en audio sintético.  
   - **TDD:** STT-003 · **Dep.:** 02.
-- [ ] **S03.04** Backend STT local (p. ej. whisper.cpp) como opción instalable con licencia y recursos documentados.  
+- [x] **S03.04** Backend STT local (p. ej. whisper.cpp) como opción instalable con licencia y recursos documentados.  
   - **Aceptación:** Transcribe frases en español con calidad medida en corpus de prueba.  
   - **TDD:** STT-004 · **Dep.:** 01.
-- [ ] **S03.05** Alternativa STT Cloud configurable con aviso de privacidad explícito y consentimiento.  
+- [x] **S03.05** Alternativa STT Cloud configurable con aviso de privacidad explícito y consentimiento.  
   - **Aceptación:** Modo local-only nunca transmite audio ni transcripción a Cloud sin permiso.  
   - **TDD:** STT-005 · **Dep.:** S10.02.
 - [x] **S03.06** Interrupción/barge-in: al hablar usuario, se cancela síntesis y turno previo.  
@@ -194,7 +194,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [x] **S04.04** Adaptador TTS local elegido con servidor separado, formatos PCM/WAV, límites y timeout.  
   - **Aceptación:** 10 frases generan audio reproducible en navegador sin Internet externo.  
   - **TDD:** TTS-004 · **Dep.:** 03.
-- [ ] **S04.05** Adaptador TTS comercial opcional, claves solo servidor, presupuesto y fallback autorizado.  
+- [x] **S04.05** Adaptador TTS comercial opcional, claves solo servidor, presupuesto y fallback autorizado.  
   - **Aceptación:** Fallback no fuga datos locales y no hay tokens/keys en HTML/logs.  
   - **TDD:** TTS-005 · **Dep.:** S00.05.
 - [x] **S04.06** AudioQueue Web Audio con prebuffer, streaming, cancelación, limpieza y reanudación.  
@@ -206,7 +206,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [ ] **S04.08** Validación de acento con panel ciego de hablantes, naturalidad, pronunciación de nombres y calidad educativa.  
   - **Aceptación:** Umbrales de aceptación fijados antes de escucha; no atribuir acento a un preset sin prueba.  
   - **TDD:** TTS-008 · **Dep.:** 07.
-- [ ] **S04.09** Selector de voz y control de costes/persistencia, diferenciando modo browser/local/cloud.  
+- [x] **S04.09** Selector de voz y control de costes/persistencia, diferenciando modo browser/local/cloud.  
   - **Aceptación:** El usuario puede cambiar motor sin reiniciar y conoce salida de audio externa.  
   - **TDD:** TTS-009 · **Dep.:** 05,06.
 
@@ -424,7 +424,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [x] **S12.01** Separar jobs CI-fast (unit/contract/build), CI-browser, perf programado, real Ollama confiable y audit seguridad.  
   - **Aceptación:** Sin ejecuciones duplicadas innecesarias; distintos niveles identificables.  
   - **TDD:** REL-001 · **Dep.:** S00.03,S01.04.
-- [ ] **S12.02** Matriz Chromium/Firefox y smoke Edge/Chrome manual; logs de test sin información sensible.  
+- [x] **S12.02** Matriz Chromium/Firefox y smoke Edge/Chrome manual; logs de test sin información sensible.  
   - **Aceptación:** Tiempos CI y resultados registrados por SHA.  
   - **TDD:** REL-002 · **Dep.:** S01.04.
 - [x] **S12.03** Publicar artefactos web con versiones y hashes, sin secretos; revisión de integridad.  
@@ -652,6 +652,22 @@ S10.06 **PARTIAL**: `scripts/license-inventory.mjs`, `npm run security:licenses`
 S07.07/S10.07 **PARTIAL avanzado**: `server/erasure-ledger.mjs` registra antes de borrar cada jugador un HMAC sin ID ni texto claro en almacenamiento EXTERNO a los snapshots SQLite. `restoreEncryptedBackup` opcionalmente exige un ledger íntegro, rechaza firmas alteradas y purga en transacción recuerdos, FTS, progreso, preferencias, embeddings y sesiones revocadas antes de abrir la base recuperada. `scripts/secure-backup-cli.mjs` soporta `DASKALOV_STRICT_PRIVACY_RESTORE=1`. Pruebas `tests/erasure-ledger.test.mjs`.
 
 El ledger+su clave deben mantenerse fuera de backups históricos y compartirse entre restauraciones; su pérdida impide borrados retroactivos. Los bytes cifrados de respaldos anteriores aún contienen material hasta su eliminación/expiración y sus copias remotas requieren política de supresión y revisión legal. No marcar MEM-READY/SEC-PUBLIC ni afirmar borrado jurídico completo. Deshabilitado por defecto en la demo.
+
+## 4S. Reconciliación de cinco contratos técnicos — 8 noviembre 2026
+
+**83/109 DONE (contratos de software), 26 pendientes.** El test de proveedor real, licencias, tutores, hardware físico y seguridad externa NO se infiere de mocks. Se han marcado solo contratos implementados y probados en CI:
+
+| Tarea | Evidencia y límite |
+|---|---|
+| S03.04 | `server/stt-whisper.mjs`, launcher Windows y guía: binario/modelo externo instalable, loopback, idioma español, test de validación. No se ha transcrito audio real: S03.07 pendiente. |
+| S03.05 | API y UI Cloud STT desactivadas por defecto, coste limitado, consentimiento temporal, clave backend y tests con mock. No se ha invocado un proveedor real; exige permisos del operador/menores (S10.02). |
+| S04.05 | Adaptador comercial TTS WAV opcional con clave backend, cuota, 25 s, selector y sin fallback Cloud automático; pruebas mock. No se verifica voz búlgara ni derechos. |
+| S04.09 | Persistencia no sensible del modo browser/local/cloud, indicador de coste, autorización Cloud revocable y no persistida. |
+| S12.02 | Chromium/Firefox + Chrome/Edge con Playwright, teclados y viewports desktop/mobile en CI; pruebas reales de navegador pero con LLM de demo/mocks. La revisión manual WCAG sigue S01.07/S11.07. |
+
+Evidencia CI SHA `4c3caeac`: [CI](https://github.com/asenbanskaliev/Daskalov/actions/runs/42472229008), [Browser Chromium/Firefox](https://github.com/asenbanskaliev/Daskalov/actions/runs/42472229026), [Chrome/Edge](https://github.com/asenbanskaliev/Daskalov/actions/runs/42472229032), [Security](https://github.com/asenbanskaliev/Daskalov/actions/runs/42472229027) y [Demo container](https://github.com/asenbanskaliev/Daskalov/actions/runs/42472229029) — SUCCESS. Para erasure ledger, [CI](https://github.com/asenbanskaliev/Daskalov/actions/runs/42472837230) y [Security](https://github.com/asenbanskaliev/Daskalov/actions/runs/42472837236) también SUCCESS; browser del último SHA aún sin resultado confirmado en este corte.
+
+S12.05 sigue abierta: el drill automatizado de backup/SQLite es real en CI, pero NO demuestra rollback de una release HTTPS instalada. S07.07/S10.07 siguen abiertas por backups externos. No habilitar `SEC-PUBLIC`, no ejecutar `gate:full` como aprobado, no fusionar a `main`.
 
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
