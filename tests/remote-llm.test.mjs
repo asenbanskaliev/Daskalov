@@ -53,3 +53,17 @@ test("AI-011: invalid credentials and upstream errors fail closed without leakin
  assert.throws(()=>validateRemoteKey("bad\nvalue"));
  await assert.rejects(()=>chatRemote({provider:"openrouter",apiKey:"sk-or-v1-mock",model:"deepseek/deepseek-chat:free",messages:[{role:"user",content:"x"}],fetchImpl:async()=>new Response("api-key-exposed",{status:429})}),e=>e.status===502&&!e.message.includes("api-key-exposed"));
 });
+
+test("AI-011: partially streamed SSE without [DONE] is never accepted as complete",async()=>{
+ const stream=new ReadableStream({start(controller){
+  controller.enqueue(new TextEncoder().encode('data: {"choices":[{"delta":{"content":"Fragmento incompleto"}}]}\n\n'));
+  controller.close();
+ }});
+ const output=[];
+ await assert.rejects(async()=>{
+  for await(const delta of streamRemote({provider:"openrouter",apiKey:"sk-or-v1-mock",
+   model:"deepseek/deepseek-chat:free",messages:[{role:"user",content:"hola"}],
+   fetchImpl:async()=>new Response(stream)}))output.push(delta);
+ },/sin confirmación completa/);
+ assert.deepEqual(output,["Fragmento incompleto"]);
+});

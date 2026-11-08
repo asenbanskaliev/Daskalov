@@ -105,5 +105,6 @@ export async function* streamRemote({provider,model,messages,apiKey,fetchImpl=fe
   if(error instanceof OllamaError)throw error;
   throw new OllamaError("El flujo externo no pudo procesarse.",502);
  }finally{await reader.cancel().catch(()=>{});reader.releaseLock();}
+ if(!complete)throw new OllamaError("El flujo externo terminó sin confirmación completa.",502);
  if(!chars)throw new OllamaError("El proveedor no generó texto visible.",502);
 }
