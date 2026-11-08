@@ -717,6 +717,10 @@ S03.07 **PARTIAL**: `scripts/voice-validation.mjs stt-matrix` rechaza informes q
 
 S05.06 **PARTIAL avanzado**: `src/baked-box-geometry.js` genera colores de vértice deterministas para las seis caras de un cubo, oscurece suelo inferior y caras posteriores, evita texturas nuevas y asigna clones `vertexColors` únicamente a cajas estáticas del aula. El avatar procedural/dinámico conserva su material y geometría sin alteración; `createStaticBoxBatcher` sigue instanciando grupos de material. `tests/baked-box-geometry.test.mjs` comprueba con Three.js real los tonos, materiales independientes y cero texturas añadidas; `e2e/performance-budget.spec.js` comprueba la capacidad activa en navegador. Quedan prueba visual humana, benchmarks VRAM en equipo físico y compresión de cualquier textura nueva antes de cerrar S05.06.
 
+## 4AD. Evaluaciones locales sin rastros de credenciales — 8 noviembre 2026
+
+S08.06/S10.07 **PARTIAL**: `scripts/persona-eval.mjs` evita volcar `error.message` de un proveedor real en informes del modelo. Los errores externos se representan únicamente como `critical:["provider-failed"]` y `pass:false`. El test `tests/persona-error-redaction.test.mjs` comprueba ausencia de secretos incluso con excepciones deliberadamente contaminadas. Sigue pendiente evaluar las 300 respuestas auténticas y validarlas con especialistas.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|

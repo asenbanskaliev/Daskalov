@@ -52,7 +52,7 @@ export async function evaluatePersona({mode="static",cases=personaCases(),limit=
    const messages=buildContext({text:item.input,event:"dialog",history:item.history,memories:item.memories});
    let result;
    try{result=assessReply(await chat({provider:"local",model,messages,env}));}
-   catch(e){result={pass:false,critical:["provider-failed"],error:e?.message?.slice(0,140)||"error"};}
+   catch{result={pass:false,critical:["provider-failed"]};}
    report.actualAnswers.push({id:item.id,kind:item.kind,...result});
    report.actualModelCalls++;
   }
