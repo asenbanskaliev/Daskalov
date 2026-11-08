@@ -721,6 +721,10 @@ S05.06 **PARTIAL avanzado**: `src/baked-box-geometry.js` genera colores de vért
 
 S08.06/S10.07 **PARTIAL**: `scripts/persona-eval.mjs` evita volcar `error.message` de un proveedor real en informes del modelo. Los errores externos se representan únicamente como `critical:["provider-failed"]` y `pass:false`. El test `tests/persona-error-redaction.test.mjs` comprueba ausencia de secretos incluso con excepciones deliberadamente contaminadas. Sigue pendiente evaluar las 300 respuestas auténticas y validarlas con especialistas.
 
+## 4AE. Piper y Kokoro — benchmark local reproducible — 8 noviembre 2026
+
+S04.03 **PARTIAL**: `scripts/tts-local-benchmark.mjs` ejecuta Piper y Kokoro como programas locales preinstalados (sin shell y con consentimiento explícito `DASKALOV_VOICE_BENCHMARK_CONSENT=1`), usa tres frases fijas idénticas sin datos personales, mide duración WAV PCM16 y tiempo por síntesis, compara RTF p50/p95, limpia WAV temporales y exporta solo agregados. Nunca confirma licencias ni mide CPU/RAM ni calidad vocal: los criterios externos siguen abiertos. `tests/tts-local-benchmark.test.mjs` cubre denegación por defecto, frases equivalentes, WAV auténtico sintético y fail-closed por formato. Ejecutar con `npm run eval:tts:local -- <config-privado.json> <reporte.json>` solo después de verificar comandos y licencias de los modelos en el equipo. No se hacen descargas ni llamadas de pago.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|

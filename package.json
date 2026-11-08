@@ -28,7 +28,8 @@
     "eval:persona:baseline": "node scripts/persona-baseline.mjs",
     "eval:voice": "node scripts/voice-validation.mjs",
     "security:licenses": "node scripts/license-inventory.mjs",
-    "perf:compare": "node scripts/performance-comparator.mjs"
+    "perf:compare": "node scripts/performance-comparator.mjs",
+    "eval:tts:local": "node scripts/tts-local-benchmark.mjs"
   },
   "dependencies": {
     "three": "0.187.0"
