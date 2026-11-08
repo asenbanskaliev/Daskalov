@@ -3,10 +3,10 @@
  * Cancelling a turn aborts pending and active playback.
  */
 export class AudioQueue {
- constructor({AudioContextCtor=globalThis.AudioContext||globalThis.webkitAudioContext,onSpeaking=()=>{}}={}){
-  this.Ctor=AudioContextCtor;this.onSpeaking=onSpeaking;this.ctx=null;this.generation=0;this.tail=Promise.resolve();this.sources=new Set();this.pending=new Set();
+ constructor({AudioContextCtor=globalThis.AudioContext||globalThis.webkitAudioContext,onSpeaking=()=>{},onFragmentStart=()=>{}}={}){
+  this.Ctor=AudioContextCtor;this.onSpeaking=onSpeaking;this.onFragmentStart=onFragmentStart;this.ctx=null;this.generation=0;this.tail=Promise.resolve();this.sources=new Set();this.pending=new Set();
  }
- async enqueue(buffer){
+ async enqueue(buffer,{text="",fragmentId=null}={}){
   if(!this.Ctor)throw Error("AudioContext no disponible.");
   const version=this.generation;
   const play=async()=>{
@@ -27,7 +27,21 @@ export class AudioQueue {
     };
     source.onended=finish;
     this.sources.add(source);this.pending.add(finish);
-    try{this.onSpeaking(true);source.start();}catch(error){finish();reject(error);}
+    try{
+     this.onSpeaking(true);
+     source.start();
+     const started=Number(this.ctx.currentTime);
+     const seconds=Number(audio.duration);
+     if(Number.isFinite(started)&&Number.isFinite(seconds)&&seconds>0){
+      this.onFragmentStart({
+       fragmentId:fragmentId||"fragment-"+version+"-"+Math.round(started*1000),
+       text:String(text).slice(0,160),
+       audioStartMs:Math.round(started*1000),
+       durationMs:Math.round(seconds*1000),
+       clockMs:()=>Number(this.ctx?.currentTime||0)*1000
+      });
+     }
+    }catch(error){finish();reject(error);}
    });
   };
   const current=this.tail.then(play,play);

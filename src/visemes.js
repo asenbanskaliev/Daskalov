@@ -27,3 +27,24 @@ export function estimateVisemeFrames(text,durationMs,{startMs=0}={}){
  frames.push({atMs:first+validDuration,viseme:"REST"});
  return frames;
 }
+
+/** Named facial blendshape contract; geometrical placeholder uses manual mouth scaling. */
+export const VISEME_BLENDSHAPES=Object.freeze([
+ "mouthOpen","mouthWide","mouthNarrow","lipsClosed","lowerLipBite","tongueUp","lipsForward"
+]);
+export function visemeBlendshapeWeights(value){
+ const viseme=normalizeViseme(value);
+ const weights={
+  REST:[0,0,0,1,0,0,0],
+  A:[1,.35,0,0,0,0,0],
+  I:[.35,1,0,0,0,0,0],
+  E:[.55,.7,0,0,0,0,0],
+  O:[.7,0,.85,0,0,0,.8],
+  U:[.35,0,1,0,0,0,1],
+  MBP:[0,0,0,1,0,0,0],
+  FV:[.2,0,0,.15,1,0,0],
+  L:[.45,.25,0,0,0,1,0],
+  CHSH:[.3,0,.5,0,0,0,.5]
+ };
+ return Object.fromEntries(VISEME_BLENDSHAPES.map((name,i)=>[name,weights[viseme][i]]));
+}

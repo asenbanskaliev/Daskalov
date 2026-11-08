@@ -1,6 +1,7 @@
 import {mapSpanishGrapheme} from "./visemes.js";
 import {BrowserSpeechQueue} from "./speech.js";
 import {LocalPiperVoice} from "./tts-local.js";
+import {AudioLipSync} from "./audio-lipsync.js";
 import {readSetting,writeSetting} from "./settings.js";
 
 export function createVoiceUI({find,onSpeaking=()=>{},onViseme=()=>{},onError=()=>{}}){
@@ -11,11 +12,28 @@ export function createVoiceUI({find,onSpeaking=()=>{},onViseme=()=>{},onError=()
   find("pauseVoice").disabled=!active;
   find("resumeVoice").disabled=active||!enabled;
  }});
- const local=new LocalPiperVoice({onSpeaking:active=>{onSpeaking(active);if(!active)onViseme("REST");},onSentenceStart:text=>onViseme(mapSpanishGrapheme(text)),onError});
+ const lip=new AudioLipSync({onViseme});
+ let lipFrame=0,lipActive=false;
+ const runLipFrame=()=>{
+  lipFrame=0;
+  if(!lipActive)return;
+  lip.tick();
+  lipFrame=window.requestAnimationFrame(runLipFrame);
+ };
+ const local=new LocalPiperVoice({
+  onSpeaking:active=>{
+   onSpeaking(active);
+   lipActive=active;
+   if(active&&!lipFrame)lipFrame=window.requestAnimationFrame(runLipFrame);
+   if(!active){onViseme("REST");}
+  },
+  onAudioFragment:fragment=>lip.schedule(fragment),
+  onSentenceStart:text=>onViseme(mapSpanishGrapheme(text)),onError
+ });
  const choice=find("ttsMode");
  choice.value=readSetting("ttsMode")||"browser";
  const selected=()=>choice.value==="local"?local:speech;
- function cancel(){speech.cancel();local.cancel();onViseme("REST");}
+ function cancel(){speech.cancel();local.cancel();lipActive=false;if(lipFrame)window.cancelAnimationFrame(lipFrame);lipFrame=0;lip.cancel();onViseme("REST");}
  function populate(){
   const select=find("voiceChoice"),previous=select.value;
   select.replaceChildren();

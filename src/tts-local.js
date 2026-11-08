@@ -1,8 +1,8 @@
 import {AudioQueue} from "./audio-queue.js";
 export class LocalPiperVoice{
- constructor({fetchImpl=fetch,onSpeaking=()=>{},onSentenceStart=()=>{},onError=()=>{},AudioQueueFactory=options=>new AudioQueue(options)}={}){
+ constructor({fetchImpl=fetch,onSpeaking=()=>{},onSentenceStart=()=>{},onAudioFragment=()=>{},onError=()=>{},AudioQueueFactory=options=>new AudioQueue(options)}={}){
   this.fetchImpl=fetchImpl;this.onError=onError;this.onSentenceStart=onSentenceStart;
-  this.audio=AudioQueueFactory({onSpeaking});
+  this.audio=AudioQueueFactory({onSpeaking,onFragmentStart:onAudioFragment});
   this.enabled=true;this.epoch=0;this.pending=new Set();
  }
  listVoices(){return [{name:"Piper local",lang:"es-ES",localService:true}];}
@@ -24,7 +24,7 @@ export class LocalPiperVoice{
    const audio=await response.arrayBuffer();
    if(epoch!==this.epoch||control.signal.aborted)return;
    this.onSentenceStart(text);
-   await this.audio.enqueue(audio);
+   await this.audio.enqueue(audio,{text});
   })().catch(error=>{
    if(!control.signal.aborted&&epoch===this.epoch)this.onError(error);
   }).finally(()=>this.pending.delete(control));
