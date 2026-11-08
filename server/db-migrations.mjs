@@ -1,4 +1,4 @@
-export const DB_SCHEMA_VERSION=2;
+export const DB_SCHEMA_VERSION=3;
 /** Additive SQLite migrations; legacy memories and FTS remain intact. */
 export function migrateDatabase(db){
  db.exec("PRAGMA foreign_keys=ON");
@@ -19,7 +19,10 @@ export function migrateDatabase(db){
    "CREATE TRIGGER IF NOT EXISTS memories_au AFTER UPDATE ON memories BEGIN INSERT INTO memories_fts(memories_fts,rowid,content) VALUES('delete',old.id,old.content); INSERT INTO memories_fts(rowid,content) VALUES(new.id,new.content); END;",
    "INSERT OR IGNORE INTO schema_migrations(version) VALUES(1);",
    "INSERT OR IGNORE INTO schema_migrations(version) VALUES(2);",
-   "PRAGMA user_version=2;"
+   "CREATE TABLE IF NOT EXISTS memory_embeddings(memory_id INTEGER PRIMARY KEY REFERENCES memories(id) ON DELETE CASCADE, player_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE, model TEXT NOT NULL, dims INTEGER NOT NULL CHECK(dims BETWEEN 2 AND 2048), vector BLOB NOT NULL, checksum TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT(datetime('now')));",
+   "CREATE INDEX IF NOT EXISTS memory_embeddings_player_model ON memory_embeddings(player_id,model);",
+   "INSERT OR IGNORE INTO schema_migrations(version) VALUES(3);",
+   "PRAGMA user_version=3;"
   ].join("\n"));
   db.exec("COMMIT");
  }catch(error){db.exec("ROLLBACK");throw error;}

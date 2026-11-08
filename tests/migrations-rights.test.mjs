@@ -6,10 +6,10 @@ import {join} from "node:path";
 import {randomUUID} from "node:crypto";
 import {openMemory} from "../server/memory.mjs";
 
-test("MEM-001/MEM-002: schema v2, FTS5 y progreso aislado",()=>{
+test("MEM-001/MEM-002: schema v3, FTS5 y progreso aislado",()=>{
  const db=openMemory(":memory:");
  try{
-  assert.equal(db.schemaVersion(),2);
+  assert.equal(db.schemaVersion(),3);
   const id=randomUUID();
   db.save(id,"user","Me gustan los triángulos");
   db.recordProgress(id,"math",10);
@@ -46,7 +46,7 @@ test("MEM-001: respaldo VACUUM INTO restaura datos y su integridad",()=>{
   db.close();
   const restored=openMemory(backup);
   try{
-   assert.equal(restored.schemaVersion(),2);
+   assert.equal(restored.schemaVersion(),3);
    assert.ok(restored.search(id,"historia").length>0);
    assert.equal(restored.integrity().quickCheck,"ok");
   }finally{restored.close();}
