@@ -1,4 +1,4 @@
-name: NVIDIA - real 2-call protected proof
+name: NVIDIA - bounded real catalog proof
 # Explicit user authorization 2026-11-08. Only dedicated marker push, no PR.
 on:
   push:
@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: "24"
           package-manager-cache: false
-      - name: Real API evidence with exactly two short synthetic turns
+      - name: Real API evidence with max four candidates, two synthetic turns on first success
         env:
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: |

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {validateNvidiaLive,pickNvidiaModel} from "../scripts/nvidia-real-smoke-ci.mjs";
+import {validateNvidiaLive,pickNvidiaModel,candidateNvidiaModels,probeNvidiaCandidates} from "../scripts/nvidia-real-smoke-ci.mjs";
 test("AI-012: NVIDIA real smoke makes precisely two synthetic calls and outputs no response",async()=>{
  let calls=0;
  const result=await validateNvidiaLive({
@@ -33,4 +33,20 @@ test("AI-012: live probe selects only a catalog-listed suitable chat model",()=>
  assert.equal(pickNvidiaModel(["meta/llama-3.3-70b-instruct"]),"meta/llama-3.3-70b-instruct");
  assert.equal(pickNvidiaModel(["unknown/image-model"]),null);
  assert.equal(pickNvidiaModel(["bad//path"]),null);
+});
+
+test("AI-012: at most four real catalog candidates, no retries on auth/quota or streaming failure",async()=>{
+ const ids=["meta/llama-3.3-70b-instruct","openai/gpt-oss-120b","deepseek-ai/deepseek-v4-flash",
+  "nvidia/nemotron-3-super-120b-a12b","other/last-instruct"];
+ assert.equal(candidateNvidiaModels(ids).length,4);
+ let attempts=0;
+ const out=await probeNvidiaCandidates({key:"nvapi-mocked-key",models:ids,run:async({model})=>{
+  attempts++;
+  if(attempts<3)throw Error("HTTP 410 retired model");
+  return {provider:"nvidia",model,realProviderRequests:2};
+ }});
+ assert.equal(attempts,3);assert.equal(out.candidateAttempts,3);assert.equal(out.unavailableModels,2);
+ await assert.rejects(()=>probeNvidiaCandidates({key:"nvapi-mocked-key",models:ids,
+  run:async()=>{attempts++;throw Error("HTTP 429 quota");}}),/429/);
+ assert.equal(attempts,4,"quota denial stops without trying another candidate");
 });
