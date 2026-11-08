@@ -12,3 +12,10 @@ test("WEB-001: Web entry is bundled via source and does not fetch runtime CDN mo
  assert.doesNotMatch(scene,/cdn\.jsdelivr\.net|unpkg\.com|https:\/\/.*three\.module/);
  assert.match(config,/publicDir:\s*false/);
 });
+
+test("GFX-002: original GLB is copied into dist by an explicit Vite build asset plugin",()=>{
+ const config=readFileSync("vite.config.js","utf8");
+ assert.match(config,/daskalov-bundled-avatar/);
+ assert.match(config,/daskalov-lowpoly\.glb/);
+ assert.match(config,/emitFile/);
+});
