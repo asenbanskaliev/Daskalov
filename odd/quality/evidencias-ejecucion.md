@@ -32,3 +32,11 @@ Las pruebas unitarias con Ollama simulado no demuestran Cloud ni Ollama local re
 - Unit https://github.com/asenbanskaliev/Daskalov/actions/runs/42411299316 SUCCESS.
 - Browser https://github.com/asenbanskaliev/Daskalov/actions/runs/42411299248 SUCCESS.
 - Tanda 9/9 DONE. Total plan 19/109 DONE. S00.01, S00.05, S00.07, S01.07 y publicación pública siguen bloqueadas/pendientes y fuera de las nueve de la tanda.
+
+## Avances verificados 8 noviembre 2026 — 52/109
+- 33 contratos nuevos validados por unitarios/build de 55ff7dff7; gates externos no cumplidos.
+- CI unitarios/build: https://github.com/asenbanskaliev/Daskalov/actions/runs/42462595231 SUCCESS.
+- Auditoría de seguridad: https://github.com/asenbanskaliev/Daskalov/actions/runs/42462595023 SUCCESS.
+- Rendimiento sintético (100 conversaciones y 10 sesiones): https://github.com/asenbanskaliev/Daskalov/actions/runs/42461893207 SUCCESS.
+- Último navegador del GLB: https://github.com/asenbanskaliev/Daskalov/actions/runs/42462595065 PENDIENTE, no declarar aprobado.
+- Control release: npm run gate:status informa, npm run gate:full falla salvo 109/109 y evidencia firmada externa.

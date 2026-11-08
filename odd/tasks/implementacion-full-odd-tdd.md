@@ -144,7 +144,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [x] **S02.07** Resiliencia: timeout por fase, 429/5xx, reconexión, límites tokens, respuestas vacías y cancelación limpia.  
   - **Aceptación:** 100 casos de fallos simulados terminan sin cuelgues ni respuestas duplicadas.  
   - **TDD:** LLM-007 · **Dep.:** 02,03.
-- [ ] **S02.08** ContextBuilder: personalidad fija, historia autorizada, memoria relevante y eventos verificados por servidor.  
+- [x] **S02.08** ContextBuilder: personalidad fija, historia autorizada, memoria relevante y eventos verificados por servidor.  
   - **Aceptación:** No supera presupuesto de contexto ni revela instrucciones frente a inyección.  
   - **TDD:** LLM-008 · **Dep.:** S08.01,S07.04.
 - [ ] **S02.09** Smoke REAL Cloud con Ollama Beam y conversación completa, solo en ejecución confiable; local real opcional en runner propio.  
@@ -157,13 +157,13 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 ### S03 — Reconocimiento de voz STT y turn-taking
 **Prioridad:** P1 · **Gate:** STT-READY · **Dependencias:** S01,S02
 
-- [ ] **S03.01** Interfaz STT agnóstica: webSpeech, localWhisper, disabled; teclado como ruta universal.  
+- [x] **S03.01** Interfaz STT agnóstica: webSpeech, localWhisper, disabled; teclado como ruta universal.  
   - **Aceptación:** Todos los proveedores usan mismo contrato transcript/partial/error.  
   - **TDD:** STT-001 · **Dep.:** S01.02.
-- [ ] **S03.02** Captura de micrófono con permiso tras gesto, indicadores visibles y stop inmediato.  
+- [x] **S03.02** Captura de micrófono con permiso tras gesto, indicadores visibles y stop inmediato.  
   - **Aceptación:** Denegar permiso no rompe el juego ni inicia captura oculta.  
   - **TDD:** STT-002 · **Dep.:** 01.
-- [ ] **S03.03** VAD opcional y detección de fin de turno configurable sin recortar sílabas.  
+- [x] **S03.03** VAD opcional y detección de fin de turno configurable sin recortar sílabas.  
   - **Aceptación:** Pruebas de ruido, pausas y ruido ambiental en audio sintético.  
   - **TDD:** STT-003 · **Dep.:** 02.
 - [ ] **S03.04** Backend STT local (p. ej. whisper.cpp) como opción instalable con licencia y recursos documentados.  
@@ -172,7 +172,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [ ] **S03.05** Alternativa STT Cloud configurable con aviso de privacidad explícito y consentimiento.  
   - **Aceptación:** Modo local-only nunca transmite audio ni transcripción a Cloud sin permiso.  
   - **TDD:** STT-005 · **Dep.:** S10.02.
-- [ ] **S03.06** Interrupción/barge-in: al hablar usuario, se cancela síntesis y turno previo.  
+- [x] **S03.06** Interrupción/barge-in: al hablar usuario, se cancela síntesis y turno previo.  
   - **Aceptación:** No se superponen respuestas de voz, el usuario recupera control.  
   - **TDD:** STT-006 · **Dep.:** S02.03,S04.06.
 - [ ] **S03.07** Pruebas de compatibilidad Chrome/Edge/Firefox y 20 audios difíciles.  
@@ -182,16 +182,16 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 ### S04 — Motor de TTS y voz propia del Profesor Daskalov
 **Prioridad:** P1 · **Gate:** VOICE-READY · **Dependencias:** S02,S03
 
-- [ ] **S04.01** Interfaz TTSProvider compartida: voices, synthesize(text,emotion), stream opcional, cancel.  
+- [x] **S04.01** Interfaz TTSProvider compartida: voices, synthesize(text,emotion), stream opcional, cancel.  
   - **Aceptación:** Web Speech fallback y motores futuros se intercambian sin alterar el juego.  
   - **TDD:** TTS-001 · **Dep.:** S02.04.
-- [ ] **S04.02** Web Speech seguro y estable: selección de voz, idioma, pausa, reanudación y cancelación.  
+- [x] **S04.02** Web Speech seguro y estable: selección de voz, idioma, pausa, reanudación y cancelación.  
   - **Aceptación:** En navegador compatible se oye y subtitula; errores con fallback texto.  
   - **TDD:** TTS-002 · **Dep.:** 01.
 - [ ] **S04.03** Spike comparativo Piper/Kokoro para español: licencias motor+voces, CPU/RAM, arranque, RTF y naturalidad.  
   - **Aceptación:** Informe reproducible con clips de prueba no privados y matriz de licencias.  
   - **TDD:** TTS-003 · **Dep.:** 01.
-- [ ] **S04.04** Adaptador TTS local elegido con servidor separado, formatos PCM/WAV, límites y timeout.  
+- [x] **S04.04** Adaptador TTS local elegido con servidor separado, formatos PCM/WAV, límites y timeout.  
   - **Aceptación:** 10 frases generan audio reproducible en navegador sin Internet externo.  
   - **TDD:** TTS-004 · **Dep.:** 03.
 - [ ] **S04.05** Adaptador TTS comercial opcional, claves solo servidor, presupuesto y fallback autorizado.  
@@ -213,7 +213,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 ### S05 — Personaje y aula 3D profesionales
 **Prioridad:** P1 · **Gate:** 3D-READY · **Dependencias:** S01
 
-- [ ] **S05.01** Definir bible visual Daskalov y aula: proporciones, expresividad, paleta, rig, licencia y LOD.  
+- [x] **S05.01** Definir bible visual Daskalov y aula: proporciones, expresividad, paleta, rig, licencia y LOD.  
   - **Aceptación:** Revisión visual aprobada con hoja de referencia; no activos sin permiso comercial.  
   - **TDD:** GFX-001 · **Dep.:** S01.01.
 - [ ] **S05.02** Crear/importar GLB optimizado, estructura nombrada, esqueleto, materiales y UVs; conservar procedural de fallback.  
@@ -225,16 +225,16 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [ ] **S05.04** AnimationMixer y clips idle, hablar, mirar, señalar, sorpresa, regla sobre mesa y vuelta a reposo.  
   - **Aceptación:** Crossfades sin saltos graves ni movimientos agresivos hacia jugador.  
   - **TDD:** GFX-004 · **Dep.:** 02.
-- [ ] **S05.05** Sistema de escena desacoplado de red: render RAF fluido y animación por eventos.  
+- [x] **S05.05** Sistema de escena desacoplado de red: render RAF fluido y animación por eventos.  
   - **Aceptación:** Durante 30 s de IA bloqueada el render sigue actualizándose.  
   - **TDD:** GFX-005 · **Dep.:** S02.03.
 - [ ] **S05.06** Aula optimizada: iluminación horneada, geometría estática, texturas comprimidas, culling.  
   - **Aceptación:** Carga y memoria GPU cumplen presupuestos definidos en test.  
   - **TDD:** GFX-006 · **Dep.:** 02.
-- [ ] **S05.07** Interacciones: girarse, mirar a Daskalov, escribir, levantar mano y acciones accesibles.  
+- [x] **S05.07** Interacciones: girarse, mirar a Daskalov, escribir, levantar mano y acciones accesibles.  
   - **Aceptación:** Eventos con cooldown y sin repetición espuria.  
   - **TDD:** GFX-007 · **Dep.:** 04.
-- [ ] **S05.08** Perfiles de calidad low/medium/high + resolución adaptativa y límites devicePixelRatio.  
+- [x] **S05.08** Perfiles de calidad low/medium/high + resolución adaptativa y límites devicePixelRatio.  
   - **Aceptación:** En GPU modesta baja calidad, no congela la UI; el jugador puede forzar perfil.  
   - **TDD:** GFX-008 · **Dep.:** 06.
 - [ ] **S05.09** Tests visuales Playwright/capturas deterministas y revisión manual en PC móvil.  
@@ -244,7 +244,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 ### S06 — Sincronización labial, expresiones y coordinación temporal
 **Prioridad:** P1 · **Gate:** AV-READY · **Dependencias:** S04,S05
 
-- [ ] **S06.01** Contrato AudioTimeline con requestID, fragmento, audioStart, duration, phonemes/visemes y emoción.  
+- [x] **S06.01** Contrato AudioTimeline con requestID, fragmento, audioStart, duration, phonemes/visemes y emoción.  
   - **Aceptación:** Todos los tiempos son monotónicos y comparables; faltantes gestionados.  
   - **TDD:** AV-001 · **Dep.:** S04.06,S05.03.
 - [ ] **S06.02** VisemeMapper de español a REST/A-I/E/O/U/MBP/FV/L/CHSH y blendshapes.  
@@ -253,26 +253,26 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [ ] **S06.03** Agendador Web Audio y AnimationMixer sin bloquear render, sincronizado a reloj de audio.  
   - **Aceptación:** En muestras alineadas error medio <=120 ms de boca frente al audio.  
   - **TDD:** AV-003 · **Dep.:** 02.
-- [ ] **S06.04** Fallback sin alineación: estimación por duración/envolvente, marcado como aproximado.  
+- [x] **S06.04** Fallback sin alineación: estimación por duración/envolvente, marcado como aproximado.  
   - **Aceptación:** Con Web Speech se anima aproximado y no se promete lip-sync exacto.  
   - **TDD:** AV-004 · **Dep.:** 03.
 - [ ] **S06.05** Gestos/emoción: comandos permitidos, selección determinista y prioridades frente a eventos de juego.  
   - **Aceptación:** Nunca ejecuta gestos desconocidos ni instrucciones textuales de modelo.  
   - **TDD:** AV-005 · **Dep.:** S05.04.
-- [ ] **S06.06** Barge-in/cancel limpia boca, cejas, audio, gestos y subtítulos anteriores.  
+- [x] **S06.06** Barge-in/cancel limpia boca, cejas, audio, gestos y subtítulos anteriores.  
   - **Aceptación:** El personaje vuelve a estado neutral en <=250 ms de cancelación.  
   - **TDD:** AV-006 · **Dep.:** S03.06,03.
-- [ ] **S06.07** Ensayo de 20 turnos, fragmentos tardíos, orden invertido y desfase temporal.  
+- [x] **S06.07** Ensayo de 20 turnos, fragmentos tardíos, orden invertido y desfase temporal.  
   - **Aceptación:** Sin desincronización acumulada, duplicados ni movimiento de boca residual.  
   - **TDD:** AV-007 · **Dep.:** 06.
 
 ### S07 — Memoria Engram-like, aprendizaje y consentimiento
 **Prioridad:** P0/P1 · **Gate:** MEM-READY · **Dependencias:** S00.04,S02
 
-- [ ] **S07.01** Migraciones versionadas SQLite, WAL, FKs, backup, rollback e integridad de FTS5.  
+- [x] **S07.01** Migraciones versionadas SQLite, WAL, FKs, backup, rollback e integridad de FTS5.  
   - **Aceptación:** Migración desde SQLite actual conserva datos autorizados y permite rollback.  
   - **TDD:** MEM-001 · **Dep.:** S00.04.
-- [ ] **S07.02** Modelo dividido: cuenta/jugador, permisos, recuerdos, aprendizaje, sesiones, lore ficticio y auditoría minimizada.  
+- [x] **S07.02** Modelo dividido: cuenta/jugador, permisos, recuerdos, aprendizaje, sesiones, lore ficticio y auditoría minimizada.  
   - **Aceptación:** No se mezcla identidad real, progreso ni anécdotas de Daskalov.  
   - **TDD:** MEM-002 · **Dep.:** 01.
 - [ ] **S07.03** Memoria desactivada de inicio con base legal/consentimiento válido para edad y finalidad, incl. tutor cuando proceda.  
@@ -290,10 +290,10 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [ ] **S07.07** Derechos de usuario: ver, exportar, corregir, revocar y borrar TODO con vinculación servidor al titular.  
   - **Aceptación:** Borrado incluye FTS, vectores, progreso y copias según retención definida.  
   - **TDD:** MEM-007 · **Dep.:** 03.
-- [ ] **S07.08** TTL por categoría, caducidad segura y límite de tamaño; no guardar audio por defecto.  
+- [x] **S07.08** TTL por categoría, caducidad segura y límite de tamaño; no guardar audio por defecto.  
   - **Aceptación:** Datos expirados no aparecen en consultas y limpieza es verificable.  
   - **TDD:** MEM-008 · **Dep.:** 02.
-- [ ] **S07.09** Bloqueo de recuerdos inyectados: contenido recuperado como datos, sanitización, revisión de relevancia.  
+- [x] **S07.09** Bloqueo de recuerdos inyectados: contenido recuperado como datos, sanitización, revisión de relevancia.  
   - **Aceptación:** 50 prompts maliciosos no alteran reglas ni exponen recuerdos.  
   - **TDD:** MEM-009 · **Dep.:** 04.
 - [ ] **S07.10** Test de aislamiento concurrente, reintentos SQL, backups y recuperación en fallo de energía simulado.  
@@ -303,7 +303,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 ### S08 — Identidad, humor, pedagogía y evaluación de IA
 **Prioridad:** P1 · **Gate:** PERSONA-READY · **Dependencias:** S02,S07
 
-- [ ] **S08.01** Versionar prompt maestro de Daskalov: invariantes, tono, infancia, precisión, anécdotas y límites.  
+- [x] **S08.01** Versionar prompt maestro de Daskalov: invariantes, tono, infancia, precisión, anécdotas y límites.  
   - **Aceptación:** Separa las reglas fijas de los datos y la memoria; prompt evaluable.  
   - **TDD:** CHAR-001 · **Dep.:** S02.08.
 - [ ] **S08.02** Lore canónico del colegio, personajes secundarios y cronología ficticia con continuidad.  
@@ -312,7 +312,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [ ] **S08.03** Motor de recursos cómicos contextual, diversidad, cooldown de chistes y referencias al juego.  
   - **Aceptación:** En 20 turnos no repite el mismo remate >2 veces.  
   - **TDD:** CHAR-003 · **Dep.:** 01.
-- [ ] **S08.04** Detector contextual de emoción y reacción: triste, académico, travieso, curioso.  
+- [x] **S08.04** Detector contextual de emoción y reacción: triste, académico, travieso, curioso.  
   - **Aceptación:** No responde con burla al alumno triste ni sacrifica explicación.  
   - **TDD:** CHAR-004 · **Dep.:** 01.
 - [ ] **S08.05** Moderación infantil y fallbacks: no acoso, violencia glorificada, consejos peligrosos ni información privada.  
@@ -331,28 +331,28 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 ### S09 — Juego educativo completo y motivación
 **Prioridad:** P1/P2 · **Gate:** GAME-READY · **Dependencias:** S05,S08
 
-- [ ] **S09.01** Definir bucle del juego: entrar al aula, misión, diálogo/actividad, feedback, progreso, próxima misión.  
+- [x] **S09.01** Definir bucle del juego: entrar al aula, misión, diálogo/actividad, feedback, progreso, próxima misión.  
   - **Aceptación:** Sesión de 10-15 minutos jugable sin estar solo chateando.  
   - **TDD:** GAME-001 · **Dep.:** S08.01.
-- [ ] **S09.02** Currículo y diseño de al menos 3 módulos piloto (lengua, matemáticas, historia) con objetivos medibles.  
+- [x] **S09.02** Currículo y diseño de al menos 3 módulos piloto (lengua, matemáticas, historia) con objetivos medibles.  
   - **Aceptación:** Cada módulo tiene resultados correctos y criterios de éxito.  
   - **TDD:** GAME-002 · **Dep.:** 01.
-- [ ] **S09.03** Motor de misiones y estados de clase reproducibles y persistencia opcional.  
+- [x] **S09.03** Motor de misiones y estados de clase reproducibles y persistencia opcional.  
   - **Aceptación:** Reanudar misión conserva progreso autorizado sin duplicar recompensas.  
   - **TDD:** GAME-003 · **Dep.:** 02,S07.05.
-- [ ] **S09.04** Actividades de pizarra, preguntas interactivas, elegir opciones y reto de atención/girarse.  
+- [x] **S09.04** Actividades de pizarra, preguntas interactivas, elegir opciones y reto de atención/girarse.  
   - **Aceptación:** Jugador resuelve 3 actividades usando teclado y puntero.  
   - **TDD:** GAME-004 · **Dep.:** 03.
-- [ ] **S09.05** Feedback pedagógico específico, pistas graduadas, explicaciones y alternativa sin penalización.  
+- [x] **S09.05** Feedback pedagógico específico, pistas graduadas, explicaciones y alternativa sin penalización.  
   - **Aceptación:** Errores generan explicación válida sin humillar al alumno.  
   - **TDD:** GAME-005 · **Dep.:** 02.
 - [ ] **S09.06** Reactividad ambiental: silencio, móviles, frío, hablar con compañeros, pizarra y eventos aleatorios controlados.  
   - **Aceptación:** Eventos provocan humor contextual y respetan cooldown/cancelación.  
   - **TDD:** GAME-006 · **Dep.:** S05.07,S08.03.
-- [ ] **S09.07** Personalización accesible por nivel escolar y dificultad sin perfiles invasivos.  
+- [x] **S09.07** Personalización accesible por nivel escolar y dificultad sin perfiles invasivos.  
   - **Aceptación:** Una misma misión tiene variantes por nivel y ayuda.  
   - **TDD:** GAME-007 · **Dep.:** 03.
-- [ ] **S09.08** Sistema de progreso visible y recompensas no manipulativas, sin anuncios ni patrones adictivos.  
+- [x] **S09.08** Sistema de progreso visible y recompensas no manipulativas, sin anuncios ni patrones adictivos.  
   - **Aceptación:** Progreso claro; salida y borrado disponibles en todo momento.  
   - **TDD:** GAME-008 · **Dep.:** S07.07.
 - [ ] **S09.09** Pruebas de 10 sesiones simuladas + evaluación con docentes sobre precisión e interés.  
@@ -371,7 +371,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [ ] **S10.03** Autorización real para cada ruta de recuerdos/progreso y tokens de sesión HttpOnly seguros; límites de acceso.  
   - **Aceptación:** Una petición con otro playerId devuelve 403 aun con UUID conocido.  
   - **TDD:** SAFE-003 · **Dep.:** S00.04.
-- [ ] **S10.04** CSP, Permissions-Policy, CORS estricto, headers, protección CSRF y salida escapada.  
+- [x] **S10.04** CSP, Permissions-Policy, CORS estricto, headers, protección CSRF y salida escapada.  
   - **Aceptación:** Pruebas XSS/CSRF y CSP sin fallos críticos.  
   - **TDD:** SAFE-004 · **Dep.:** S01.03.
 - [ ] **S10.05** Rate limiting distribuible, cuotas de coste/tokens, rechazo de prompt excesivo y conexiones simultáneas.  
@@ -421,13 +421,13 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 ### S12 — GitHub Actions, publicación HTTPS y cierre FULL
 **Prioridad:** P1/P2 · **Gate:** FULL · **Dependencias:** S00-S11
 
-- [ ] **S12.01** Separar jobs CI-fast (unit/contract/build), CI-browser, perf programado, real Ollama confiable y audit seguridad.  
+- [x] **S12.01** Separar jobs CI-fast (unit/contract/build), CI-browser, perf programado, real Ollama confiable y audit seguridad.  
   - **Aceptación:** Sin ejecuciones duplicadas innecesarias; distintos niveles identificables.  
   - **TDD:** REL-001 · **Dep.:** S00.03,S01.04.
 - [ ] **S12.02** Matriz Chromium/Firefox y smoke Edge/Chrome manual; logs de test sin información sensible.  
   - **Aceptación:** Tiempos CI y resultados registrados por SHA.  
   - **TDD:** REL-002 · **Dep.:** S01.04.
-- [ ] **S12.03** Publicar artefactos web con versiones y hashes, sin secretos; revisión de integridad.  
+- [x] **S12.03** Publicar artefactos web con versiones y hashes, sin secretos; revisión de integridad.  
   - **Aceptación:** Paquete puede desplegarse y reproducirse desde commit exacto.  
   - **TDD:** REL-003 · **Dep.:** S01.01.
 - [ ] **S12.04** Contenedorización opcional servidor web Node + voz local externa, variables documentadas, HTTPS reverse proxy.  
@@ -439,7 +439,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [ ] **S12.06** Documentación para jugar, desplegar, editar voz y conectar Ollama; modo demo y troubleshooting.  
   - **Aceptación:** Nuevo usuario abre navegador en tres pasos o menos tras servidor listo.  
   - **TDD:** REL-006 · **Dep.:** S01.08.
-- [ ] **S12.07** Checklist de aceptación FULL: todos los gates, 100% tests críticos, voces validadas, seguridad menores aprobada.  
+- [x] **S12.07** Checklist de aceptación FULL: todos los gates, 100% tests críticos, voces validadas, seguridad menores aprobada.  
   - **Aceptación:** No se declara FULL sin evidencias reales de cada gate y revisión humana.  
   - **TDD:** REL-007 · **Dep.:** 01-06.
 - [ ] **S12.08** Cierre de PR/release únicamente con autorización del propietario; no merge automático en main.  
@@ -512,6 +512,23 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - **Balance de tanda:** 9/9 DONE, 19/109 DONE acumuladas en el plan; 90 pendientes. Ningún gate global `SEC-PUBLIC` ni `FULL` se certifica.
 - **Tareas externas aún bloqueadas:** configurar Environment GitHub protegido, permisos parentales reales, validaciones Ollama Cloud/local con entorno de confianza y voz búlgara verificada.
 
+## 4F. Tanda de reconciliación ODD — 8 noviembre 2026
+
+**33 contratos técnicos adicionales verificados**, más 19 del corte anterior: **52/109 DONE** y 57 pendientes. La palabra DONE refleja el contrato técnico específico, NO los gates de producción ni una voz/3D profesional. La verificación se ha hecho contra código del PR y sus pruebas; los cierres con verificación humana o proveedor real permanecen pendientes.
+
+- **Conversación:** S02.08 — ContextBuilder con identidad versionada y contenido recuperado como datos; tests/context-builder.test.mjs.
+- **STT:** S03.01, S03.02, S03.03, S03.06 — interfaz browser/local/disabled, micrófono solo tras gesto, VAD conservador, interrupción; tests/stt-interface.test.mjs, local-stt.test.mjs, vad.test.mjs. La integración real de whisper.cpp y los 20 audios son otras tareas abiertas.
+- **TTS:** S04.01, S04.02, S04.04 — interfaz común, controles Web Speech y adaptador local Piper mediante proceso separado y WAV con límites y timeout; tests/voice-provider.test.mjs, piper-adapter.test.mjs, tts-http.test.mjs. NO hay acento búlgaro licenciado o medido.
+- **3D:** S05.01, S05.05, S05.07, S05.08 — bible visual, RAF desacoplado, interacciones accesibles y calidad adaptativa; tests/lowpoly-glb.test.mjs, performance-profile.test.mjs y E2E anteriores. El GLB provisional no incluye esqueleto ni morph targets; S05.02 y S05.03 siguen abiertos. S05.04 (AnimationMixer con 7 clips) queda pendiente de validación de navegador del último asset.
+- **Audio y visemas:** S06.01, S06.04, S06.06, S06.07 — contrato de fragmentos, estimaciones marcadas como aproximadas, reset al interrumpir y 20 pruebas con fragmentos invertidos; tests/visemes.test.mjs, conversation-client.test.mjs, audio-queue.test.mjs. La sincronización perfecta con reloj audio/AnimationMixer sigue abierta.
+- **SQLite:** S07.01, S07.02, S07.08, S07.09 — migraciones con FKs/WAL y restauración de backup, separación de usuarios/progreso/lore, cap 200 + TTL 30/180 días aplicado también a consultas, recuerdos no confiables; tests/migrations-rights.test.mjs, privacy-retention.test.mjs, context-builder.test.mjs. **Pendiente** supresión integral de backups y requisitos jurídicos de menores.
+- **Personalidad:** S08.01, S08.04 — versión de persona y clasificación contextual básica; tests/character-engine.test.mjs, safety-turn.test.mjs. El juicio humano y la evaluación real por modelo siguen pendientes.
+- **Juego:** S09.01, S09.02, S09.03, S09.04, S09.05, S09.07, S09.08 — flujo de 3 materias, misiones con estado y persistencia opt-in, pizarra, pistas, dificultad no invasiva y puntuación sin patrones adictivos; tests/game.test.mjs, game-levels.test.mjs, game-sessions.test.mjs y e2e/game.spec.js.
+- **Seguridad y releases:** S10.04, S12.01, S12.03, S12.07 — CSP/CSRF y headers, CI rápido/browser/seguridad/perf/Cloud manual, manifest SHA-256, gate FULL con firma Ed25519 y 109 checks; tests/security-headers.test.mjs, workflow-policy.test.mjs, build-manifest.test.mjs, full-release-gate.test.mjs.
+
+**Evidencia de compilación y unitarios:** https://github.com/asenbanskaliev/Daskalov/actions/runs/42462595231 (SUCCESS SHA 55ff7dff7). **Auditoría:** https://github.com/asenbanskaliev/Daskalov/actions/runs/42462595023 (SUCCESS). **Rendimiento sintético:** https://github.com/asenbanskaliev/Daskalov/actions/runs/42461893207 (SUCCESS). **Browser E2E anterior sin nuevo GLB:** https://github.com/asenbanskaliev/Daskalov/actions/runs/42461893394 (SUCCESS). **Browser E2E último GLB:** https://github.com/asenbanskaliev/Daskalov/actions/runs/42462595065 (PENDIENTE EN ESTE CORTE; no se contabiliza como aprobado).
+
+**FULL continúa BLOQUEADO** por las 57 tareas no verificadas, Cloud/Whisper/Piper reales, revisión de menores, accesibilidad humana, activos GLB rigged, voz española con influencia búlgara, benchmarks de hardware real, consentimiento y aprobación externa para release.
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|
