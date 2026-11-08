@@ -23,13 +23,30 @@ export async function validateNvidiaLive({key,chat=chatRemote,stream=streamRemot
   durationMs:Date.now()-started,rawRepliesExcluded:true,
   sessionDataUsed:false,claimsFullSafetyCertification:false};
 }
+export function pickNvidiaModel(ids){
+ if(!Array.isArray(ids))return null;
+ const safe=ids.filter(id=>typeof id==="string"&&id.length<130&&/^[A-Za-z0-9_.:-]+\/[A-Za-z0-9_.:+-]+$/.test(id));
+ const preferred=[
+  "deepseek-ai/deepseek-v4-flash",
+  "nvidia/nemotron-3-super-120b-a12b",
+  "openai/gpt-oss-120b",
+  "meta/llama-3.3-70b-instruct",
+  "qwen/qwen3-next-80b-a3b-instruct"
+ ];
+ return preferred.find(id=>safe.includes(id))||
+  safe.find(id=>/instruct|gpt-oss|nemotron|deepseek/i.test(id))||null;
+}
 async function catalogStatus(key){
  try{
   const response=await fetch("https://integrate.api.nvidia.com/v1/models",{
    headers:{authorization:"Bearer "+key},signal:AbortSignal.timeout(8000)
   });
-  return response.status;
- }catch{return null;}
+  if(!response.ok)return {status:response.status,modelIds:[]};
+  const catalog=await response.json();
+  const modelIds=Array.isArray(catalog?.data)?catalog.data.map(x=>x.id)
+   .filter(id=>typeof id==="string"&&id.length<130&&/^[A-Za-z0-9_.:-]+\/[A-Za-z0-9_.:+-]+$/.test(id)):[];
+  return {status:response.status,modelIds};
+ }catch{return {status:null,modelIds:[]};}
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
  let phase="catalog";
@@ -37,9 +54,11 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).hr
  if(typeof key!=="string"||key.length<10){
   process.stderr.write("NVIDIA_SECRET_UNAVAILABLE: secret missing or too short.\n");
   process.exitCode=1;
- }else catalogStatus(key).then(status=>{
-  process.stdout.write("NVIDIA_CATALOG_HTTP="+(status===null?"unreachable":status)+"\n");
-  return validateNvidiaLive({key,onPhase:name=>phase=name});
+ }else catalogStatus(key).then(({status,modelIds})=>{
+  const selected=pickNvidiaModel(modelIds);
+  process.stdout.write("NVIDIA_CATALOG_HTTP="+(status===null?"unreachable":status)+" models="+modelIds.length+" selected="+(selected||"none")+"\n");
+  if(!selected)throw Error("NVIDIA_CATALOG_NO_USABLE_MODEL");
+  return validateNvidiaLive({key,model:selected,onPhase:name=>phase=name});
  }).then(result=>{
   process.stdout.write("NVIDIA_LIVE_OK "+JSON.stringify(result)+"\n");
  }).catch(error=>{
