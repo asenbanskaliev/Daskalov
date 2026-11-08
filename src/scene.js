@@ -8,6 +8,7 @@ import {createStaticBoxBatcher} from "./static-box-batcher.js";
 import {gestureForAudio} from "./audio-gesture.js";
 import {AudioMixerClock} from "./audio-mixer-clock.js";
 import {releaseProceduralAvatar} from "./release-procedural-avatar.js";
+import {createBakedBoxGeometry,createBakedMaterial} from "./baked-box-geometry.js";
 export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeaking=()=>false,getReducedMotion=()=>false,onReady=()=>{},quality="auto"}){
  try{
   const THREE=await import("three");
@@ -26,9 +27,15 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
   const mat=(hex)=>new THREE.MeshStandardMaterial({color:hex,roughness:0.85});
   const cream=mat(0xe4d7ab),wood=mat(0x7d5335),dark=mat(0x26342b),coat=mat(0x574f3f),skin=mat(0xe2ae83),black=mat(0x25221c),white=mat(0xffffff);
   const sharedBoxGeometry=new THREE.BoxGeometry(1,1,1);
-  const staticBoxes=createStaticBoxBatcher({THREE,scene,geometry:sharedBoxGeometry});
+  const bakedBoxGeometry=createBakedBoxGeometry(THREE);
+  const bakedMaterials=new Map();
+  const staticMat=material=>{
+   if(!bakedMaterials.has(material))bakedMaterials.set(material,createBakedMaterial(material));
+   return bakedMaterials.get(material);
+  };
+  const staticBoxes=createStaticBoxBatcher({THREE,scene,geometry:bakedBoxGeometry});
   function box(w,h,d,x,y,z,material,parent=scene){
-   if(parent===scene)return staticBoxes.add(w,h,d,x,y,z,material);
+   if(parent===scene)return staticBoxes.add(w,h,d,x,y,z,staticMat(material));
    const o=new THREE.Mesh(sharedBoxGeometry,material);o.scale.set(w,h,d);o.position.set(x,y,z);parent.add(o);return o;
   }
   function sphere(r,x,y,z,material,parent=scene){const o=new THREE.Mesh(new THREE.SphereGeometry(r,20,16),material);o.position.set(x,y,z);parent.add(o);return o;}
@@ -95,7 +102,7 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
     setQuality(value){currentQuality=value;renderer.setPixelRatio(pixelRatio());resize();},
     setBlackboardMessage,
     getStats(){
-     return {...fpsMonitor.snapshot(),...staticBoxes.snapshot(),fallbackGeometryReleased,fallbackGeometriesDisposed,drawCallsLastFrame:renderer.info.render.calls,
+     return {...fpsMonitor.snapshot(),...staticBoxes.snapshot(),staticBakedVertexLighting:true,fallbackGeometryReleased,fallbackGeometriesDisposed,drawCallsLastFrame:renderer.info.render.calls,
       trianglesLastFrame:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,
       textureObjects:renderer.info.memory.textures,pixelRatio:renderer.getPixelRatio(),
       limitations:"Renderer counters are not measured GPU VRAM and FPS is device-dependent."};

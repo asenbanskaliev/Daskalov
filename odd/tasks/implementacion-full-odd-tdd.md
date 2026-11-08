@@ -713,6 +713,10 @@ S12.05 **PARTIAL**: `/api/health` informa opcionalmente el SHA de release inyect
 
 S03.07 **PARTIAL**: `scripts/voice-validation.mjs stt-matrix` rechaza informes que no incluyan **los mismos 20 casos** en Chrome, Edge y Firefox, referencias diferentes, identificadores repetidos, casos sin marca de audio real y resultados incompletos. Devuelve solo WER numérico por ID, sin guardar audios ni transcripciones. `tests/stt-browser-matrix.test.mjs` comprueba el contrato con frases sintéticas. **Un atributo `realAudioVerified=true` es una declaración del operador, no prueba independiente**: la revisión de los 60 audios autorizados y compatibilidad real de micrófonos/navegadores siguen pendientes; no marcar STT-READY.
 
+## 4AC. Sombreados horneados sin texturas externas — 8 noviembre 2026
+
+S05.06 **PARTIAL avanzado**: `src/baked-box-geometry.js` genera colores de vértice deterministas para las seis caras de un cubo, oscurece suelo inferior y caras posteriores, evita texturas nuevas y asigna clones `vertexColors` únicamente a cajas estáticas del aula. El avatar procedural/dinámico conserva su material y geometría sin alteración; `createStaticBoxBatcher` sigue instanciando grupos de material. `tests/baked-box-geometry.test.mjs` comprueba con Three.js real los tonos, materiales independientes y cero texturas añadidas; `e2e/performance-budget.spec.js` comprueba la capacidad activa en navegador. Quedan prueba visual humana, benchmarks VRAM en equipo físico y compresión de cualquier textura nueva antes de cerrar S05.06.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|

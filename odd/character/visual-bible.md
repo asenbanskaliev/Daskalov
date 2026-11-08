@@ -26,3 +26,6 @@ License and rights: original purely procedural placeholder in this repository. A
 
 ## Liberación del avatar provisional
 Tras crear correctamente el GLB, el motor retira del grafo el avatar de esferas y libera sus geometrías independientes, conservando la BoxGeometry que comparte con el aula instanciada. Si GLB falla, el personaje provisional sigue visible. `GFX-006` prueba la política, pero deben medirse VRAM/FPS y revisarse visualmente los assets antes de aprobar 3D-READY.
+
+## Sombreado estático y geometría procedural
+El aula añade sombreados estáticos mediante colores de vértice en cajas instanciadas: superior iluminada, inferior y posterior atenuadas. No incorpora imágenes externas, texturas adicionales ni cambios a la piel y gestos del personaje. Se usa una segunda geometría pequeña exclusiva del aula y materiales clonados con `vertexColors`; la geometría compartida del avatar procedural permanece independiente. Revisar comparativa visual de calidad y VRAM antes de 3D-READY.
