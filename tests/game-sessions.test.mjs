@@ -8,7 +8,7 @@ test("GAME-009: ten independent deterministic lessons sessions; no duplicate rew
  for(let session=0;session<10;session++){
   const game=createGame({level:LEVELS[session%LEVELS.length]});
   const reactions=new ClassroomReactions({cooldownMs:500});
-  for(const item of LESSONS){
+  for(const [lessonIndex,item] of LESSONS.entries()){
    const lesson=game.start(item.id);
    assert.ok(lesson.options.includes(lesson.answer));
    const wrong=game.answer("__incorrecta__");
@@ -18,7 +18,7 @@ test("GAME-009: ten independent deterministic lessons sessions; no duplicate rew
    assert.equal(right.correct,true);
    const again=game.answer(lesson.answer);
    assert.equal(again.correct,true);
-   const event=reactions.react("board",session*1000);
+   const event=reactions.react("board",session*10000+lessonIndex*1000);
    assert.equal(event.gesture,"point_board");
    assert.ok(demoReply(lesson.question).reply.length>25);
   }
