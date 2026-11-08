@@ -637,6 +637,10 @@ S04.05 **implementación técnica pendiente de proveedor real y licencia**: `ser
 
 S04.09 **implementación técnica pendiente de CI**: selector browser/local/cloud, indicaciones de recursos/coste y preferencia de modo persistida pero autorización de Cloud temporal y no persistida. No declarar VOICE-READY: faltan voz española con acento búlgaro validado, costes contractuales y revisión infantil. Tests `tests/tts-cloud.test.mjs`, `tests/tts-cloud-ui.test.mjs`.
 
+## 4P. Bloqueo de memoria detrás de proxy — 8 noviembre 2026
+
+S07.03 y S10.03: mejora de privacidad. Aun si el administrador activa `DASKALOV_ALLOW_MEMORY=1`, peticiones con Host público no pueden crear sesiones, guardar recuerdos, consultar progreso o enviar conversaciones persistentes. GET de sesión no expone token CSRF ni indica disponibilidad fuera de localhost. Pruebas HTTP con Host falso `tests/private-memory-boundary.test.mjs`. No reemplaza acreditación jurídica ni consentimiento tutelar: S07.03 continúa pendiente.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|

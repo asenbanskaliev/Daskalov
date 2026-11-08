@@ -103,6 +103,9 @@ export function createApp({
    }
    if(path==="/api/health"&&req.method==="GET")return respond(res,200,{ok:true,cloudConfigured:process.env.DASKALOV_SAFE_DEMO_ONLY==="1"?false:!!process.env.OLLAMA_API_KEY,demoOnly:process.env.DASKALOV_SAFE_DEMO_ONLY==="1"});
    if(process.env.DASKALOV_SAFE_DEMO_ONLY==="1"&&path.startsWith("/api/"))throw new OllamaError("Demo pública: IA y datos personales desactivados.",403);
+   // Refuse persistent guest data from reverse proxies, even with memory enabled.
+   if(!isPrivateClient(req)&&(path.startsWith("/api/memory")||path==="/api/progress"||(path==="/api/session"&&req.method==="POST")))
+    throw new OllamaError("Memoria persistente solo disponible en modo privado.",403);
    if(path==="/api/stt/status"&&req.method==="GET"){
     return respond(res,200,{available:Boolean(process.env.DASKALOV_WHISPER_URL),provider:"whisper-local",cloudAvailable:allowCloudStt&&Boolean(process.env.DASKALOV_STT_CLOUD_KEY),recordingPersisted:false});
    }
@@ -154,7 +157,7 @@ export function createApp({
     if(path==="/api/session"&&req.method==="GET"){
      if(!isSameSiteRequest(req))throw new OllamaError("Origen de consulta de sesión no permitido.",403);
      const active=getSession(req,memory);
-    return respond(res,200,{active:Boolean(active),csrfToken:active?.csrfToken||null,memoryAvailable:allowMemory});
+    return respond(res,200,{active:isPrivateClient(req)&&Boolean(active),csrfToken:isPrivateClient(req)?active?.csrfToken||null:null,memoryAvailable:allowMemory&&isPrivateClient(req)});
    }
    if(path==="/api/session"&&req.method==="POST"){
     if(!allowMemory)throw new OllamaError("Memoria persistente desactivada en el servidor.",403);
@@ -243,6 +246,7 @@ export function createApp({
      return res.end();
     }
     const remember=body.remember===true;
+     if(remember&&!isPrivateClient(req))throw new OllamaError("No se permite almacenar datos desde una red pública.",403);
     let session=null;
     if(remember){
      if(!allowMemory)throw new OllamaError("La memoria está desactivada en el servidor.",403);
