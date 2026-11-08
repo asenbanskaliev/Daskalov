@@ -31,7 +31,7 @@ jobs:
       - name: 100 synthetic conversations and 10 sessions
         run: |
           mkdir -p reports
-          node --test --test-reporter=tap tests/stress-100.test.mjs tests/game-sessions.test.mjs > reports/performance.tap
+          node --test --test-reporter=tap tests/stress-100.test.mjs tests/stress-network-chaos.test.mjs tests/game-sessions.test.mjs > reports/performance.tap
           cat reports/performance.tap
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
