@@ -33,7 +33,9 @@
         <p class="field-help">El dictado del navegador puede enviar audio a su proveedor. La opción local requiere instalar un servicio aparte; el juego no guarda las grabaciones.</p>
         <div class="toggles"><label><input type="checkbox" id="cloudSttConsent"> Autorizo transferir la grabación al proveedor externo de voz (puede tener coste). El permiso no se guarda al recargar la página.</label></div>
         <p class="field-help">STT Cloud requiere configuración privada del administrador. No apto para menores sin autorización legal y del tutor cuando proceda.</p>
-        <div class="fields"><label for="ttsMode">Síntesis de voz (TTS)</label><select id="ttsMode"><option value="browser">Voz del navegador · gratis</option><option value="local">Piper local · requiere servidor y voz con licencia</option></select></div>
+        <div class="fields"><label for="ttsMode">Síntesis de voz (TTS)</label><select id="ttsMode"><option value="browser">Voz del navegador · gratis</option><option value="local">Piper local · requiere servidor y voz con licencia</option><option value="cloud">TTS Cloud externo · requiere autorización y puede facturar</option></select></div>
+        <div class="toggles"><label><input id="cloudTtsConsent" type="checkbox"> Autorizo que el texto de la respuesta se transfiera a un proveedor de voz externo, con posible coste; el permiso no se recuerda.</label></div>
+        <p id="ttsCostInfo" class="field-help" role="status">Voz del navegador: sin cargo desde la aplicación.</p>
         <div class="fields"><label for="voiceChoice">Voz española del navegador</label><select id="voiceChoice"><option value="">Voz predeterminada</option></select></div>
         <div class="toggles"><label><input type="checkbox" id="vadEnabled"> Detectar fin de frase automáticamente con micrófono local</label></div>
         <div class="toggles"><label><input type="checkbox" id="reducedMotion"> Reducir animaciones</label></div>

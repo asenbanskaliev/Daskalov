@@ -16,6 +16,7 @@ import {isPrivateClient,UsageBudget} from "./access-policy.mjs";
 import {AtomicUsageLedger} from "./usage-ledger.mjs";
 import {makeTurnEvent} from "../shared/turn-protocol.js";
 import {synthesizePiper} from "./tts-piper.mjs";
+import {synthesizeCloudTts} from "./tts-cloud.mjs";
 import {transcribeLocalWhisper,readAudioRequest} from "./stt-whisper.mjs";
 import {transcribeCloudStt} from "./stt-cloud.mjs";
 import {installSecurityHeaders} from "./security-headers.mjs";
@@ -54,6 +55,8 @@ export function createApp({
  streamLlm=streamOllama,
  models=listOllamaModels,
  ttsSynth=synthesizePiper,
+ ttsCloudSynth=synthesizeCloudTts,
+ allowCloudTts=process.env.DASKALOV_ENABLE_TTS_CLOUD==="1",
  sttTranscriber=transcribeLocalWhisper,
  sttCloudTranscriber=transcribeCloudStt,
  allowCloudStt=process.env.DASKALOV_ENABLE_STT_CLOUD==="1",
@@ -80,6 +83,7 @@ export function createApp({
  const inFlight=new Map();
  const cloudBudget=new UsageBudget({dailyLimit:maxCloudCallsPerDay});
  const cloudSttBudget=new UsageBudget({dailyLimit:6});
+ const cloudTtsBudget=new UsageBudget({dailyLimit:10});
  const distributedLedger=process.env.DASKALOV_DISTRIBUTED_LIMIT==="1"?
   new AtomicUsageLedger({path:dbPath,secret:process.env.DASKALOV_LEDGER_SECRET}):null;
  const metrics=new MetricsCollector({cloudUsdPerMillionOutputTokens:process.env.DASKALOV_USD_PER_1M_OUTPUT_TOKENS??null});
@@ -121,7 +125,7 @@ export function createApp({
      return respond(res,200,{transcript});
     }
     if(path==="/api/tts/status"&&req.method==="GET"){
-    return respond(res,200,{available:Boolean(process.env.DASKALOV_PIPER_BIN&&process.env.DASKALOV_PIPER_MODEL),provider:"piper-local"});
+    return respond(res,200,{available:Boolean(process.env.DASKALOV_PIPER_BIN&&process.env.DASKALOV_PIPER_MODEL),provider:"piper-local",cloudAvailable:allowCloudTts&&Boolean(process.env.DASKALOV_TTS_CLOUD_KEY)});
    }
    if(path==="/api/tts/local"&&req.method==="POST"){
     if(!isPrivateClient(req))throw new OllamaError("Voz local disponible solo desde localhost.",403);
@@ -134,7 +138,20 @@ export function createApp({
     res.writeHead(200,{"content-type":"audio/wav","cache-control":"no-store","x-content-type-options":"nosniff"});
     return res.end(wav);
    }
-   if(path==="/api/session"&&req.method==="GET"){
+   if(path==="/api/tts/cloud"&&req.method==="POST"){
+     if(!allowCloudTts||!isPrivateClient(req))throw new OllamaError("TTS Cloud solo se permite en privado y tras habilitarlo.",403);
+     if(req.headers["x-daskalov-tts-consent"]!=="cloud")throw new OllamaError("Falta autorización explícita de TTS Cloud.",403);
+     const body=await bodyOf(req);
+     if(typeof body.text!=="string"||!body.text.trim()||body.text.length>160)throw new OllamaError("Texto de voz inválido.",400);
+     if(!cloudTtsBudget.reserve())throw new OllamaError("Cuota TTS Cloud agotada.",429);
+     const started=Date.now();
+     const wav=await ttsCloudSynth({text:body.text});
+     metrics.observe("tts",Date.now()-started);
+     if(!Buffer.isBuffer(wav)||wav.length>3*1024*1024)throw new OllamaError("Audio TTS Cloud inválido.",502);
+     res.writeHead(200,{"content-type":"audio/wav","cache-control":"no-store","x-content-type-options":"nosniff"});
+     return res.end(wav);
+    }
+    if(path==="/api/session"&&req.method==="GET"){
      if(!isSameSiteRequest(req))throw new OllamaError("Origen de consulta de sesión no permitido.",403);
      const active=getSession(req,memory);
     return respond(res,200,{active:Boolean(active),csrfToken:active?.csrfToken||null,memoryAvailable:allowMemory});
