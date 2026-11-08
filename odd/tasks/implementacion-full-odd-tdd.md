@@ -767,6 +767,10 @@ S11.04/S10.07 **PARTIAL**: `MetricsCollector` incorpora latencia y recuentos agr
 
 **Nueva capacidad de proveedores configurable (no aumenta artificialmente el 84/109)**: `scripts/remote-provider-smoke.mjs` permite ejecutar una prueba real de OpenRouter o NVIDIA, **solo si** el operador activa `DASKALOV_REMOTE_SMOKE_CONSENT=1` y facilita proveedor, modelo y su clave en variables de entorno privadas. Verifica el modelo en el catálogo y efectúa una única pregunta sintética en español, sin memoria. Exporta solo latencia agregada, longitud y estado, nunca texto generado, token o error bruto. `tests/remote-provider-smoke.test.mjs` usa fetch falsos y verifica que sin autorización se realizan cero conexiones y un modelo ausente no consume inferencia. No se han usado claves reales ni coste real en esta tanda: sigue pendiente ejecutar el smoke con autorización para confirmar comportamiento vivo, términos y facturación.
 
+## 4AP. Evaluador remoto de 300 escenarios con cuotas explícitas — 8 noviembre 2026
+
+S08.06 **PARTIAL avanzado**: `scripts/remote-persona-eval.mjs` ejecuta **una llamada por escenario** sobre el conjunto estático de 300 solicitudes (100 humor, 100 escolares, 50 inyección y 50 memoria) a NVIDIA u OpenRouter, con claves exclusivamente en variables de entorno y habilitación explícita `DASKALOV_REMOTE_EVAL_CONSENT=1`. Ejecuta secuencialmente, sin retry automático, con límite ajustable 1–300; en el primer error del proveedor se detiene para no consumir cuota/coste adicional. Solo reporta IDs y contadores de fallos, sin textos generados, prompts ni credenciales; no se considera revisión humana ni conformidad educativa. Prueba `tests/remote-persona-eval.test.mjs` con 300 respuestas sintéticas y fail-closed. **Las 300 llamadas REALES no están certificadas mientras NVIDIA devuelva HTTP 404/410 y no haya presupuesto/modelo válido**, por tanto S08.06 permanece sin marcar DONE.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|

@@ -31,7 +31,8 @@
     "perf:compare": "node scripts/performance-comparator.mjs",
     "eval:tts:local": "node scripts/tts-local-benchmark.mjs",
     "perf:hardware:local": "node scripts/hardware-browser-benchmark.mjs",
-    "smoke:remote:local": "node scripts/remote-provider-smoke.mjs"
+    "smoke:remote:local": "node scripts/remote-provider-smoke.mjs",
+    "eval:persona:remote": "node scripts/remote-persona-eval.mjs"
   },
   "dependencies": {
     "three": "0.187.0"
