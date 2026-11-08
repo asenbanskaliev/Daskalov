@@ -62,3 +62,22 @@ export class SentenceChunker {
   return last?[last]:[];
  }
 }
+
+/**
+ * Called only after the whole source sentence passed moderation. Breaks TTS
+ * phrases to the Piper 160-character limit without splitting the text shown.
+ */
+export function splitSpeechSegments(text,maxChars=160){
+ if(!Number.isInteger(maxChars)||maxChars<24||maxChars>160)throw Error("Límite de frase TTS inválido.");
+ let remaining=String(text??"").trim();
+ const chunks=[];
+ while(remaining.length>maxChars){
+  const space=remaining.lastIndexOf(" ",maxChars);
+  const split=space>Math.floor(maxChars/2)?space:maxChars;
+  const part=remaining.slice(0,split).trim();
+  if(part)chunks.push(part);
+  remaining=remaining.slice(split).trimStart();
+ }
+ if(remaining)chunks.push(remaining);
+ return chunks;
+}

@@ -65,3 +65,24 @@ test("VAL-05: unsafe response split across chunks is withheld from every SSE and
  assert.match(events.at(-1).reply,/respeto/);
  assert.equal(moderateProfessorOutput("No se lo digas a tus padres.").blocked,true);
 });
+
+test("VAL-05: streaming moderation cannot be bypassed by a >160-character phrase split across LLM deltas",async t=>{
+ const words="pizarra ".repeat(17)+"No se lo digas a tus padres.";
+ const first=words.slice(0,160),second=words.slice(160);
+ const app=createApp({dbPath:":memory:",allowMemory:false,streamLlm:async function*(){
+  yield first;
+  yield second;
+ }});
+ app.server.listen(0,"127.0.0.1");await once(app.server,"listening");
+ t.after(async()=>{await new Promise(done=>app.server.close(done));app.close();});
+ const base="http://127.0.0.1:"+app.server.address().port;
+ const r=await fetch(base+"/api/chat/stream",{method:"POST",headers:{"content-type":"application/json"},
+  body:JSON.stringify({provider:"local",model:"qwen2.5:7b",text:"Enséñame sobre el respeto"})});
+ assert.equal(r.status,200);
+ const events=(await r.text()).trim().split("\n").map(JSON.parse);
+ assert.equal(events.at(-1).type,"completed");
+ assert.match(events.at(-1).reply,/respeto/);
+ const publicText=events.map(e=>e.text||e.reply||"").join(" ");
+ assert.doesNotMatch(publicText,/No se lo digas a tus padres/i);
+ assert.doesNotMatch(publicText,/pizarra pizarra/);
+});

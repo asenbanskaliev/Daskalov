@@ -9,7 +9,7 @@ import {safeDeterministicReply} from "./child-safety.mjs";
 import {moderateProfessorOutput} from "./output-moderation.mjs";
 import {chatOllama,streamOllama,listOllamaModels,OllamaError,validateModel,validateProvider} from "./ollama.mjs";
 import {isRemoteProvider,validateRemoteKey,chatRemote,streamRemote,listRemoteModels} from "./remote-llm.mjs";
-import {SentenceChunker} from "./stream.mjs";
+import {SentenceChunker,splitSpeechSegments} from "./stream.mjs";
 import {streamWithOptionalFallback} from "./fallback.mjs";
 import {retryLocalStream} from "./resilience.mjs";
 import {MetricsCollector} from "./metrics.mjs";
@@ -307,7 +307,7 @@ export function createApp({
      if(remember)metrics.observe("db",Date.now()-dbStarted);
      const messages=buildContext({text:body.text,event,memories,history:body.history});
      if(path==="/api/chat/stream"){
-      const requestId=randomUUID(),chunker=new SentenceChunker();
+      const requestId=randomUUID(),chunker=new SentenceChunker({maxChars:6001});
       const cancellation=new AbortController();
       let sequence=0,full="",raw="",finalProvider=provider,finalModel=model,firstTokenMs=null,completedStream=false;
       const startedMs=Date.now();
@@ -349,7 +349,7 @@ export function createApp({
          const safe=moderateProfessorOutput(sentence).text;
          full+=(full?" ":"")+safe;
          emit("delta",{text:(full.length>safe.length?" ":"")+safe});
-         emit("sentence",{text:safe});
+         for(const spokenText of splitSpeechSegments(safe))emit("sentence",{text:spokenText});
         }
        }
        if(!cancellation.signal.aborted){
@@ -357,7 +357,7 @@ export function createApp({
          const safe=moderateProfessorOutput(sentence).text;
          full+=(full?" ":"")+safe;
          emit("delta",{text:(full.length>safe.length?" ":"")+safe});
-         emit("sentence",{text:safe});
+         for(const spokenText of splitSpeechSegments(safe))emit("sentence",{text:spokenText});
         }
         const reply=normalizeReply(full);
         if(!reply)throw new OllamaError("Ollama no devolvió texto.",502);
