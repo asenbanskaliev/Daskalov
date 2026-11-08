@@ -10,6 +10,11 @@ export function isPrivateHost(hostHeader){
   return ["127.0.0.1","localhost","[::1]"].includes(url.hostname)&&!url.username&&!url.password;
  }catch{return false;}
 }
+/** Host is attacker-controlled, so check the actual TCP peer. */
+export function isPrivateClient(req) {
+ const addr=req?.socket?.remoteAddress;
+ return isPrivateHost(req?.headers?.host)&&["127.0.0.1","::1","::ffff:127.0.0.1"].includes(addr);
+}
 export class UsageBudget{
  constructor({dailyLimit=24}={}){this.dailyLimit=dailyLimit;this.day="";this.used=0;}
  reserve(date=new Date()){

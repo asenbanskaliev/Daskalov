@@ -110,3 +110,22 @@ test("SEC-004: bloquea origen ajeno antes de crear memoria",async(t)=>{
  const res=await fetch(base+"/api/session",{method:"POST",headers:{origin:"https://otro.example"}});
  assert.equal(res.status,403);
 });
+
+test("SEC-010: entire private player API requires cookie plus CSRF, cross-site GET is denied",async t=>{
+ const {base}=await fixture(t);
+ const session=await auth(base);
+ const endpoints=[
+  ["/api/memory",{}, "POST"],["/api/memory",{}, "DELETE"],
+  ["/api/memory/export",{}, "POST"],["/api/memory/correct",{id:1,content:"hola"},"POST"],
+  ["/api/memory/reindex",{limit:1},"POST"],["/api/progress",{readOnly:true},"POST"],
+  ["/api/chat",{provider:"local",model:"qwen2.5:7b",text:"hola",remember:true},"POST"],
+  ["/api/chat/stream",{provider:"local",model:"qwen2.5:7b",text:"hola",remember:true},"POST"]
+ ];
+ for(const [path,body,method] of endpoints){
+  assert.equal((await post(base,path,body,"","",method)).status,401,path+" anonymous");
+  assert.equal((await post(base,path,body,session.cookie,"",method)).status,403,path+" missing csrf");
+ }
+ const cross=await fetch(base+"/api/session",{headers:{cookie:session.cookie,origin:"https://attacker.invalid"}});
+ assert.equal(cross.status,403);
+ assert.equal((await post(base,"/api/memory/export",{},session.cookie,session.csrf)).status,200);
+});

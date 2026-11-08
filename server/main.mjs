@@ -12,7 +12,7 @@ import {SentenceChunker} from "./stream.mjs";
 import {streamWithOptionalFallback} from "./fallback.mjs";
 import {retryLocalStream} from "./resilience.mjs";
 import {MetricsCollector} from "./metrics.mjs";
-import {isPrivateHost,UsageBudget} from "./access-policy.mjs";
+import {isPrivateClient,UsageBudget} from "./access-policy.mjs";
 import {AtomicUsageLedger} from "./usage-ledger.mjs";
 import {makeTurnEvent} from "../shared/turn-protocol.js";
 import {synthesizePiper} from "./tts-piper.mjs";
@@ -90,7 +90,7 @@ export function createApp({
     throw new OllamaError("Demo pública: IA y datos personales desactivados.",403);
    }
    if(path==="/api/metrics"&&req.method==="GET"){
-    if(!isPrivateHost(req.headers.host))throw new OllamaError("Métricas solo disponibles en modo privado.",403);
+    if(!isPrivateClient(req))throw new OllamaError("Métricas solo disponibles en modo privado.",403);
     return respond(res,200,metrics.snapshot());
    }
    if(path==="/api/health"&&req.method==="GET")return respond(res,200,{ok:true,cloudConfigured:process.env.DASKALOV_SAFE_DEMO_ONLY==="1"?false:!!process.env.OLLAMA_API_KEY,demoOnly:process.env.DASKALOV_SAFE_DEMO_ONLY==="1"});
@@ -99,7 +99,7 @@ export function createApp({
     return respond(res,200,{available:Boolean(process.env.DASKALOV_WHISPER_URL),provider:"whisper-local",recordingPersisted:false});
    }
    if(path==="/api/stt/local"&&req.method==="POST"){
-    if(!isPrivateHost(req.headers.host))throw new OllamaError("Transcripción local permitida solo desde localhost.",403);
+    if(!isPrivateClient(req))throw new OllamaError("Transcripción local permitida solo desde localhost.",403);
     const {audio,mime}=await readAudioRequest(req);
     const sttStarted=Date.now();
     const transcript=await sttTranscriber({audio,mime});
@@ -110,7 +110,7 @@ export function createApp({
     return respond(res,200,{available:Boolean(process.env.DASKALOV_PIPER_BIN&&process.env.DASKALOV_PIPER_MODEL),provider:"piper-local"});
    }
    if(path==="/api/tts/local"&&req.method==="POST"){
-    if(!isPrivateHost(req.headers.host))throw new OllamaError("Voz local disponible solo desde localhost.",403);
+    if(!isPrivateClient(req))throw new OllamaError("Voz local disponible solo desde localhost.",403);
     const body=await bodyOf(req);
     if(typeof body.text!=="string"||!body.text.trim()||body.text.length>160)throw new OllamaError("Texto de voz inválido.",400);
     const ttsStarted=Date.now();
@@ -121,7 +121,8 @@ export function createApp({
     return res.end(wav);
    }
    if(path==="/api/session"&&req.method==="GET"){
-    const active=getSession(req,memory);
+     if(!isSameSiteRequest(req))throw new OllamaError("Origen de consulta de sesión no permitido.",403);
+     const active=getSession(req,memory);
     return respond(res,200,{active:Boolean(active),csrfToken:active?.csrfToken||null,memoryAvailable:allowMemory});
    }
    if(path==="/api/session"&&req.method==="POST"){
@@ -137,12 +138,12 @@ export function createApp({
    }
    if(path==="/api/models"&&req.method==="GET"){
     const provider=validateProvider(url.searchParams.get("provider"));
-    if(provider==="cloud"&&!isPrivateHost(req.headers.host))throw new OllamaError("Cloud solo está disponible en modo privado.",403);
+    if(provider==="cloud"&&!isPrivateClient(req))throw new OllamaError("Cloud solo está disponible en modo privado.",403);
     return respond(res,200,{models:await models({provider})});
    }
    if(path==="/api/provider-status"&&req.method==="GET"){
     const provider=validateProvider(url.searchParams.get("provider"));
-    if(provider==="cloud"&&!isPrivateHost(req.headers.host))throw new OllamaError("Cloud solo está disponible en modo privado.",403);
+    if(provider==="cloud"&&!isPrivateClient(req))throw new OllamaError("Cloud solo está disponible en modo privado.",403);
     try{
      const available=await models({provider});
      return respond(res,200,{provider,reachable:true,models:available.length});
@@ -190,7 +191,7 @@ export function createApp({
     const body=await bodyOf(req);
     rejectClientPlayerId(body);
     const provider=validateProvider(body.provider),model=validateModel(body.model);
-    if(provider==="cloud"&&!isPrivateHost(req.headers.host))throw new OllamaError("Cloud no está habilitado fuera de localhost.",403);
+    if(provider==="cloud"&&!isPrivateClient(req))throw new OllamaError("Cloud no está habilitado fuera de localhost.",403);
     if(typeof body.text!=="string"||!body.text.trim()||body.text.length>700)throw new OllamaError("Mensaje inválido (1-700 caracteres).",400);
     const event=["dialog","turned_around","interruption","long_silence","hand_raised"].includes(body.event)?body.event:"dialog";
     const safetyReply=safeDeterministicReply(body.text);
@@ -268,7 +269,7 @@ export function createApp({
        for await(const packet of streamWithOptionalFallback({
         provider,model,messages,signal:cancellation.signal,streamLlm:effectiveStream,
         allowFallbackToCloud:body.allowFallbackToCloud===true,
-        reserveCloud:()=>isPrivateHost(req.headers.host)&&cloudBudget.reserve()
+        reserveCloud:()=>isPrivateClient(req)&&cloudBudget.reserve()
        })){
         if(cancellation.signal.aborted)break;
         if(packet.provider!==finalProvider){

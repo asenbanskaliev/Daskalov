@@ -368,7 +368,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [ ] **S10.02** Privacidad-by-design: base legal, transparencia infantil, flujos de permisos y consentimiento parental cuando legalmente exigible.  
   - **Aceptación:** Prueba con menor <14 sin consentimiento impide memoria; revisión jurídica previa a público.  
   - **TDD:** SAFE-002 · **Dep.:** S00.06.
-- [ ] **S10.03** Autorización real para cada ruta de recuerdos/progreso y tokens de sesión HttpOnly seguros; límites de acceso.  
+- [x] **S10.03** Autorización real para cada ruta de recuerdos/progreso y tokens de sesión HttpOnly seguros; límites de acceso.  
   - **Aceptación:** Una petición con otro playerId devuelve 403 aun con UUID conocido.  
   - **TDD:** SAFE-003 · **Dep.:** S00.04.
 - [x] **S10.04** CSP, Permissions-Policy, CORS estricto, headers, protección CSRF y salida escapada.  
@@ -594,6 +594,10 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 S08.08: el baseline por modelo requiere las 300 respuestas locales reales exactas (100 humor, 100 escolares, 50 inyección, 50 memoria), comprueba IDs y categorías, hash de dataset, regresiones, aprobación explícita y SHA de commit. Se rechazan resultados parciales, IDs duplicados, casos ausentes y resultados críticos marcados PASS. El baseline solo guarda señales, nunca texto de respuestas. El modo estático no se puede presentar como ejecución de modelo. **S08.06, S08.07 y PERSONA-READY continúan abiertos** hasta ejecución Ollama autorizada y valoración humana.
 
 Pruebas: `tests/output-moderation.test.mjs`, `tests/persona-baseline.test.mjs`; queda pendiente el resultado de CI del SHA publicado. No hacer merge ni publicar.
+
+## 4I. Hardening de autorización — 8 noviembre 2026
+
+**77/109 contratos técnicos implementados, 32 abiertos.** S10.03 comprueba sesión de propietario y CSRF en todas las rutas de recuerdos, corrección, reindexado, progreso y chat persistente. GET de sesión verifica el origen, y Cloud/voz/mediciones privadas exigen peer TCP de loopback además de Host. Pruebas: `tests/security-session.test.mjs` y `tests/private-client-policy.test.mjs`. No se abre Cloud público ni se certifica consentimiento tutelar (S00.05, S07.03, S10.02 siguen abiertas). Sin merge ni despliegue.
 
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
