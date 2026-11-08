@@ -38,7 +38,9 @@ test("PERF-005: 100 mocked conversations with 429/500, network delay and interru
    try{await reader.cancel();}catch{}
    aborted++;
    // Let abort propagate to the server before opening the next turn.
-   await new Promise(resolve=>setTimeout(resolve,3));
+   // Mock upstream may still be inside its 12 ms sleep after abort.
+   // Check server returns to an idle state before the next synthetic turn.
+   await new Promise(resolve=>setTimeout(resolve,45));
    continue;
   }
   const events=(await response.text()).trim().split("\n").map(JSON.parse);
