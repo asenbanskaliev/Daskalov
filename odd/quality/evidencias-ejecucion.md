@@ -56,3 +56,8 @@ Las pruebas unitarias con Ollama simulado no demuestran Cloud ni Ollama local re
 - https://github.com/asenbanskaliev/Daskalov/actions/runs/42467411676 seguridad SUCCESS.
 - https://github.com/asenbanskaliev/Daskalov/actions/runs/42467411860 navegador PENDIENTE EN ESTE CORTE.
 - Los gates externos de menores, rendimiento real, Cloud y voz autorizada no están certificados. FULL=NO.
+
+## Browser GLB real (sin IA ni voz reales) — 8 noviembre 2026
+- Run https://github.com/asenbanskaliev/Daskalov/actions/runs/42467630215 **SUCCESS**, SHA 93c5d0284.
+- Chromium y Firefox validan que el personaje GLB no solo existe en HTTP sino que se carga en la escena si WebGL está disponible; fallback texto cuando no.
+- No cubre hardware móvil real, GPU Iris Xe, calidad de voz licenciada ni auditoría humana. Los gates FULL/3D-READY continúan bloqueados.

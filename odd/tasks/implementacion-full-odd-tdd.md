@@ -579,7 +579,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 ### Evidencia de ejecución
 - Unit, contracts and build exactos de la tanda: https://github.com/asenbanskaliev/Daskalov/actions/runs/42467411741 — SUCCESS.
 - Security audit sin secretos: https://github.com/asenbanskaliev/Daskalov/actions/runs/42467411676 — SUCCESS.
-- Browser E2E exacto de la tanda: https://github.com/asenbanskaliev/Daskalov/actions/runs/42467411860 — **PENDIENTE AL CIERRE DE ESTE CORTE**; no se marca aprobado hasta completar.
+- Browser E2E del artefacto GLB y controles en Chromium/Firefox: https://github.com/asenbanskaliev/Daskalov/actions/runs/42467630215 — **SUCCESS** (SHA 93c5d0284); test reforzado espera la carga real del GLB en la escena.
 - Synthetic performance anterior: https://github.com/asenbanskaliev/Daskalov/actions/runs/42466261582 — SUCCESS; mide mocks, NO hardware real.
 
 ### Bloqueos aún vigentes
