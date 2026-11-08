@@ -763,6 +763,10 @@ S05.06 **PARTIAL avanzado**: `src/shared-fallback-sphere.js` crea las esferas de
 
 S11.04/S10.07 **PARTIAL**: `MetricsCollector` incorpora latencia y recuentos agregados de OpenRouter y NVIDIA, sin incluir prompts, claves ni identificadores de modelo; las solicitudes sin streaming también registran duración total. El coste estimado permanece `null` para proveedores externos, pues no se puede inventar el precio efectivo de su facturación. `tests/remote-metrics.test.mjs` lo comprueba con datos sintéticos. Las mediciones reales de latencia, primera voz y percentiles siguen pendientes.
 
+## 4AO. Smoke manual con proveedor real y una sola petición — 8 noviembre 2026
+
+**Nueva capacidad de proveedores configurable (no aumenta artificialmente el 84/109)**: `scripts/remote-provider-smoke.mjs` permite ejecutar una prueba real de OpenRouter o NVIDIA, **solo si** el operador activa `DASKALOV_REMOTE_SMOKE_CONSENT=1` y facilita proveedor, modelo y su clave en variables de entorno privadas. Verifica el modelo en el catálogo y efectúa una única pregunta sintética en español, sin memoria. Exporta solo latencia agregada, longitud y estado, nunca texto generado, token o error bruto. `tests/remote-provider-smoke.test.mjs` usa fetch falsos y verifica que sin autorización se realizan cero conexiones y un modelo ausente no consume inferencia. No se han usado claves reales ni coste real en esta tanda: sigue pendiente ejecutar el smoke con autorización para confirmar comportamiento vivo, términos y facturación.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|
