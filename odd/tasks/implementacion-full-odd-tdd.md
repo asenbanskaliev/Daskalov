@@ -779,6 +779,10 @@ S00.01/S00.05/S02.09 **NO FULL**: se probó el secreto `NVIDIA_API_KEY` de Actio
 
 S01.07/S05.09/S11.07 **PARTIAL**: la workflow `.github/workflows/browser-e2e.yml` separa Chromium y Firefox en dos jobs paralelos `matrix.browser`, con `fail-fast:false` para que un fallo de un navegador no oculte los resultados del otro. Cada job instala solo su navegador, ejecuta todos los E2E de ese motor y publica capturas y trazas en artefactos con nombre distinto, sin conversaciones de alumnos ni secretos. `tests/workflow-policy.test.mjs` asegura la matriz y los nombres separados. No sustituye auditoría humana ni benchmarks hardware físico.
 
+## 4AS. Ejecución protegida de 20 o 300 escenarios reales — 8 noviembre 2026
+
+S08.06 **PARTIAL**: nueva workflow `nvidia-persona-real.yml` para ejecutar opcionalmente **20 o 300 solicitudes sintéticas reales** desde `main`, bajo `workflow_dispatch` y `confirm_paid_test=true` con Environment `daskalov-cloud-test` y secreto exclusivo `DASKALOV_ENV_NVIDIA_API_KEY`. El operador debe elegir un ID de modelo previamente validado, aprobar el posible gasto y disponer del rol de inferencia NVIDIA. El informe archivado solo contiene agregados e IDs de casos; el código se detiene en el primer fallo sin reintentos. `tests/nvidia-persona-workflow.test.mjs` verifica que nunca se active en push/PR, que exija consentimiento y que no use secretos de repositorio. **No se ha ejecutado la batería real por rechazo NVIDIA 404/410 y falta de permiso verificado; 300 respuestas reales y evaluación pedagógica humana permanecen pendientes.**
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|

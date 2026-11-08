@@ -1,0 +1,65 @@
+name: NVIDIA - 300 real classroom evaluation (manual protected)
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        type: string
+        description: "Verified text model ID from an earlier successful live smoke"
+        required: true
+        default: "openai/gpt-oss-120b"
+      max_calls:
+        type: choice
+        description: "Exactly how many synthetic requests to authorize"
+        options:
+          - "20"
+          - "300"
+        required: true
+        default: "20"
+      confirm_paid_test:
+        type: boolean
+        required: true
+        default: false
+        description: "I explicitly authorize up to max_calls paid model requests"
+permissions:
+  contents: read
+concurrency:
+  group: daskalov-real-300-eval
+  cancel-in-progress: false
+jobs:
+  controlled-evaluation:
+    if: github.repository == 'asenbanskaliev/Daskalov' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && inputs.confirm_paid_test == true
+    environment: daskalov-cloud-test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: "24"
+          package-manager-cache: false
+      - name: Ensure protected Environment secret exists
+        env:
+          ENV_NVIDIA_KEY: ${{ secrets.DASKALOV_ENV_NVIDIA_API_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "$ENV_NVIDIA_KEY" ]; then
+            echo "Missing protected Environment key: no requests sent."
+            exit 1
+          fi
+      - name: Run synthetic evaluation without recording prompts or replies
+        env:
+          NVIDIA_API_KEY: ${{ secrets.DASKALOV_ENV_NVIDIA_API_KEY }}
+          DASKALOV_REMOTE_EVAL_PROVIDER: nvidia
+          DASKALOV_REMOTE_EVAL_MODEL: ${{ inputs.model }}
+          DASKALOV_REMOTE_EVAL_LIMIT: ${{ inputs.max_calls }}
+          DASKALOV_REMOTE_EVAL_CONSENT: "1"
+        run: node scripts/remote-persona-eval.mjs
+      - name: Preserve aggregated counts only on successful completion
+        if: success()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: nvidia-300-synthetic-aggregate
+          path: reports/remote-persona-live.json
+          retention-days: 3
