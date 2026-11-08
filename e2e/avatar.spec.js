@@ -7,5 +7,13 @@ test("GFX-002: the local teacher GLB is available with no external asset fetch",
  expect(bytes.subarray(0,4).toString("ascii")).toBe("glTF");
  await page.goto("/");
  await expect(page.getByRole("heading",{name:"Profesor Daskalov"})).toBeVisible();
- await expect(page.locator("#sceneStatus")).not.toHaveText("");
+ const hasWebGL=await page.evaluate(()=>{
+  const canvas=document.createElement("canvas");
+  return Boolean(canvas.getContext("webgl2")||canvas.getContext("webgl"));
+ });
+ if(hasWebGL){
+  await expect(page.locator("#sceneStatus")).toContainText("GLB local cargado",{timeout:12000});
+ }else{
+  await expect(page.locator("#sceneStatus")).toContainText("3D no disponible");
+ }
 });
