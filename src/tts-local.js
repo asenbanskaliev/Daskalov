@@ -14,6 +14,7 @@ export class LocalPiperVoice{
   const epoch=this.epoch,control=new AbortController();
   this.pending.add(control);
   // Fetch sentences eagerly (prebuffer), but play them in original stream order.
+  const fetchStart=performance.now();
   const prebuffer=this.fetchImpl("/api/tts/local",{
    method:"POST",headers:{"content-type":"application/json"},
    body:JSON.stringify({text:String(text).slice(0,160)}),signal:control.signal
@@ -22,14 +23,14 @@ export class LocalPiperVoice{
     let body={};try{body=await response.json();}catch{}
     throw Error(body.error||"Piper local no está disponible.");
    }
-   return response.arrayBuffer();
-  }).then(audio=>({audio}),error=>({error}));
+   return {audio:await response.arrayBuffer(),synthesisMs:performance.now()-fetchStart};
+  }).then(result=>result,error=>({error}));
   const play=this.audioTail.then(async()=>{
    const result=await prebuffer;
    if(result.error)throw result.error;
    if(epoch!==this.epoch||control.signal.aborted)return false;
    this.onSentenceStart(text);
-   return this.audio.enqueue(result.audio,{text});
+   return this.audio.enqueue(result.audio,{text,synthesisMs:result.synthesisMs});
   });
   this.audioTail=play.catch(()=>{});
   play.catch(error=>{

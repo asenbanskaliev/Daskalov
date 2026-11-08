@@ -6,7 +6,7 @@ export class AudioQueue {
  constructor({AudioContextCtor=globalThis.AudioContext||globalThis.webkitAudioContext,onSpeaking=()=>{},onFragmentStart=()=>{}}={}){
   this.Ctor=AudioContextCtor;this.onSpeaking=onSpeaking;this.onFragmentStart=onFragmentStart;this.ctx=null;this.generation=0;this.tail=Promise.resolve();this.sources=new Set();this.pending=new Set();
  }
- async enqueue(buffer,{text="",fragmentId=null}={}){
+ async enqueue(buffer,{text="",fragmentId=null,synthesisMs=null}={}){
   if(!this.Ctor)throw Error("AudioContext no disponible.");
   const version=this.generation;
   const play=async()=>{
@@ -38,6 +38,7 @@ export class AudioQueue {
        text:String(text).slice(0,160),
        audioStartMs:Math.round(started*1000),
        durationMs:Math.round(seconds*1000),
+       synthesisMs:Number.isFinite(synthesisMs)?Math.max(0,synthesisMs):null,
        clockMs:()=>Number(this.ctx?.currentTime||0)*1000
       });}catch{ /* Visual animation must never break audio playback. */ }
      }
