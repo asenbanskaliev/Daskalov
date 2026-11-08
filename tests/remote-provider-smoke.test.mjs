@@ -15,7 +15,7 @@ test("AI-011: real vendor smoke uses exactly one synthetic chat, no raw content 
  assert.equal(r.requestCount,1);
  assert.equal(r.success,true);
  assert.equal(r.latencyMs,45);
- assert.equal(r.responseCharacters,17);
+ assert.equal(r.responseCharacters,"Buenos días, clase".length);
  assert.equal(r.rawResponseIncluded,false);
  assert.equal(r.credentialsStored,false);
  assert.doesNotMatch(JSON.stringify(r),/sk-or-v1|Buenos días/);
