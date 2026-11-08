@@ -29,6 +29,8 @@ jobs:
           node-version: "24"
           package-manager-cache: false
       - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: GLB geometry and memory estimate (NOT hardware FPS)
+        run: npm run gfx:budget
       - name: 100 synthetic conversations and 10 sessions
         run: |
           mkdir -p reports
@@ -38,5 +40,7 @@ jobs:
         if: always()
         with:
           name: daskalov-synthetic-performance
-          path: reports/performance.tap
+          path: |
+            reports/performance.tap
+            reports/graphics-budget.json
           retention-days: 7

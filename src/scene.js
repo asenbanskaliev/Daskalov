@@ -19,7 +19,8 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
   const light=new THREE.DirectionalLight(0xffe3bd,2.0);light.position.set(-3,7,5);scene.add(light);
   const mat=(hex)=>new THREE.MeshStandardMaterial({color:hex,roughness:0.85});
   const cream=mat(0xe4d7ab),wood=mat(0x7d5335),dark=mat(0x26342b),coat=mat(0x574f3f),skin=mat(0xe2ae83),black=mat(0x25221c),white=mat(0xffffff);
-  function box(w,h,d,x,y,z,material,parent=scene){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);o.position.set(x,y,z);parent.add(o);return o;}
+  const sharedBoxGeometry=new THREE.BoxGeometry(1,1,1);
+  function box(w,h,d,x,y,z,material,parent=scene){const o=new THREE.Mesh(sharedBoxGeometry,material);o.scale.set(w,h,d);o.position.set(x,y,z);parent.add(o);return o;}
   function sphere(r,x,y,z,material,parent=scene){const o=new THREE.Mesh(new THREE.SphereGeometry(r,20,16),material);o.position.set(x,y,z);parent.add(o);return o;}
   box(15,0.2,14,0,-0.1,-1,wood);
   box(15,7,.25,0,3.3,-7.7,cream);
