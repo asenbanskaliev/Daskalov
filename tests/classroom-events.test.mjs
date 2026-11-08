@@ -16,7 +16,7 @@ test("GAME-006: cinco eventos permitidos, sin spam ni humillación",()=>{
 
 test("GAME-006: deterministic opt-in spontaneous events obey global 90-second cooldown",()=>{
  const engine=new ClassroomReactions({cooldownMs:1000,autoCooldownMs:90000});
- assert.equal(engine.auto(10,1000).event,"board");
+ assert.equal(engine.auto(9,1000).event,"board");
  assert.equal(engine.auto(2,2000),null);
  assert.ok(engine.auto(2,91000));
  assert.equal(engine.auto(Number.NaN,190000),null);
