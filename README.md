@@ -12,7 +12,7 @@ Abrir el juego en el navegador con HTML, CSS y JavaScript. No es una aplicación
 - Personalidad: odd/character/daskalov-personality.md
 - Pruebas: odd/quality/matriz-tdd.md
 
-## Primera ejecución (cuando se complete la fase F0)
+## Primera ejecución (prototipo operativo en desarrollo)
 Requisito: Node.js 24.
 1. Clona el repositorio y ejecuta `npm ci`, `npm run build` y `npm start`.
 2. Abre http://localhost:3000 en Chrome o Edge. Para desarrollo HMR, inicia `npm run dev:server` y, en otra terminal, `npm run dev`; abre http://127.0.0.1:5173.
@@ -44,3 +44,5 @@ Three.js y Vite se instalan desde `package-lock.json`; en producción el motor 3
 
 ## Voz Piper local opcional
 El selector de TTS mantiene **navegador (gratis)** como predeterminado. Con Piper instalado, configura `DASKALOV_PIPER_BIN` y `DASKALOV_PIPER_MODEL` (ruta del archivo `.onnx`); el backend ejecuta Piper sin shell, envía WAV por el mismo origen y elimina el audio temporal tras leerlo. No existe una voz con acento búlgaro licenciada/validada por defecto. Revisa individualmente licencia del motor y del modelo vocal. Para un ejemplo de CLI con `--output_file` consulta la documentación de Piper: https://tderflinger.github.io/piper-docs/guides/usage/.
+
+Guía detallada para jugar, configurar voz y Ollama, desarrollar y resolver problemas: `odd/operations/guia-uso-desarrollo.md`.
