@@ -315,7 +315,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [x] **S08.04** Detector contextual de emoción y reacción: triste, académico, travieso, curioso.  
   - **Aceptación:** No responde con burla al alumno triste ni sacrifica explicación.  
   - **TDD:** CHAR-004 · **Dep.:** 01.
-- [ ] **S08.05** Moderación infantil y fallbacks: no acoso, violencia glorificada, consejos peligrosos ni información privada.  
+- [x] **S08.05** Moderación infantil y fallbacks: no acoso, violencia glorificada, consejos peligrosos ni información privada.  
   - **Aceptación:** 0 fallos críticos de seguridad en batería adversarial aprobada.  
   - **TDD:** CHAR-005 · **Dep.:** 01.
 - [ ] **S08.06** Evaluación reproducible de 100 escenarios de humor, 100 escolares, 50 inyecciones y 50 memoria.  
@@ -324,7 +324,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [ ] **S08.07** Rúbrica y revisión humana de acento/humor/pedagogía; separar hechos verificables de inventos.  
   - **Aceptación:** La evaluación distingue chiste ficcional de enseñanza factual.  
   - **TDD:** CHAR-007 · **Dep.:** 06.
-- [ ] **S08.08** Versionar prompts/datasets (sin conversaciones reales de menores), baseline y regresión por modelo.  
+- [x] **S08.08** Versionar prompts/datasets (sin conversaciones reales de menores), baseline y regresión por modelo.  
   - **Aceptación:** Comparación A/B reproducible Cloud/local y alertas de regresión.  
   - **TDD:** CHAR-008 · **Dep.:** 06.
 
@@ -587,6 +587,14 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - Voz, acento búlgaro, licencias, comparación Piper/Kokoro, 20 audios reales, panel ciego, revisión de menores y docentes deben ejecutarse con personas y recursos autorizados.
 - Los backups históricos pueden contener recuerdos ya eliminados y precisan gestión de supresión jurídica; no declarar MEM-READY.
 - FPS hardware y WCAG AA exigen equipos reales/revisión humana. `npm run gate:full` sigue fallando correctamente hasta 109/109 más 12 gates firmados.
+## 4H. Moderación infantil y baselines completos — 8 noviembre 2026
+
+**76/109 contratos técnicos DONE; 33 pendientes.** Esta tanda amplía S08.05 a amenazas, acoso, secretos de menores, instrucciones peligrosas y contenido activo, con tests de rechazo y falsos positivos. El filtrado determinista protege tanto respuesta directa como NDJSON (la moderación ya ocurre antes del evento de texto/audio); **NO es una certificación de seguridad infantil** ni sustituye revisión humana de casos adversariales.
+
+S08.08: el baseline por modelo requiere las 300 respuestas locales reales exactas (100 humor, 100 escolares, 50 inyección, 50 memoria), comprueba IDs y categorías, hash de dataset, regresiones, aprobación explícita y SHA de commit. Se rechazan resultados parciales, IDs duplicados, casos ausentes y resultados críticos marcados PASS. El baseline solo guarda señales, nunca texto de respuestas. El modo estático no se puede presentar como ejecución de modelo. **S08.06, S08.07 y PERSONA-READY continúan abiertos** hasta ejecución Ollama autorizada y valoración humana.
+
+Pruebas: `tests/output-moderation.test.mjs`, `tests/persona-baseline.test.mjs`; queda pendiente el resultado de CI del SHA publicado. No hacer merge ni publicar.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|

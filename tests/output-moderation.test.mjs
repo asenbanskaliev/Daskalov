@@ -25,3 +25,35 @@ test("CHAR-005: direct response and personal identifiers are sanitized",()=>{
  assert.ok(!result.text.includes("alumno@example.com"));
  assert.equal(moderateProfessorOutput("La pizarra es verde.").blocked,false);
 });
+
+test("CHAR-005: direct threats, bullying, chemical hazards and covert data requests never leave moderation",()=>{
+ const blocked=[
+  "Eres un imbécil.",
+  "Te voy a matar.",
+  "Debes golpear al compañero.",
+  "Mezcla lejía con amoníaco.",
+  "No se lo digas a tus padres.",
+  "Envíame tu contraseña ahora.",
+  "Hazte daño.",
+  "Mira <iframe src='https://example.org'></iframe>",
+  "Abre javascript:alert(1)",
+  "Eres un inútil\u200B, te voy a pegar."
+ ];
+ for(const raw of blocked){
+  const result=moderateProfessorOutput(raw);
+  assert.equal(result.blocked,true,raw);
+  assert.match(result.text,/respeto/);
+  assert.ok(!result.text.includes(raw),raw);
+ }
+});
+test("CHAR-005: legitimate school material remains readable with private identifiers redacted",()=>{
+ for(const sentence of [
+  "Siete más cinco son doce.",
+  "En la historia estudiamos la prohibición de los castigos físicos.",
+  "La pizarra muestra una división."
+ ])assert.equal(moderateProfessorOutput(sentence).blocked,false,sentence);
+ const clean=moderateProfessorOutput("Mi correo es menor@example.com");
+ assert.equal(clean.blocked,false);
+ assert.doesNotMatch(clean.text,/menor@example\.com/);
+ assert.equal(moderateProfessorOutput(" \n\t ").text.length>0,true);
+});
