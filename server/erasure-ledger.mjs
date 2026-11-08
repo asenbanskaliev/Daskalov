@@ -59,6 +59,11 @@ export async function appendErasure({path,secret,playerId}){
    // Missing both files is a new ledger; missing only its anchor is fatal.
    try{await readFile(path,"utf8");throw Error("Firma del registro de supresiones ausente.");}
    catch(inner){if(inner.code!=="ENOENT")throw inner;}
+   // A lost ledger with its old authenticated head is NOT a fresh ledger.
+   try{
+    await readFile(path+".head","utf8");
+    throw Error("Firma del registro de supresiones ausente: se conserva el anclaje.");
+   }catch(inner){if(inner.code!=="ENOENT")throw inner;}
   }
   const row={v:1,hash,mac:mac(secret,"daskalov-erasure-record-v1:"+hash)};
   const serialized=JSON.stringify(row)+"\n";

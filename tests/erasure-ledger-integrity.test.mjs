@@ -34,3 +34,11 @@ test("MEM-007: deleted/truncated anchor and wrong secret fail closed",async t=>{
  await assert.rejects(()=>readErasureHashes({path,secret}),/ENOENT/);
  await assert.rejects(()=>appendErasure({path,secret,playerId:randomUUID()}),/ENOENT|Firma/);
 });
+test("MEM-007: existing head without ledger blocks new deletion, never starts empty",async t=>{
+ const dir=mkdtempSync(join(tmpdir(),"daskalov-anchored-missing-"));
+ t.after(()=>rmSync(dir,{recursive:true,force:true}));
+ const path=join(dir,"erasure.jsonl"),secret=randomBytes(32).toString("hex");
+ await appendErasure({path,secret,playerId:randomUUID()});
+ unlinkSync(path);
+ await assert.rejects(()=>appendErasure({path,secret,playerId:randomUUID()}),/Firma/);
+});
