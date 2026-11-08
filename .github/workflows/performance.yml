@@ -9,6 +9,7 @@ on:
     paths:
       - ".github/workflows/performance.yml"
       - "tests/stress-100.test.mjs"
+      - "tests/stress-network-chaos.test.mjs"
       - "tests/game-sessions.test.mjs"
 permissions:
   contents: read
