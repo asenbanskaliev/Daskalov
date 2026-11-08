@@ -9,3 +9,5 @@ La eliminación del jugador borra recuerdos, progreso, preferencias y sesiones e
 El consentimiento de memoria en la interfaz es opcional, pero sigue pendiente validar base jurídica y, cuando proceda, permiso del tutor. Por este motivo MEM-READY y SEC-PUBLIC siguen bloqueados.
 
 Se bloquea la persistencia de recuerdos detrás de proxies públicos aun con memoria habilitada: peer TCP y Host deben ser loopback. Esta defensa se prueba en `tests/private-memory-boundary.test.mjs`. Sigue prohibida la memoria de menores sin validación legal y consentimiento válido cuando corresponda.
+
+En chat síncrono y streaming la persistencia vuelve a comprobar sesión autorizada inmediatamente antes de escribir, impidiendo que una respuesta tardía reviva los recuerdos tras revocar. `tests/revocation-inflight.test.mjs` cubre la carrera con dos modos de respuesta.

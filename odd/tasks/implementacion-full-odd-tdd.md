@@ -691,6 +691,10 @@ S00.01 **PARTIAL (bloqueo de secreto por defecto)**: el workflow real requiere d
 
 Tests `tests/public-proxy-inference.test.mjs` y `tests/workflow-policy.test.mjs`. No se ha gastado Cloud ni modificado `main`.
 
+## 4X. Borrado mientras se espera a Ollama — 8 noviembre 2026
+
+S07.07/S10.07 **avance de consistencia**: `server/main.mjs` comprueba justo antes de guardar una respuesta (normal o NDJSON) que la cookie y el titular siguen activos. Si la petición se inició antes del borrado y terminó después, la sesión revocada no puede recrear recuerdos. `tests/revocation-inflight.test.mjs` mantiene un modelo artificialmente bloqueado mientras borra todos los datos y comprueba memorias, progreso, sesiones y FTS en ambos formatos. Esto NO acredita supresión en servicios/backups externos; no se marcan DONE.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|

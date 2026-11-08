@@ -47,6 +47,12 @@ function requireSession(req,memory){
  if(!csrfIsValid(req,session))throw new OllamaError("La sesión necesita un token de seguridad válido.",403);
  return session;
 }
+function mayPersistRememberedReply(req,memory,session){
+ // A revoked session must not resurrect player data after an awaited LLM call.
+ if(!session)return false;
+ const active=getSession(req,memory);
+ return Boolean(active&&active.keyHash===session.keyHash&&active.playerId===session.playerId);
+}
 function rejectClientPlayerId(body){
  if(body&&Object.hasOwn(body,"playerId"))throw new OllamaError("El cliente no puede indicar la identidad de otro jugador.",400);
 }
@@ -340,7 +346,7 @@ export function createApp({
         }
         const reply=normalizeReply(full);
         if(!reply)throw new OllamaError("Ollama no devolvió texto.",502);
-        if(remember){
+        if(remember&&mayPersistRememberedReply(req,memory,session)){
          memory.save(session.playerId,"user",body.text);
          memory.save(session.playerId,"assistant",reply);
         }
@@ -360,7 +366,7 @@ export function createApp({
      }
      const reply=normalizeReply(moderateProfessorOutput(await llm({provider,model,messages})).text);
      if(!reply)throw new OllamaError("El profesor no ha respondido.",502);
-     if(remember){
+     if(remember&&mayPersistRememberedReply(req,memory,session)){
       memory.save(session.playerId,"user",body.text);
       memory.save(session.playerId,"assistant",reply);
      }
