@@ -113,3 +113,21 @@ for(const width of [320,390]){
   await expect(page.locator("#mainContent")).not.toHaveClass(/is-immersive/);
  });
 }
+
+test("AULA-005: real browser fullscreen API is used when available, otherwise view falls back safely",async({page})=>{
+ await page.goto("/");
+ const supported=await page.evaluate(()=>typeof document.getElementById("mainContent").requestFullscreen==="function");
+ await page.locator("#fullscreenToggle").click();
+ await expect(page.locator("#mainContent")).toHaveClass(/is-immersive/);
+ await expect(page.locator("#fullscreenToggle")).toHaveAttribute("aria-pressed","true");
+ const fullscreenElement=await page.evaluate(()=>document.fullscreenElement?.id||null);
+ if(fullscreenElement!==null){
+  expect(supported).toBe(true);
+  expect(fullscreenElement).toBe("mainContent");
+ }
+ await expect(page.locator("#question")).toBeVisible();
+ await page.locator("#fullscreenToggle").click();
+ await expect(page.locator("#mainContent")).not.toHaveClass(/is-immersive/);
+ await expect(page.locator("#fullscreenToggle")).toHaveAttribute("aria-pressed","false");
+ expect(await page.evaluate(()=>document.fullscreenElement===document.getElementById("mainContent"))).toBe(false);
+});
