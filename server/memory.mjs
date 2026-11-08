@@ -12,6 +12,7 @@ export function openMemory(fileName) {
  const db=new DatabaseSync(fileName);
  db.exec([
  "PRAGMA journal_mode=WAL;",
+ "PRAGMA busy_timeout=5000;",
  "CREATE TABLE IF NOT EXISTS memories(id INTEGER PRIMARY KEY, player_id TEXT NOT NULL, role TEXT NOT NULL CHECK(role IN ('user','assistant')), content TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')));",
  "CREATE INDEX IF NOT EXISTS memories_player_date ON memories(player_id,id DESC);",
  "CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(content,content='memories',content_rowid='id');",
