@@ -1,10 +1,13 @@
-name: NVIDIA - bounded real catalog proof
-# Explicit user authorization 2026-11-08. Only dedicated marker push, no PR.
+name: NVIDIA - approved real smoke (manual only)
+# Run only from reviewed main and protected Environment. No feature-branch or PR secrets.
 on:
-  push:
-    branches: ["feat/odd-tdd-web-mvp"]
-    paths:
-      - "odd/evidence/nvidia-smoke.trigger"
+  workflow_dispatch:
+    inputs:
+      confirm_paid_test:
+        description: "Autorizo hasta 6 consultas cortas reales a NVIDIA y su posible coste"
+        type: boolean
+        required: true
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -12,9 +15,10 @@ concurrency:
   cancel-in-progress: true
 jobs:
   nvidia-authenticated:
-    if: github.repository == 'asenbanskaliev/Daskalov' && github.ref == 'refs/heads/feat/odd-tdd-web-mvp' && github.event_name == 'push'
+    if: github.repository == 'asenbanskaliev/Daskalov' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && inputs.confirm_paid_test == true
     runs-on: ubuntu-24.04
-    timeout-minutes: 4
+    environment: daskalov-cloud-test
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -23,13 +27,16 @@ jobs:
         with:
           node-version: "24"
           package-manager-cache: false
-      - name: Real API evidence with max four candidates, two synthetic turns on first success
+      - name: Verify protected Environment provides a separate NVIDIA secret
         env:
-          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NVIDIA_API_KEY: ${{ secrets.DASKALOV_ENV_NVIDIA_API_KEY }}
         run: |
           set -euo pipefail
           if [ -z "$NVIDIA_API_KEY" ]; then
-            echo "NVIDIA_SECRET_UNAVAILABLE: GitHub Actions secret missing in this workflow context."
+            echo "Environment secret DASKALOV_ENV_NVIDIA_API_KEY is absent; no provider calls."
             exit 1
           fi
-          node scripts/nvidia-real-smoke-ci.mjs
+      - name: Bounded synthetic NVIDIA API proof
+        env:
+          NVIDIA_API_KEY: ${{ secrets.DASKALOV_ENV_NVIDIA_API_KEY }}
+        run: node scripts/nvidia-real-smoke-ci.mjs

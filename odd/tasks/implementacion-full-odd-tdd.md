@@ -771,6 +771,10 @@ S11.04/S10.07 **PARTIAL**: `MetricsCollector` incorpora latencia y recuentos agr
 
 S08.06 **PARTIAL avanzado**: `scripts/remote-persona-eval.mjs` ejecuta **una llamada por escenario** sobre el conjunto estático de 300 solicitudes (100 humor, 100 escolares, 50 inyección y 50 memoria) a NVIDIA u OpenRouter, con claves exclusivamente en variables de entorno y habilitación explícita `DASKALOV_REMOTE_EVAL_CONSENT=1`. Ejecuta secuencialmente, sin retry automático, con límite ajustable 1–300; en el primer error del proveedor se detiene para no consumir cuota/coste adicional. Solo reporta IDs y contadores de fallos, sin textos generados, prompts ni credenciales; no se considera revisión humana ni conformidad educativa. Prueba `tests/remote-persona-eval.test.mjs` con 300 respuestas sintéticas y fail-closed. **Las 300 llamadas REALES no están certificadas mientras NVIDIA devuelva HTTP 404/410 y no haya presupuesto/modelo válido**, por tanto S08.06 permanece sin marcar DONE.
 
+## 4AQ. Diagnóstico NVIDIA real y protección posterior de secreto — 8 noviembre 2026
+
+S00.01/S00.05/S02.09 **NO FULL**: se probó el secreto `NVIDIA_API_KEY` de Actions en la rama de trabajo de forma puntual para verificar la integración solicitada. La consulta autenticada a `/v1/models` fue HTTP 200 y listó 84 modelos, pero varios `/v1/chat/completions` fallaron con 404 o 410; no declarar inferencia NVIDIA funcional. Para evitar futuras exposiciones en pushes editables, `.github/workflows/nvidia-real-smoke.yml` se deja **solo manual, solo `main`, con confirmación del gasto y Environment `daskalov-cloud-test`**; requiere un secreto específico `DASKALOV_ENV_NVIDIA_API_KEY`, no reutiliza el repo-secret. Se deben configurar revisores del Environment desde Settings antes de cualquier prueba posterior, y el propietario debe comprobar acceso efectivo a un modelo. No se ha tocado `main`. Ninguna prueba equivale al smoke Ollama Beam exigido en S02.09.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|

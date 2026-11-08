@@ -18,16 +18,17 @@ test("AI-012: no credential, no remote calls",async()=>{
  await assert.rejects(()=>validateNvidiaLive({key:"",chat:async()=>{calls++}}),/SECRET/);
  assert.equal(calls,0);
 });
-test("AI-012: secret used only by marker-only branch push (no PR)",()=>{
+test("AI-012: paid NVIDIA secret is available only to approved main workflow and protected Environment",()=>{
  const yaml=readFileSync(".github/workflows/nvidia-real-smoke.yml","utf8");
- assert.match(yaml,/secrets\.NVIDIA_API_KEY/);
- assert.match(yaml,/paths:\s*\n\s+- "odd\/evidence\/nvidia-smoke\.trigger"/);
- assert.match(yaml,/github\.ref == 'refs\/heads\/feat\/odd-tdd-web-mvp'/);
+ assert.match(yaml,/workflow_dispatch:/);
+ assert.match(yaml,/inputs\.confirm_paid_test == true/);
+ assert.match(yaml,/environment: daskalov-cloud-test/);
+ assert.match(yaml,/github\.ref == 'refs\/heads\/main'/);
+ assert.match(yaml,/secrets\.DASKALOV_ENV_NVIDIA_API_KEY/);
+ assert.doesNotMatch(yaml,/secrets\.NVIDIA_API_KEY/);
+ assert.doesNotMatch(yaml,/^\s*(push|pull_request|pull_request_target|schedule|workflow_run):/m);
  assert.match(yaml,/persist-credentials: false/);
- assert.doesNotMatch(yaml,/^\s*(pull_request|pull_request_target|schedule|workflow_dispatch|workflow_run):/m);
- assert.doesNotMatch(yaml,/git push|npm publish|write-all/);
 });
-
 test("AI-012: live probe selects only a catalog-listed suitable chat model",()=>{
  assert.equal(pickNvidiaModel(["retired/obsolete","nvidia/nemotron-3-super-120b-a12b","deepseek-ai/deepseek-v4-flash"]),"deepseek-ai/deepseek-v4-flash");
  assert.equal(pickNvidiaModel(["meta/llama-3.3-70b-instruct"]),"meta/llama-3.3-70b-instruct");
