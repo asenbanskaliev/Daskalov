@@ -3,7 +3,7 @@ import {pathToFileURL} from "node:url";
 import {resolve} from "node:path";
 
 /** Two short synthetic requests, never logs secrets, prompts, model text or response headers. */
-export async function validateNvidiaLive({key,chat=chatRemote,stream=streamRemote,model="openai/gpt-oss-120b",onPhase=()=>{}}={}){
+export async function validateNvidiaLive({key,chat=chatRemote,stream=streamRemote,model="deepseek-ai/deepseek-v4-flash",onPhase=()=>{}}={}){
  if(typeof key!=="string"||key.length<10)throw Error("NVIDIA_SECRET_UNAVAILABLE");
  const messages=[{role:"user",content:"Responde con una frase breve en español sobre una pizarra."}];
  const started=Date.now();
@@ -23,9 +23,24 @@ export async function validateNvidiaLive({key,chat=chatRemote,stream=streamRemot
   durationMs:Date.now()-started,rawRepliesExcluded:true,
   sessionDataUsed:false,claimsFullSafetyCertification:false};
 }
+async function catalogStatus(key){
+ try{
+  const response=await fetch("https://integrate.api.nvidia.com/v1/models",{
+   headers:{authorization:"Bearer "+key},signal:AbortSignal.timeout(8000)
+  });
+  return response.status;
+ }catch{return null;}
+}
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
- let phase="setup";
- validateNvidiaLive({key:process.env.NVIDIA_API_KEY,onPhase:name=>phase=name}).then(result=>{
+ let phase="catalog";
+ const key=process.env.NVIDIA_API_KEY;
+ if(typeof key!=="string"||key.length<10){
+  process.stderr.write("NVIDIA_SECRET_UNAVAILABLE: secret missing or too short.\n");
+  process.exitCode=1;
+ }else catalogStatus(key).then(status=>{
+  process.stdout.write("NVIDIA_CATALOG_HTTP="+(status===null?"unreachable":status)+"\n");
+  return validateNvidiaLive({key,onPhase:name=>phase=name});
+ }).then(result=>{
   process.stdout.write("NVIDIA_LIVE_OK "+JSON.stringify(result)+"\n");
  }).catch(error=>{
   // The HTTP code is authored by the controlled adapter and contains no key.
