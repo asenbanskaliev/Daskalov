@@ -775,6 +775,10 @@ S08.06 **PARTIAL avanzado**: `scripts/remote-persona-eval.mjs` ejecuta **una lla
 
 S00.01/S00.05/S02.09 **NO FULL**: se probó el secreto `NVIDIA_API_KEY` de Actions en la rama de trabajo de forma puntual para verificar la integración solicitada. La consulta autenticada a `/v1/models` fue HTTP 200 y listó 84 modelos, pero varios `/v1/chat/completions` fallaron con 404 o 410; no declarar inferencia NVIDIA funcional. Para evitar futuras exposiciones en pushes editables, `.github/workflows/nvidia-real-smoke.yml` se deja **solo manual, solo `main`, con confirmación del gasto y Environment `daskalov-cloud-test`**; requiere un secreto específico `DASKALOV_ENV_NVIDIA_API_KEY`, no reutiliza el repo-secret. Se deben configurar revisores del Environment desde Settings antes de cualquier prueba posterior, y el propietario debe comprobar acceso efectivo a un modelo. No se ha tocado `main`. Ninguna prueba equivale al smoke Ollama Beam exigido en S02.09.
 
+## 4AR. E2E paralelo con evidencias por navegador — 8 noviembre 2026
+
+S01.07/S05.09/S11.07 **PARTIAL**: la workflow `.github/workflows/browser-e2e.yml` separa Chromium y Firefox en dos jobs paralelos `matrix.browser`, con `fail-fast:false` para que un fallo de un navegador no oculte los resultados del otro. Cada job instala solo su navegador, ejecuta todos los E2E de ese motor y publica capturas y trazas en artefactos con nombre distinto, sin conversaciones de alumnos ni secretos. `tests/workflow-policy.test.mjs` asegura la matriz y los nombres separados. No sustituye auditoría humana ni benchmarks hardware físico.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|

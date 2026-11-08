@@ -24,8 +24,12 @@ concurrency:
   cancel-in-progress: true
 jobs:
   browser-e2e:
-    name: Browser compatibility
+    name: Browser compatibility (${{ matrix.browser }})
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox]
     timeout-minutes: 18
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -38,23 +42,23 @@ jobs:
       - name: Reproducible install
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Install browsers
-        run: npx playwright install --with-deps chromium firefox
+        run: npx playwright install --with-deps ${{ matrix.browser }}
       - name: Build web
         run: npm run build
       - name: E2E Chromium Firefox (Ollama mocked)
-        run: npm run test:e2e
+        run: npm run test:e2e -- --project=${{ matrix.browser }}
       - name: Save synthetic lesson screenshots for manual visual review
         if: success()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
-          name: daskalov-visual-review-chromium-firefox
+          name: daskalov-visual-review-${{ matrix.browser }}
           path: reports/visual-review/
           retention-days: 7
       - name: Collect browser test report
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
-          name: daskalov-browser-e2e-report
+          name: daskalov-browser-e2e-report-${{ matrix.browser }}
           path: |
             playwright-report/
             test-results/

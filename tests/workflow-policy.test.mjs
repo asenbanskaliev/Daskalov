@@ -48,7 +48,10 @@ test("SEC-003: secret references only in a trustworthy workflow",()=>{
 
 test("WEB-004: Browser E2E has no Cloud secret injection and runs on relevant changes",()=>{
  const browser=readFileSync(resolve(".github/workflows/browser-e2e.yml"),"utf8");
- assert.match(browser,/chromium firefox/);
+ assert.match(browser,/browser:\\s*\\[chromium,\\s*firefox\\]/);
+ assert.match(browser,/fail-fast:\\s*false/);
+ assert.match(browser,/--project=\\$\\{\\{ matrix\\.browser \\}\\}/);
+ assert.match(browser,/name: daskalov-visual-review-\\$\\{\\{ matrix\\.browser \\}\\}/);
  assert.match(browser,/src\/\*\*/);
  assert.doesNotMatch(browser,/secrets\.|OLLAMA_API_KEY/);
  assert.match(browser,/persist-credentials:\s*false/);
