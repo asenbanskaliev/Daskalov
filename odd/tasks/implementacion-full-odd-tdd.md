@@ -743,6 +743,10 @@ S04.08 **PARTIAL**: `scripts/voice-validation.mjs` exige que cada evaluador inde
 
 S00.01/S02.09/S10.07 **PARTIAL**: el script de prueba real `scripts/ollama-cloud-smoke.mjs` no imprime mensajes de excepciones de Ollama, ya que podrían contener fragmentos de prompt, URL privada o credenciales. El error informa únicamente si fue timeout o fallo de integración, sin registrar el contenido. `tests/cloud-smoke-log-policy.test.mjs` comprueba el contrato. El smoke de Cloud sigue condicionado a credencial de Environment con consentimiento y ejecución en `main`, que no se ha llevado a cabo.
 
+## 4AJ. Ledger HMAC anclado para detectar borrados recortados — 8 noviembre 2026
+
+S07.07/S10.07 **PARTIAL avanzado**: `server/erasure-ledger.mjs` añade un anclaje de integridad HMAC independiente `.head` para el contenido **completo** del registro de borrados, no solo la firma de cada fila. Truncar entradas válidas o cambiar la firma bloquea nuevas eliminaciones y restauraciones. Se usa bloqueo exclusivo de archivo para serializar escrituras y reemplazo atómico del anclaje. `npm run backup:encrypted` y `npm run backup:restore` no incluyen la clave de HMAC. Para iniciar un registro nuevo vacío ejecutar `node scripts/secure-backup-cli.mjs init-ledger` con `DASKALOV_ERASURE_LEDGER_PATH` y `DASKALOV_ERASURE_LEDGER_SECRET` en un host privado; un registro antiguo `v1` sin anclaje requiere migración manual auditada, no se acepta en modo estricto. Test `tests/erasure-ledger-integrity.test.mjs` comprueba borrado de líneas, firma errónea, pérdida del anclaje y lectura válida. El ledger y su anclaje siguen requiriendo custodia fuera de los backups y revisión del ciclo de vida de copias remotas antes de cerrar las tareas.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|
