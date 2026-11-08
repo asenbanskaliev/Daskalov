@@ -21,9 +21,10 @@ export function openMemory(fileName) {
  ].join("\n"));
  migrateDatabase(db);
  const add=db.prepare("INSERT INTO memories(player_id,role,content) VALUES (?,?,?)");
+ const existing=db.prepare("SELECT id FROM memories WHERE player_id=? AND role=? AND content=? AND created_at>=datetime('now','-1 day') LIMIT 1");
  const capMemories=db.prepare("DELETE FROM memories WHERE player_id=? AND id NOT IN (SELECT id FROM memories WHERE player_id=? ORDER BY id DESC LIMIT 200)");
  const recent=db.prepare("SELECT role,content,created_at FROM memories WHERE player_id=? AND created_at>=datetime('now','-30 days') ORDER BY id DESC LIMIT ?");
- const fts=db.prepare("SELECT m.role,m.content,m.created_at FROM memories_fts JOIN memories m ON m.id=memories_fts.rowid WHERE memories_fts MATCH ? AND m.player_id=? AND m.created_at>=datetime('now','-30 days') ORDER BY bm25(memories_fts) LIMIT ?");
+ const fts=db.prepare("SELECT m.role,m.content,m.created_at,bm25(memories_fts) AS fts_score FROM memories_fts JOIN memories m ON m.id=memories_fts.rowid WHERE memories_fts MATCH ? AND m.player_id=? AND m.created_at>=datetime('now','-30 days') ORDER BY bm25(memories_fts) LIMIT ?");
  const del=db.prepare("DELETE FROM memories WHERE player_id=?");
  const insertCredential=db.prepare("INSERT INTO session_credentials(key_hash,player_id) VALUES (?,?)");
  const queryCredential=db.prepare("SELECT player_id FROM session_credentials WHERE key_hash=? AND expires_at>datetime('now')");
@@ -39,17 +40,40 @@ export function openMemory(fileName) {
  const privacyUpsert=db.prepare("INSERT INTO privacy_preferences(player_id,memory_enabled) VALUES(?,?) ON CONFLICT(player_id) DO UPDATE SET memory_enabled=excluded.memory_enabled,updated_at=datetime('now')");
 
  return {
-  save(id,role,content){if(!isPlayerId(id)||!["user","assistant"].includes(role))throw new Error("Memoria inválida");insertPlayer.run(id);add.run(id,role,redactSensitiveMemory(content));capMemories.run(id,id);},
+  save(id,role,content){
+   if(!isPlayerId(id)||!["user","assistant"].includes(role))throw new Error("Memoria inválida");
+   const safe=redactSensitiveMemory(content);
+   insertPlayer.run(id);
+   if(existing.get(id,role,safe))return false;
+   add.run(id,role,safe);capMemories.run(id,id);
+   return true;
+  },
   search(id,query,limit=5){
    if(!isPlayerId(id))return [];
-   const size=Math.min(10,Math.max(1,Math.floor(limit)));
+   const size=Math.min(10,Math.max(1,Math.floor(Number(limit)||5)));
    const words=[...new Set(String(query).toLowerCase().match(/[\p{L}\p{N}]{3,}/gu)||[])].slice(0,6);
    const phrase=words.map(w=>'"'+w+'"').join(" OR ");
-   let found=[];
-   if(phrase){try{found=fts.all(phrase,id,size);}catch{found=[];}}
-   const used=new Set(found.map(r=>r.role+":"+r.content));
-   for(const row of recent.all(id,size)){if(!used.has(row.role+":"+row.content))found.push(row);if(found.length>=size)break;}
-   return found.slice(0,size).map(row=>row.role+": "+row.content);
+   const candidates=[];
+   if(phrase){
+    try{candidates.push(...fts.all(phrase,id,Math.min(50,size*5)));}catch{}
+   }
+   candidates.push(...recent.all(id,Math.min(50,size*5)));
+   const seen=new Set(),now=Date.now();
+   const ranked=[];
+   for(const row of candidates){
+    const key=row.role+":"+row.content;
+    if(seen.has(key))continue;
+    seen.add(key);
+    const text=row.content.toLocaleLowerCase("es");
+    const relevance=words.reduce((sum,word)=>sum+(text.includes(word)?1:0),0);
+    const important=/me gusta|prefiero|mi objetivo|quiero aprender|me cuesta|recuerda|dificultad/.test(text);
+    const timestamp=Date.parse(String(row.created_at).replace(" ","T")+"Z");
+    const ageDays=Number.isFinite(timestamp)?Math.max(0,(now-timestamp)/86400000):30;
+    const score=relevance*100+(important?16:0)+(row.role==="user"?3:0)+Math.max(0,30-ageDays)*.05;
+    ranked.push({score,row});
+   }
+   ranked.sort((a,b)=>b.score-a.score);
+   return ranked.slice(0,size).map(item=>item.row.role+": "+item.row.content);
   },
   list(id){return isPlayerId(id)?recent.all(id,30):[];},
   deletePlayer(id){
