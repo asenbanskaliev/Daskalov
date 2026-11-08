@@ -5,10 +5,20 @@
 - Uso previsto en pruebas privadas de personas adultas autorizadas. NO se ha aprobado para publicación pública dirigida a menores.
 - No se incluyen servicios de voz externos ni se almacenan claves en el cliente. Cloud puede generar costes; se limita el acceso desde el servidor.
 
+## Modo Aula inmersivo y controles de vista (AULA-001 a AULA-004)
+- **Ajustes** (icono de engranaje, arriba a la derecha del aula): abre el panel de configuración superpuesto. En móvil aparece como hoja inferior desplazable. Ningún campo de modelo, API key, privacidad ni voz se pierde al cerrarlo. Se cierra con X, clic fuera o `Esc`; el foco vuelve al botón que lo abrió.
+- **Retos**: muestra u oculta las lecciones y eventos del aula sin reiniciar la partida ni borrar puntuaciones. Al entrar en pantalla completa comienza oculto para no tapar al personaje y se puede volver a abrir.
+- **Historial**: permite ocultar y recuperar la transcripción; el campo para preguntar y los subtítulos permanecen disponibles.
+- **Pantalla completa**: solicita la Fullscreen API sobre el aula **junto al chat**, no sobre el canvas solamente. Si el navegador la prohíbe (por ejemplo, en ciertos móviles), ofrece un diseño inmersivo CSS que ocupa el área visible; no equivale a eliminar siempre las barras del navegador. Pulsa otra vez el botón o `Esc` para salir. Los botones mantienen nombre accesible, estado ARIA y foco de teclado.
+- **Vista normal**: chat antes de los retos para poder escribir sin desplazarse a través del formulario técnico. La configuración comienza oculta por defecto y los retos son plegables.
+- El botón Interrumpir continúa disponible durante las respuestas; las frases del profesor permanecen como subtítulos sobre la escena, incluso sin micrófono ni WebGL. El cambio de vista no vuelve a crear la escena Three.js ni lanza una llamada de IA.
+- Las claves API y consentimientos siguen siendo efímeros. La preferencia de pantalla completa **no se restaura automáticamente al recargar**, porque los navegadores requieren una acción del usuario y no debe sorprenderle una pantalla bloqueada en el modo inmersivo.
+- Pruebas automatizadas: `e2e/aula-mode.spec.js` (modal, foco, teclado, modo alternativo, estado, 320/390 px), `tests/aula-mode.test.mjs`, y suite de regresión de chat/lecciones/voz. No son una auditoría de accesibilidad con lector de pantalla o una validación de hardware físico.
+
 ## Probar el modo demo sin Ollama
 1. Instalar Node.js 24 y Git; clonar el repositorio y elegir la rama de desarrollo.
 2. Ejecutar `npm ci`, `npm run build`, `npm run verify:build` y `npm start`.
-3. Abrir `http://127.0.0.1:3000`; en Proveedor elegir `Demo sin IA · offline`.
+3. Abrir `http://127.0.0.1:3000`; pulsar **Ajustes** (engranaje) y en Proveedor elegir `Demo sin IA · offline`. Cerrar Ajustes para hablar con Daskalov.
 4. Seleccionar Matemáticas, Lengua o Historia, nivel básico/intermedio/avanzado y contestar con el teclado. La pizarra muestra preguntas.
 5. Los botones permiten levantar mano, girar, mirar al frente y activar eventos del aula si se desea. La opción de eventos ocasionales está desactivada por defecto.
 6. Tras la primera visita desde HTTPS o localhost, el service worker guarda únicamente archivos estáticos; ninguna pregunta, audio o respuesta se escribe en su caché.
