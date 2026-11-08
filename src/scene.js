@@ -1,5 +1,6 @@
 import {AdaptiveQuality} from "./performance-profile.js";
 import {normalizeViseme} from "./visemes.js";
+import {loadLowPolyAvatar} from "./avatar-loader.js";
 export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeaking=()=>false,getReducedMotion=()=>false,onReady=()=>{},quality="auto"}){
  try{
   const THREE=await import("three");
@@ -73,6 +74,14 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
     setBlackboardMessage
   };
   onReady(sceneState);
+  let avatar=null;
+  loadLowPolyAvatar().then(model=>{
+   avatar=model;
+   model.root.position.copy(teacher.position);
+   scene.add(model.root);
+   teacher.visible=false;
+   status.textContent="Aula 3D · personaje GLB local cargado";
+  }).catch(()=>{ /* Procedural professor remains available. */ });
   let lastFrame=0;
   function frame(now){
    if(lastFrame&&currentQuality==="auto"){
@@ -82,14 +91,25 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
    lastFrame=now;
    camera.rotation.set(0,getYaw(),0);
    const active=now<until;
-   head.position.y=2.66+(getReducedMotion()?0:Math.sin(now*.0017)*.025);
-   arm.rotation.z=active&&!getReducedMotion()
+   const bob=getReducedMotion()?0:Math.sin(now*.0017)*.025;
+   if(avatar)avatar.head.position.y=2.69+bob;
+   else head.position.y=2.66+bob;
+   const armAngle=active&&!getReducedMotion()
     ?animation==="ruler_desk"?.6+Math.sin(now*.015)*.36:animation==="raise_hand"?-2:0:0;
+   if(avatar)avatar.arm.rotation.z=armAngle;
+   else arm.rotation.z=armAngle;
    const shapes={REST:[1,.18],A:[1,1.25],I:[1.35,.38],E:[1.1,.6],O:[.75,.95],U:[.65,.55],MBP:[.9,.12],FV:[1,.25],L:[1,.55],CHSH:[.8,.45]};
    const target=isSpeaking()?(shapes[viseme]||shapes.REST):shapes.REST;
-   mouth.scale.x+=(target[0]-mouth.scale.x)*.35;
-   mouth.scale.y+=(target[1]-mouth.scale.y)*.35;
-   teacher.rotation.y=getReducedMotion()?0:Math.sin(now*.0004)*.06;
+   const activeMouth=avatar?.mouth||mouth;
+   const baseX=avatar?.mouth?.userData.baseX||1,baseY=avatar?.mouth?.userData.baseY||1;
+   if(avatar&&!avatar.mouth.userData.baseX){
+    avatar.mouth.userData.baseX=avatar.mouth.scale.x;
+    avatar.mouth.userData.baseY=avatar.mouth.scale.y;
+   }
+   activeMouth.scale.x+=(baseX*target[0]-activeMouth.scale.x)*.35;
+   activeMouth.scale.y+=(baseY*target[1]-activeMouth.scale.y)*.35;
+   const turn=getReducedMotion()?0:Math.sin(now*.0004)*.06;
+   (avatar?.root||teacher).rotation.y=turn;
    renderer.render(scene,camera);requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);status.textContent="Aula 3D lista";
