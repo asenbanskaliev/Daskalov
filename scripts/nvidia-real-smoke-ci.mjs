@@ -3,7 +3,7 @@ import {pathToFileURL} from "node:url";
 import {resolve} from "node:path";
 
 /** Two short synthetic requests, never logs secrets, prompts, model text or response headers. */
-export async function validateNvidiaLive({key,chat=chatRemote,stream=streamRemote,model="meta/llama-3.1-8b-instruct",onPhase=()=>{}}={}){
+export async function validateNvidiaLive({key,chat=chatRemote,stream=streamRemote,model="openai/gpt-oss-120b",onPhase=()=>{}}={}){
  if(typeof key!=="string"||key.length<10)throw Error("NVIDIA_SECRET_UNAVAILABLE");
  const messages=[{role:"user",content:"Responde con una frase breve en español sobre una pizarra."}];
  const started=Date.now();
