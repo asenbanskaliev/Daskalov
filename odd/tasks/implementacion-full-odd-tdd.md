@@ -619,6 +619,14 @@ S03.04: **PARTIAL**: `scripts/start-whisper-local.ps1`, `odd/operations/whisper-
 
 **Pendientes 31 hasta certificación de pruebas de este commit.** No publicar ni fusionar.
 
+## 4M. Navegadores de marca y medidas WebGL — 8 noviembre 2026
+
+S12.02 **PARTIAL hasta obtener CI verde del workflow nuevo**: `browser-brands.yml` instala Chrome y Microsoft Edge oficiales y ejecuta dos viewports reales en modo demo sin secretos. Continúan Chromium/Firefox en el job anterior. Esto refuerza pruebas manuales, no las suplanta para aprobación de producto.
+
+S11.02/S11.03/S11.08 **PARTIAL**: `e2e/performance-budget.spec.js` captura en navegador real contador de FPS/draw calls/texturas y compara estimaciones de instancing; no son VRAM ni benchmarks de hardware de referencia. `e2e/visual-regression.spec.js` obtiene capturas repetibles de lecciones con movimiento reducido en PC/móvil; sigue pendiente comparar contra referencias aprobadas y revisión visual humana (S05.09).
+
+**78/109 DONE sigue siendo el corte técnico.** No FULL, ni benchmarks acreditados de hardware.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|
