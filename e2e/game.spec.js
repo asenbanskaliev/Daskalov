@@ -13,7 +13,7 @@ test("GAME-001/004: tres misiones, respuestas y progreso sin llamar a Ollama",as
  await expect(page.locator("#gameProgress")).toContainText("1 de 3");
  await page.getByRole("button",{name:"Lengua",exact:true}).click();
  await page.locator("#lessonAnswers").getByRole("button",{name:"pizarra"}).click();
- await page.getByRole("button",{name:"Historia"}).click();
+ await page.getByRole("button",{name:"Historia",exact:true}).click();
  await page.locator("#lessonAnswers").getByRole("button",{name:"Una carta escrita en esa época"}).click();
  await expect(page.locator("#gameProgress")).toContainText("3 de 3");
  await expect(page.locator("#gameProgress")).toContainText("30 puntos");
