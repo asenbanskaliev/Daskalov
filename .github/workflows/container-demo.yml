@@ -1,0 +1,52 @@
+name: Safe demo container smoke
+on:
+  push:
+    branches: ["feat/**"]
+    paths:
+      - "Dockerfile"
+      - "Caddyfile.example"
+      - "server/**"
+      - "src/**"
+      - "scripts/**"
+      - "package*.json"
+      - ".github/workflows/container-demo.yml"
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, ready_for_review]
+permissions:
+  contents: read
+concurrency:
+  group: container-demo-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  safe-demo:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Build image without injecting secrets
+        run: docker build --tag daskalov-safe-demo:test .
+      - name: Check health and reject access to Cloud and player data
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run -d --name daskalov-safe-demo-ci -p 127.0.0.1:38080:3000 daskalov-safe-demo:test
+          trap 'docker logs daskalov-safe-demo-ci || true; docker rm -f daskalov-safe-demo-ci || true' EXIT
+          ready=0
+          for i in $(seq 1 40); do
+            if curl -fsS --max-time 2 http://127.0.0.1:38080/api/health > /tmp/daskalov-health.json; then
+              ready=1; break
+            fi
+            sleep 1
+          done
+          test "$ready" = "1"
+          grep -q '"demoOnly":true' /tmp/daskalov-health.json
+          curl -fsS --max-time 4 http://127.0.0.1:38080/ > /dev/null
+          status=$(curl -sS --max-time 4 -o /dev/null -w '%{http_code}' -H 'Content-Type: application/json' \
+            --data '{"provider":"cloud","model":"beam","text":"hola"}' http://127.0.0.1:38080/api/chat)
+          test "$status" = "403"
+          status=$(curl -sS --max-time 4 -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:38080/api/session)
+          test "$status" = "403"
+          test "$(docker inspect -f '{{.Config.User}}' daskalov-safe-demo-ci)" = "node"

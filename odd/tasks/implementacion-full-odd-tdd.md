@@ -430,7 +430,7 @@ Prioridad de implementación: S00 (protección y no regresión) → S01 (reprodu
 - [x] **S12.03** Publicar artefactos web con versiones y hashes, sin secretos; revisión de integridad.  
   - **Aceptación:** Paquete puede desplegarse y reproducirse desde commit exacto.  
   - **TDD:** REL-003 · **Dep.:** S01.01.
-- [ ] **S12.04** Contenedorización opcional servidor web Node + voz local externa, variables documentadas, HTTPS reverse proxy.  
+- [x] **S12.04** Contenedorización opcional servidor web Node + voz local externa, variables documentadas, HTTPS reverse proxy.  
   - **Aceptación:** Ejemplo desplegado con configuración segura y sin credenciales embebidas.  
   - **TDD:** REL-004 · **Dep.:** S10.04.
 - [ ] **S12.05** Smoke post-deploy, health checks, rollback release y gestión de copias de base SQL.  
@@ -598,6 +598,10 @@ Pruebas: `tests/output-moderation.test.mjs`, `tests/persona-baseline.test.mjs`; 
 ## 4I. Hardening de autorización — 8 noviembre 2026
 
 **77/109 contratos técnicos implementados, 32 abiertos.** S10.03 comprueba sesión de propietario y CSRF en todas las rutas de recuerdos, corrección, reindexado, progreso y chat persistente. GET de sesión verifica el origen, y Cloud/voz/mediciones privadas exigen peer TCP de loopback además de Host. Pruebas: `tests/security-session.test.mjs` y `tests/private-client-policy.test.mjs`. No se abre Cloud público ni se certifica consentimiento tutelar (S00.05, S07.03, S10.02 siguen abiertas). Sin merge ni despliegue.
+
+## 4J. Contrato de contenedor demo aislado — 8 noviembre 2026
+
+**78/109 contratos técnicos implementados; 31 pendientes.** S12.04 tiene Docker Node 24 sin privilegios y en modo demo bloqueado, Caddy HTTPS de referencia y nuevo workflow que compila el contenedor sin secretos y prueba salud, HTML, denegación de Cloud/memoria y ejecución como usuario no-root. El contrato de CI sigue pendiente de ejecución en el SHA exacto. Piper es externo al contenedor demo, no se incluye una voz comercial ni se ha activado hosting público. S12.05 y SEC-PUBLIC continúan abiertos. Tests: `tests/container-demo-policy.test.mjs`. No merge ni despliegue.
 
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |

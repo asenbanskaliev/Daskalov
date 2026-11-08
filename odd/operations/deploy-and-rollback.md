@@ -30,3 +30,6 @@ Public account authentication, verifiable parental consent, deletion from backup
 - `npm run backup:prune -- /secure/backups` removes expired matching encrypted backups older than 30 days; back up the backup key separately and rotate according to policy.
 - VACUUM INTO temporarily creates a plaintext SQLite snapshot in a private OS temporary directory; use full-disk encryption/RAM disk for the host. The tool erases the temporary directory after encryption, but OS snapshots and prior backups need independent deletion policy.
 - Deleting a player DOES NOT retroactively erase them from previously stored encrypted backups. Before public use, implement data-subject erasure across the full backup lifecycle and review with counsel. S07.07/S10.07 remain partial.
+
+## Contrato CI de imagen demo
+`.github/workflows/container-demo.yml` construye y ejecuta la imagen en un job aislado sin secretos, comprueba salud y HTML y exige HTTP 403 para chat Cloud y sesión. Esto NO es una aprobación para publicar. El motor/modelo Piper, si se utilizan en entornos privados, requieren instalación, licencias y configuración fuera del contenedor demo. El Caddyfile es solo un ejemplo: para producción hace falta TLS, dominio y todas las autorizaciones externas.
