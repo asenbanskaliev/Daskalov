@@ -1,3 +1,4 @@
+import {withSettings} from "./support/aula.js";
 import {test,expect} from "@playwright/test";
 test("VAL-02: mode Sin voz produces no speech synthesis or audio network calls",async({page})=>{
  let ttsRequests=0;
@@ -18,9 +19,9 @@ test("VAL-02: mode Sin voz produces no speech synthesis or audio network calls",
   const speech=window.speechSynthesis;
   if(speech)Object.defineProperty(speech,"speak",{configurable:true,value:()=>{window.__daskalovSynthCalls++;}});
  });
- await page.locator("#ttsMode").selectOption("disabled");
+ await withSettings(page,()=>page.locator("#ttsMode").selectOption("disabled"));
  await expect(page.locator("#ttsCostInfo")).toContainText("Sin voz");
- await page.locator("#voiceEnabled").check();
+ await withSettings(page,()=>page.locator("#voiceEnabled").check());
  await page.locator("#question").fill("Hola profesor");
  await page.locator("#sendButton").click();
  await expect(page.locator("#history")).toContainText("hoy aprenderemos historia");

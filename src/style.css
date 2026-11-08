@@ -128,3 +128,7 @@ body.aula-immersive-active{overflow:hidden}
  .stage-tool{font-size:11px}
 }
 @media(prefers-reduced-motion:reduce){.settings-drawer,.drawer-backdrop,.layout.is-immersive{transition:none!important}}
+
+/* The dock must not establish a containing block for the floating lesson tray. */
+.layout.is-immersive .panel{left:max(13px,calc((100% - 1020px)/2));right:max(13px,calc((100% - 1020px)/2));width:auto;transform:none;backdrop-filter:none;background:#162721f5}
+@media(max-width:850px){.layout.is-immersive .panel{left:7px;right:7px;width:auto}}

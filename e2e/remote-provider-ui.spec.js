@@ -23,6 +23,7 @@ test("AI-011: OpenRouter from UI loads models, filters catalog, sends ephemeral 
   await route.fulfill({contentType:"application/x-ndjson",body:turns.map(x=>JSON.stringify(x)+"\n").join("")});
  });
  await page.goto("/");
+ await page.locator("#settingsToggle").click();
  await page.locator("#provider").selectOption("openrouter");
  await expect(page.locator("#providerKeyRow")).toBeVisible();
  await expect(page.locator("#providerStatus")).toContainText("clave API");
@@ -35,6 +36,7 @@ test("AI-011: OpenRouter from UI loads models, filters catalog, sends ephemeral 
  await expect(page.locator("#modelPicker option")).toHaveCount(2);
  await page.locator("#modelPicker").selectOption("qwen/qwen3-coder:free");
  await expect(page.locator("#model")).toHaveValue("qwen/qwen3-coder:free");
+ await page.locator("#settingsClose").click();
  await page.locator("#question").fill("Hola profesor");
  await page.locator("#sendButton").click();
  await expect(page.locator("#history")).toContainText("Buenos días desde OpenRouter.");
@@ -49,6 +51,7 @@ test("AI-011: NVIDIA Build lists catalog and forget button revokes the key immed
  await page.route("**/api/models?provider=nvidia",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({models:["openai/gpt-oss-120b","nvidia/nemotron-3.5-lightning-30b-a3b"]})}));
  await page.route("**/api/provider-status?provider=nvidia",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({reachable:true,models:2})}));
  await page.goto("/");
+ await page.locator("#settingsToggle").click();
  await page.locator("#provider").selectOption("nvidia");
  await page.locator("#providerApiKey").fill("nvapi-example-test-key");
  await page.locator("#saveProviderKey").click();
