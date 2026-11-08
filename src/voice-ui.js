@@ -2,12 +2,15 @@ import {mapSpanishGrapheme} from "./visemes.js";
 import {BrowserSpeechQueue} from "./speech.js";
 import {LocalPiperVoice} from "./tts-local.js";
 import {AudioLipSync} from "./audio-lipsync.js";
+import {VoiceMetrics} from "./voice-metrics.js";
 import {readSetting,writeSetting} from "./settings.js";
 
 export function createVoiceUI({find,onSpeaking=()=>{},onViseme=()=>{},onError=()=>{}}){
  let enabled=true;
+ const stats=new VoiceMetrics();
  const speech=new BrowserSpeechQueue({onSentenceStart:text=>onViseme(mapSpanishGrapheme(text)),onBoundary:({text,charIndex})=>onViseme(mapSpanishGrapheme(text.slice(charIndex,charIndex+3))),onSpeaking:active=>{
   onSpeaking(active);
+  if(active)stats.audioStart();
   if(!active)onViseme("REST");
   find("pauseVoice").disabled=!active;
   find("resumeVoice").disabled=active||!enabled;
@@ -23,17 +26,18 @@ export function createVoiceUI({find,onSpeaking=()=>{},onViseme=()=>{},onError=()
  const local=new LocalPiperVoice({
   onSpeaking:active=>{
    onSpeaking(active);
+   if(active)stats.audioStart();
    lipActive=active;
    if(active&&!lipFrame)lipFrame=window.requestAnimationFrame(runLipFrame);
    if(!active){onViseme("REST");}
   },
-  onAudioFragment:fragment=>lip.schedule(fragment),
+  onAudioFragment:fragment=>{stats.fragment(fragment);lip.schedule(fragment);},
   onSentenceStart:text=>onViseme(mapSpanishGrapheme(text)),onError
  });
  const choice=find("ttsMode");
  choice.value=readSetting("ttsMode")||"browser";
  const selected=()=>choice.value==="local"?local:speech;
- function cancel(){speech.cancel();local.cancel();lipActive=false;if(lipFrame)window.cancelAnimationFrame(lipFrame);lipFrame=0;lip.cancel();onViseme("REST");}
+ function cancel(){stats.cancel();speech.cancel();local.cancel();lipActive=false;if(lipFrame)window.cancelAnimationFrame(lipFrame);lipFrame=0;lip.cancel();onViseme("REST");}
  function populate(){
   const select=find("voiceChoice"),previous=select.value;
   select.replaceChildren();
@@ -59,6 +63,8 @@ export function createVoiceUI({find,onSpeaking=()=>{},onViseme=()=>{},onError=()
  populate();
  window.speechSynthesis?.addEventListener?.("voiceschanged",populate);
  return {
+  beginTurn(){stats.beginTurn();},
+  getStats(){return stats.snapshot();},
   speak(text){return selected().speak(text);},
   cancel,
   setEnabled(value){

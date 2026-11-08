@@ -55,6 +55,7 @@ async function send(text,event="dialog"){
  voice.cancel();
  const controller=new AbortController();
  activeController=controller;
+ voice.beginTurn();
  $("sendButton").disabled=true;
  $("stopButton").disabled=false;
  $("sendButton").textContent="Pensando…";
@@ -169,7 +170,7 @@ configureClassroomEvents({
  find:$,onVoiceCancel:()=>voice.cancel(),onGesture:gesture=>sceneState?.act(gesture,"ambient"),
  onVoice:text=>{if($("voiceEnabled").checked&&$("provider").value!=="demo")voice.speak(text);}
 });
-configureDevMetrics({find:$,graphicsStats:()=>sceneState?.getStats?.()||null});
+configureDevMetrics({find:$,graphicsStats:()=>sceneState?.getStats?.()||null,audioStats:()=>voice.getStats()});
 settings.checkHealth();
 settings.refreshModels();
 memoryUI.refresh().then(applyDemoControls);
