@@ -97,7 +97,9 @@ export function createApp({
    if(path==="/api/stt/local"&&req.method==="POST"){
     if(!isPrivateHost(req.headers.host))throw new OllamaError("Transcripción local permitida solo desde localhost.",403);
     const {audio,mime}=await readAudioRequest(req);
+    const sttStarted=Date.now();
     const transcript=await sttTranscriber({audio,mime});
+    metrics.observe("stt",Date.now()-sttStarted);
     return respond(res,200,{transcript});
    }
    if(path==="/api/tts/status"&&req.method==="GET"){
@@ -107,7 +109,9 @@ export function createApp({
     if(!isPrivateHost(req.headers.host))throw new OllamaError("Voz local disponible solo desde localhost.",403);
     const body=await bodyOf(req);
     if(typeof body.text!=="string"||!body.text.trim()||body.text.length>160)throw new OllamaError("Texto de voz inválido.",400);
+    const ttsStarted=Date.now();
     const wav=await ttsSynth({text:body.text});
+    metrics.observe("tts",Date.now()-ttsStarted);
     if(!Buffer.isBuffer(wav)||wav.length>3*1024*1024)throw new OllamaError("Audio local inválido.",502);
     res.writeHead(200,{"content-type":"audio/wav","cache-control":"no-store","x-content-type-options":"nosniff"});
     return res.end(wav);
@@ -219,8 +223,11 @@ export function createApp({
     times.push(now);rate.set(ip,times);
     daily.set(ip,{day,count:(counter?.day===day?counter.count:0)+1});
     inFlight.set(ip,(inFlight.get(ip)||0)+1);
+    metrics.active([...inFlight.values()].reduce((a,b)=>a+b,0));
     try{
+     const dbStarted=Date.now();
      const memories=remember?await recalledMemories(session.playerId,body.text):[];
+     if(remember)metrics.observe("db",Date.now()-dbStarted);
      const messages=buildContext({text:body.text,event,memories,history:body.history});
      if(path==="/api/chat/stream"){
       const requestId=randomUUID(),chunker=new SentenceChunker();
@@ -290,7 +297,7 @@ export function createApp({
       memory.save(session.playerId,"assistant",reply);
      }
      return respond(res,200,{reply,animation:inferAnimation(reply,event),provider,model});
-    }finally{inFlight.set(ip,Math.max(0,(inFlight.get(ip)||1)-1));}
+    }finally{inFlight.set(ip,Math.max(0,(inFlight.get(ip)||1)-1));metrics.active([...inFlight.values()].reduce((a,b)=>a+b,0));}
    }
    if(req.method==="GET"&&(path==="/"||path==="/index.html"||path==="/sw.js"||/^\/assets\/[A-Za-z0-9_.-]+\.(?:js|css|woff2|png|webp|svg|glb|wasm)$/.test(path))){
     const assetPath=path==="/"||path==="/index.html"?"index.html":path.slice(1);

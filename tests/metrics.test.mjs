@@ -21,3 +21,21 @@ test("LLM-010: without configured pricing cost is unknown, never claimed zero",(
  assert.equal(s.providers.cloud.costUsdEstimated,null);
  assert.equal(s.providers.local.durationP95Ms,null);
 });
+
+test("PERF-001/006: service and queue percentiles expose only anonymous aggregate counts",()=>{
+ const m=new MetricsCollector({retainedSamples:5});
+ for(const val of [10,20,30,40,50,600])m.observe("db",val);
+ assert.equal(m.observe("unknown",10),false);
+ assert.equal(m.observe("db",-4),false);
+ m.observe("tts",600);
+ m.observe("firstAudio",2200);
+ m.active(3);m.active(1);
+ const snapshot=m.snapshot();
+ assert.equal(snapshot.services.db.samples,5);
+ assert.equal(snapshot.services.db.p95Ms,600);
+ assert.equal(snapshot.services.tts.p50Ms,600);
+ assert.equal(snapshot.services.firstAudio.p50Ms,2200);
+ assert.equal(snapshot.queue.peak,3);
+ assert.equal(snapshot.queue.current,1);
+ assert.doesNotMatch(JSON.stringify(snapshot),/email|cookie|content|ipAddress/i);
+});
