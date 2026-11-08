@@ -1,7 +1,8 @@
+import {withSettings} from "./support/aula.js";
 import {test,expect} from "@playwright/test";
 test("GFX-007 GAME-004: levantar mano, mirar al frente y actualizar pizarra en modo demo",async({page})=>{
  await page.goto("/");
- await page.locator("#provider").selectOption("demo");
+ await withSettings(page,()=>page.locator("#provider").selectOption("demo"));
  await page.locator("#raiseHand").click();
  await expect(page.locator("#history")).toContainText("¡Mano levantada");
  await page.getByRole("button",{name:"Matemáticas"}).click();
@@ -12,7 +13,7 @@ test("GFX-007 GAME-004: levantar mano, mirar al frente y actualizar pizarra en m
 
 test("GAME-006: eventos de clase tienen control de repetición y sin conexión IA",async({page})=>{
  await page.goto("/");
- await page.locator("#provider").selectOption("demo");
+ await withSettings(page,()=>page.locator("#provider").selectOption("demo"));
  await page.locator('[data-classroom-event="cold"]').click();
  await expect(page.locator("#classroomFeedback")).toContainText("calefacción");
  await page.locator('[data-classroom-event="cold"]').click();

@@ -1,3 +1,4 @@
+import {withSettings} from "./support/aula.js";
 import {test,expect} from "@playwright/test";
 test("WEB-007: three educational activities work with keyboard, reduced motion, no mic and no WebGL",async({page})=>{
  await page.setViewportSize({width:320,height:720});
@@ -15,8 +16,8 @@ test("WEB-007: three educational activities work with keyboard, reduced motion, 
  await expect(page.locator("#sceneStatus")).toContainText("3D no disponible");
  await page.keyboard.press("Tab");await expect(page.locator(".skip-link")).toBeFocused();
  await page.keyboard.press("Enter");await expect(page.locator("#question")).toBeFocused();
- await page.locator("#provider").selectOption("demo");
- await page.locator("#sttMode").selectOption("disabled");
+ await withSettings(page,()=>page.locator("#provider").selectOption("demo"));
+ await withSettings(page,()=>page.locator("#sttMode").selectOption("disabled"));
  await expect(page.locator("#micButton")).toBeDisabled();
  await page.locator("#question").fill("¿Qué es la historia?");
  await page.keyboard.press("Enter");

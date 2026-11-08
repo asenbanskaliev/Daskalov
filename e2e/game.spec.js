@@ -1,3 +1,4 @@
+import {withSettings} from "./support/aula.js";
 import {test,expect} from "@playwright/test";
 test("GAME-001/004: tres misiones, respuestas y progreso sin llamar a Ollama",async({page})=>{
  let chatCalls=0;
@@ -20,10 +21,10 @@ test("GAME-001/004: tres misiones, respuestas y progreso sin llamar a Ollama",as
 });
 test("STT-001/002: modo solo teclado funciona sin micrófono",async({page})=>{
  await page.goto("/");
- await page.locator("#sttMode").selectOption("disabled");
+ await withSettings(page,()=>page.locator("#sttMode").selectOption("disabled"));
  await expect(page.locator("#micButton")).toBeDisabled();
  await expect(page.locator("#question")).toBeVisible();
- await page.locator("#provider").selectOption("demo");
+ await withSettings(page,()=>page.locator("#provider").selectOption("demo"));
  await page.locator("#question").fill("¿Qué es la historia?");
  await page.locator("#sendButton").click();
  await expect(page.locator("#history")).toContainText("La historia");

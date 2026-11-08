@@ -1,3 +1,4 @@
+import {withSettings} from "./support/aula.js";
 import {test,expect} from "@playwright/test";
 test("PERF-002: live browser render counters and FPS exist without fabricated VRAM data",async({page})=>{
  await page.goto("/");
@@ -7,13 +8,14 @@ test("PERF-002: live browser render counters and FPS exist without fabricated VR
   // Firefox headless on GitHub runners may have no WebGL device: verify fallback,
   // never fabricate graphics metrics or declare a hardware benchmark.
   await expect(page.locator("#question")).toBeVisible();
-  await page.locator("#provider").selectOption("demo");
+  await withSettings(page,()=>page.locator("#provider").selectOption("demo"));
   await page.locator("#question").fill("Hola profesor");
   await page.locator("#sendButton").click();
   await expect(page.locator("#history")).toContainText("Hola profesor");
   return;
  }
  await page.waitForTimeout(2000);
+ await page.locator("#settingsToggle").click();
  await page.locator("#devMetrics summary").click();
  await page.locator("#refreshMetrics").click();
  await expect(page.locator("#devMetricsJson")).toContainText("localBrowserGraphics");

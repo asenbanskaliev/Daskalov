@@ -1,3 +1,4 @@
+import {withSettings} from "./support/aula.js";
 import {test,expect} from "@playwright/test";
 import {LESSONS,LEVELS,lessonForLevel} from "../src/game.js";
 
@@ -5,7 +6,7 @@ test("VAL-01: complete browser-to-real-Node safety turn reaches transcript witho
  let streamCalls=0;
  await page.route("**/api/chat/stream",route=>{streamCalls++;return route.continue();});
  await page.goto("/");
- await page.locator("#ttsMode").selectOption("disabled");
+ await withSettings(page,()=>page.locator("#ttsMode").selectOption("disabled"));
  await page.locator("#question").fill("Me hacen bullying en clase");
  await page.locator("#sendButton").click();
  await expect(page.locator("#history")).toContainText("adulto de confianza");
@@ -28,6 +29,7 @@ test("VAL-03: renderer emits real browser counters or declares WebGL unavailable
   return;
  }
  await page.waitForTimeout(1000);
+ await page.locator("#settingsToggle").click();
  await page.locator("#devMetrics summary").click();
  await page.locator("#refreshMetrics").click();
  const report=JSON.parse(await page.locator("#devMetricsJson").innerText());
@@ -76,9 +78,9 @@ test("VAL-05: no memory, microphone, public-cloud audio or model calls in a demo
  await page.goto("/");
  await expect(page.locator("#remember")).toBeDisabled();
  await expect(page.locator("#voiceEnabled")).not.toBeChecked();
- await page.locator("#provider").selectOption("demo");
+ await withSettings(page,()=>page.locator("#provider").selectOption("demo"));
  await expect(page.locator("#remember")).not.toBeChecked();
- await page.locator("#sttMode").selectOption("disabled");
+ await withSettings(page,()=>page.locator("#sttMode").selectOption("disabled"));
  await expect(page.locator("#micButton")).toBeDisabled();
  await page.locator("#question").fill("¿Qué es la historia?");
  await page.locator("#sendButton").click();
