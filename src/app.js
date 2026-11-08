@@ -147,13 +147,11 @@ $("raiseHand").addEventListener("click",()=>{
  send("Profesor, levanto la mano para preguntar.","hand_raised");
 });
 $("lookForward").addEventListener("click",()=>{yaw=0;sceneState?.act("talk");});
-$("chatForm").addEventListener("submit",event=>{
- event.preventDefault();const text=$("question").value;$("question").value="";send(text);
-});
+$("chatForm").addEventListener("submit",e=>{e.preventDefault();const text=$("question").value;$("question").value="";send(text);});
 memoryUI.bind();
 const mic=configureVoiceInput({find:$,send,stopSpeech:()=>{activeController?.abort();voice.cancel();},showMessage});
 gameUI=createGameUI({
- find:$,onGesture:gesture=>sceneState?.act(gesture,"lesson"),
+ find:$,onGesture:g=>sceneState?.act(g,"lesson"),
  onCompleted:async lessonId=>{
   if(!$("remember").checked)return;
   try{
@@ -164,7 +162,7 @@ gameUI=createGameUI({
 });
 bindCameraKeyboard({
  getYaw:()=>yaw,
- setYaw:next=>{yaw=next;},
+ setYaw:next=>yaw=next,
  onTurn:()=>{if($("autoTurn").checked)send("Me he girado a mirar a mis compañeros.","turned_around");}
 });
 configureClassroomEvents({
@@ -179,6 +177,6 @@ createClassroomScene({
  canvas:$("sceneCanvas"),status:$("sceneStatus"),getYaw:()=>yaw,isSpeaking:()=>playing,
  getReducedMotion:()=>$("reducedMotion").checked||window.matchMedia("(prefers-reduced-motion: reduce)").matches,
  quality:$("graphicsQuality").value,
- onReady:scene=>{sceneState=scene;}
+ onReady:scene=>sceneState=scene
 });
 registerOfflineWorker();
