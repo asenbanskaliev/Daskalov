@@ -36,8 +36,12 @@ jobs:
         run: npm audit --omit=dev --audit-level=critical
       - name: SBOM inventory
         run: npm run security:sbom
+      - name: License provenance inventory (does not approve external voices)
+        run: npm run security:licenses
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: daskalov-sbom-inventory
-          path: reports/sbom-dependencies.json
+          path: |
+            reports/sbom-dependencies.json
+            reports/license-inventory.json
           retention-days: 7

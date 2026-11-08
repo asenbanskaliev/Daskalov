@@ -641,6 +641,12 @@ S04.09 **implementación técnica pendiente de CI**: selector browser/local/clou
 
 S07.03 y S10.03: mejora de privacidad. Aun si el administrador activa `DASKALOV_ALLOW_MEMORY=1`, peticiones con Host público no pueden crear sesiones, guardar recuerdos, consultar progreso o enviar conversaciones persistentes. GET de sesión no expone token CSRF ni indica disponibilidad fuera de localhost. Pruebas HTTP con Host falso `tests/private-memory-boundary.test.mjs`. No reemplaza acreditación jurídica ni consentimiento tutelar: S07.03 continúa pendiente.
 
+## 4Q. Contraste medido y auditoría de licencias — 8 noviembre 2026
+
+S01.07 **PARTIAL**: helper `src/contrast-ratio.js`, pruebas de algoritmo WCAG y `e2e/contrast.spec.js` que leen colores calculados de controles, mensajes y botones, exigiendo contraste 4.5:1. Aún faltan lector de pantalla, zoom, especialistas y aprobación WCAG 2.2 AA independiente.
+
+S10.06 **PARTIAL**: `scripts/license-inventory.mjs`, `npm run security:licenses` y contrato de seguridad CI con hashes SHA-256 del GLB original, dependencias y licencias declaradas, más estado de derechos de voces sin falsos aprobados. Informe `reports/license-inventory.json`. Prueba `tests/license-inventory.test.mjs`, documento `odd/security/license-inventory.md`. Pendiente licencias concretas de voces, contratos de proveedor y revisión humana antes de cerrar S10.06.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|
