@@ -33,3 +33,6 @@ Public account authentication, verifiable parental consent, deletion from backup
 
 ## Contrato CI de imagen demo
 `.github/workflows/container-demo.yml` construye y ejecuta la imagen en un job aislado sin secretos, comprueba salud y HTML y exige HTTP 403 para chat Cloud y sesión. Esto NO es una aprobación para publicar. El motor/modelo Piper, si se utilizan en entornos privados, requieren instalación, licencias y configuración fuera del contenedor demo. El Caddyfile es solo un ejemplo: para producción hace falta TLS, dominio y todas las autorizaciones externas.
+
+## Drill automático previo a producción
+`tests/staging-rollback-drill.test.mjs` realiza backup cifrado/restauración a SQLite nuevo y comprueba FTS, progreso, health y HTML. `npm run smoke:deploy` permite `DASKALOV_SMOKE_EXPECT_DEMO=1` para exigir denegación Cloud/memoria en un deployment demo. Esta prueba NO implica recuperación de una instalación real, ni sanea backups históricos de menores revocados. La revisión de restore debe realizarse con usuario autorizado y datos sintéticos.

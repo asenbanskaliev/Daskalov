@@ -611,6 +611,14 @@ S06.03 **PARTIAL**: animación de hablar por defecto se activa y desactiva segú
 
 **78/109 casillas DONE, 31 pendientes**. Esta tanda no declara FULL, ni tiempos/FPS no medidos.
 
+## 4L. Staging rollback y Whisper instalable — 8 noviembre 2026
+
+S12.05: **implementación técnica añadida**, verificación exacta de CI aún requerida para marcar DONE. Nuevo `scripts/post-deploy-smoke.mjs` acepta `DASKALOV_SMOKE_EXPECT_DEMO=1` y comprueba que demo deniega chat Cloud y sesión, además de salud, HTML y CSP. `tests/staging-rollback-drill.test.mjs` verifica snapshot cifrado SQLite, recuperación en ruta nueva, FTS, progreso y arranque healthy de la versión recuperada. `tests/post-deploy-smoke.test.mjs` valida fail closed. No se presume simulacro en hosting real.
+
+S03.04: **PARTIAL**: `scripts/start-whisper-local.ps1`, `odd/operations/whisper-local.md` y test de contrato. Instalación fuera de CI de binario, modelo autorizado y ffmpeg, más evaluación con audio real, sigue pendiente; no usar Cloud por omisión.
+
+**Pendientes 31 hasta certificación de pruebas de este commit.** No publicar ni fusionar.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|
