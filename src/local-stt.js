@@ -11,8 +11,11 @@ export class LocalWhisperRecorder{
   maxDurationMs=12000,
   maxBytes=2*1024*1024,
   vadEnabled=()=>false,
-  AudioContextCtor=globalThis.AudioContext||globalThis.webkitAudioContext
+  AudioContextCtor=globalThis.AudioContext||globalThis.webkitAudioContext,
+  endpoint="/api/stt/local",cloudConsent=()=>false
  }={}){
+  if(!["/api/stt/local","/api/stt/cloud"].includes(endpoint))throw Error("Endpoint STT no permitido.");
+  this.endpoint=endpoint;this.cloudConsent=cloudConsent;this.uploadAbort=null;
   this.mediaDevices=mediaDevices;this.Recorder=MediaRecorderCtor;this.fetchImpl=fetchImpl;
   this.maxDurationMs=maxDurationMs;this.maxBytes=maxBytes;
   this.vadEnabled=vadEnabled;this.AudioContextCtor=AudioContextCtor;this.vadInterval=null;this.audioContext=null;
@@ -21,6 +24,7 @@ export class LocalWhisperRecorder{
  get available(){return Boolean(this.mediaDevices?.getUserMedia&&this.Recorder);}
  async start(){
   if(!this.available)throw Error("Captura local no disponible.");
+  if(this.endpoint==="/api/stt/cloud"&&!this.cloudConsent())throw Error("Autoriza la transferencia de voz.");
   if(this.running)throw Error("Ya hay una grabación activa.");
   this.running=true;this.cancelled=false;
   try{
@@ -39,7 +43,11 @@ export class LocalWhisperRecorder{
      try{
       const blob=new Blob(chunks,{type});
       if(blob.size<10||blob.size>this.maxBytes)throw Error("La muestra de voz es demasiado corta o grande.");
-      const result=await this.fetchImpl("/api/stt/local",{method:"POST",headers:{"content-type":type.split(";")[0]},body:blob});
+      if(this.endpoint==="/api/stt/cloud"&&!this.cloudConsent())throw Error("Consentimiento revocado antes del envío.");
+      this.uploadAbort=new AbortController();
+      const headers={"content-type":type.split(";")[0]};
+      if(this.endpoint==="/api/stt/cloud")headers["x-daskalov-audio-consent"]="cloud";
+      const result=await this.fetchImpl(this.endpoint,{method:"POST",headers,body:blob,signal:this.uploadAbort.signal});
       if(!result.ok){
        let error={};try{error=await result.json();}catch{}
        throw Error(error.error||"No se pudo transcribir con Whisper local.");

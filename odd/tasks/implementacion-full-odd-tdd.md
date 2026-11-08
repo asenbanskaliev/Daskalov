@@ -627,6 +627,10 @@ S11.02/S11.03/S11.08 **PARTIAL**: `e2e/performance-budget.spec.js` captura en na
 
 **78/109 DONE sigue siendo el corte técnico.** No FULL, ni benchmarks acreditados de hardware.
 
+## 4N. STT Cloud opcional y consentimiento temporal — 8 noviembre 2026
+
+S03.05 **implementación técnica pendiente de pruebas CI/operador**. `server/stt-cloud.mjs` usa un endpoint fijo HTTPS, modelo de transcripción español y clave solo en backend; flag desactivado por defecto, presupuesto seis solicitudes diarias y audio máximo de 2 MiB. `/api/stt/cloud` exige petición privada desde loopback y cabecera de consentimiento; `src/local-stt.js` permite abortar uploads. La casilla de consentimiento Cloud nunca se persiste y no hay fallback automático de Whisper local a Cloud. Pruebas con mocks en `tests/stt-cloud.test.mjs` y `tests/cloud-stt-consent.test.mjs`; falta ejecución real autorizada, revisión de proveedores/costes y privacidad legal de menores (S10.02). STT-READY permanece bloqueado.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|

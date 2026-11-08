@@ -17,6 +17,7 @@ import {AtomicUsageLedger} from "./usage-ledger.mjs";
 import {makeTurnEvent} from "../shared/turn-protocol.js";
 import {synthesizePiper} from "./tts-piper.mjs";
 import {transcribeLocalWhisper,readAudioRequest} from "./stt-whisper.mjs";
+import {transcribeCloudStt} from "./stt-cloud.mjs";
 import {installSecurityHeaders} from "./security-headers.mjs";
 import {openMemory} from "./memory.mjs";
 import {embedLocal} from "./embeddings.mjs";
@@ -54,6 +55,8 @@ export function createApp({
  models=listOllamaModels,
  ttsSynth=synthesizePiper,
  sttTranscriber=transcribeLocalWhisper,
+ sttCloudTranscriber=transcribeCloudStt,
+ allowCloudStt=process.env.DASKALOV_ENABLE_STT_CLOUD==="1",
  embedder=embedLocal,
  allowMemory=process.env.DASKALOV_ALLOW_MEMORY==="1",
  maxCallsPerMinute=12,
@@ -76,6 +79,7 @@ export function createApp({
  }
  const inFlight=new Map();
  const cloudBudget=new UsageBudget({dailyLimit:maxCloudCallsPerDay});
+ const cloudSttBudget=new UsageBudget({dailyLimit:6});
  const distributedLedger=process.env.DASKALOV_DISTRIBUTED_LIMIT==="1"?
   new AtomicUsageLedger({path:dbPath,secret:process.env.DASKALOV_LEDGER_SECRET}):null;
  const metrics=new MetricsCollector({cloudUsdPerMillionOutputTokens:process.env.DASKALOV_USD_PER_1M_OUTPUT_TOKENS??null});
@@ -96,7 +100,7 @@ export function createApp({
    if(path==="/api/health"&&req.method==="GET")return respond(res,200,{ok:true,cloudConfigured:process.env.DASKALOV_SAFE_DEMO_ONLY==="1"?false:!!process.env.OLLAMA_API_KEY,demoOnly:process.env.DASKALOV_SAFE_DEMO_ONLY==="1"});
    if(process.env.DASKALOV_SAFE_DEMO_ONLY==="1"&&path.startsWith("/api/"))throw new OllamaError("Demo pública: IA y datos personales desactivados.",403);
    if(path==="/api/stt/status"&&req.method==="GET"){
-    return respond(res,200,{available:Boolean(process.env.DASKALOV_WHISPER_URL),provider:"whisper-local",recordingPersisted:false});
+    return respond(res,200,{available:Boolean(process.env.DASKALOV_WHISPER_URL),provider:"whisper-local",cloudAvailable:allowCloudStt&&Boolean(process.env.DASKALOV_STT_CLOUD_KEY),recordingPersisted:false});
    }
    if(path==="/api/stt/local"&&req.method==="POST"){
     if(!isPrivateClient(req))throw new OllamaError("Transcripción local permitida solo desde localhost.",403);
@@ -106,7 +110,17 @@ export function createApp({
     metrics.observe("stt",Date.now()-sttStarted);
     return respond(res,200,{transcript});
    }
-   if(path==="/api/tts/status"&&req.method==="GET"){
+   if(path==="/api/stt/cloud"&&req.method==="POST"){
+     if(!allowCloudStt||!isPrivateClient(req))throw new OllamaError("STT Cloud no disponible fuera del modo privado.",403);
+     if(req.headers["x-daskalov-audio-consent"]!=="cloud")throw new OllamaError("Se requiere consentimiento de voz por grabación.",403);
+     const {audio,mime}=await readAudioRequest(req);
+     if(!cloudSttBudget.reserve())throw new OllamaError("Cuota de voz Cloud agotada.",429);
+     const started=Date.now();
+     const transcript=await sttCloudTranscriber({audio,mime});
+     metrics.observe("stt",Date.now()-started);
+     return respond(res,200,{transcript});
+    }
+    if(path==="/api/tts/status"&&req.method==="GET"){
     return respond(res,200,{available:Boolean(process.env.DASKALOV_PIPER_BIN&&process.env.DASKALOV_PIPER_MODEL),provider:"piper-local"});
    }
    if(path==="/api/tts/local"&&req.method==="POST"){

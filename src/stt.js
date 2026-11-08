@@ -1,4 +1,4 @@
-export const STT_MODES=Object.freeze(["webSpeech","localWhisper","disabled"]);
+export const STT_MODES=Object.freeze(["webSpeech","localWhisper","cloudWhisper","disabled"]);
 export function createSTTAdapter({
  mode="webSpeech",
  recognitionFactory=null,
@@ -11,7 +11,7 @@ export function createSTTAdapter({
 }={}){
  if(!STT_MODES.includes(mode))throw Error("Proveedor de reconocimiento de voz desconocido.");
  if(mode==="disabled")return {provider:mode,available:false,start(){return false;},stop(){},dispose(){}};
- if(mode==="localWhisper"){
+ if(mode==="localWhisper"||mode==="cloudWhisper"){
   let active=false;
   return {provider:mode,available:typeof localTranscriber==="function",
    get active(){return active;},

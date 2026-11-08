@@ -10,8 +10,10 @@ export function configureVoiceInput({find,send,stopSpeech,showMessage}){
   current?.stop();
   recorder?.cancel();recorder=null;
   const selected=mode?.value||"webSpeech";
-  if(selected==="localWhisper"){
-   recorder=new LocalWhisperRecorder({vadEnabled:()=>find("vadEnabled")?.checked===true});
+  if(selected==="localWhisper"||selected==="cloudWhisper"){
+   recorder=new LocalWhisperRecorder({vadEnabled:()=>find("vadEnabled")?.checked===true,
+    endpoint:selected==="cloudWhisper"?"/api/stt/cloud":"/api/stt/local",
+    cloudConsent:()=>find("cloudSttConsent")?.checked===true});
   }
   const transcriber=recorder?.available?()=>recorder.start():null;
   if(transcriber){transcriber.finish=()=>recorder.finish();transcriber.cancel=()=>recorder.cancel();}
@@ -25,13 +27,14 @@ export function configureVoiceInput({find,send,stopSpeech,showMessage}){
    onStatus:status,
    onError:error=>showMessage("error",error.message+" Puedes escribir tu pregunta.")
   });
-  mic.disabled=!current.available;
+  mic.disabled=!current.available||(selected==="cloudWhisper"&&!find("cloudSttConsent")?.checked);
   mic.title=current.available?"Activar micrófono":"Reconocimiento local no instalado o navegador no compatible. Usa el teclado.";
   status(current.available?"Micrófono apagado. No se guarda audio.":"Micrófono no disponible; usa el teclado.");
  };
  mode?.addEventListener("change",choose);
+ find("cloudSttConsent")?.addEventListener("change",choose);
  mic.addEventListener("click",()=>{
-  if(current?.provider==="localWhisper"&&current.active){current.finish();status("Transcribiendo con Whisper local…");}
+  if(["localWhisper","cloudWhisper"].includes(current?.provider)&&current.active){current.finish();status("Transcribiendo con Whisper local…");}
   else current?.start();
  });
  choose();
