@@ -29,7 +29,8 @@
     "eval:voice": "node scripts/voice-validation.mjs",
     "security:licenses": "node scripts/license-inventory.mjs",
     "perf:compare": "node scripts/performance-comparator.mjs",
-    "eval:tts:local": "node scripts/tts-local-benchmark.mjs"
+    "eval:tts:local": "node scripts/tts-local-benchmark.mjs",
+    "perf:hardware:local": "node scripts/hardware-browser-benchmark.mjs"
   },
   "dependencies": {
     "three": "0.187.0"
