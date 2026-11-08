@@ -47,3 +47,6 @@ Durante `npm run backup:restore`, con strict=1 el ledger debe estar íntegro, o 
 
 ## Regla obligatoria en restauración con memoria habilitada
 Con `DASKALOV_ALLOW_MEMORY=1`, el CLI de restauración impone verificación de `DASKALOV_ERASURE_LEDGER_PATH` y `DASKALOV_ERASURE_LEDGER_SECRET`, **aunque** `DASKALOV_STRICT_PRIVACY_RESTORE=0`. Si no existe el ledger o su HMAC no verifica, no se escribe el archivo SQLite de destino; configurar la ruta y secreto en el vault antes de restaurar. Al activar un ledger en el servidor, la clave debe tener al menos 32 caracteres: se rechaza el arranque si falta. El operador debe custodiar registro y clave fuera del directorio de backups. No utilizar `DASKALOV_ALLOW_MEMORY=0` para eludir los requisitos de recuperación de datos personales.
+
+## Smoke ligado al commit exacto
+En el release privado, establecer `DASKALOV_RELEASE_SHA` al SHA de 40 hex de GitHub antes de iniciar Node y establecer `DASKALOV_SMOKE_EXPECTED_SHA` al mismo valor al ejecutar `npm run smoke:deploy`; un SHA ausente o distinto bloqueará el smoke. La comprobación identifica una etiqueta declarada por el proceso y **no verifica por sí sola** la firma del artefacto, despliegue HTTPS o rollback físico.

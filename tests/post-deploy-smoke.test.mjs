@@ -22,3 +22,13 @@ test("REL-005: demo smoke fails closed on API exposure",async()=>{
  const leakedHealth=(u,opts)=>mock(u,opts).then(r=>new URL(u).pathname==="/api/health"?{...r,json:async()=>({ok:true,demoOnly:false,cloudConfigured:true})}:r);
  await assert.rejects(()=>smokeDeployment({url:"https://example.org",expectDemo:true,fetchImpl:leakedHealth}),/no aislado/);
 });
+
+test("REL-005: deployment smoke rejects wrong commit and validates exact remote build SHA",async()=>{
+ const expected="a".repeat(40);
+ const fetchWithSha=(url,opts)=>mock(url,opts).then(result=>new URL(url).pathname==="/api/health"?
+  {...result,json:async()=>({ok:true,demoOnly:true,cloudConfigured:false,releaseSha:expected})}:result);
+ const verified=await smokeDeployment({url:"https://example.org",expectDemo:true,expectedSha:expected,fetchImpl:fetchWithSha});
+ assert.equal(verified.shaVerified,true);
+ await assert.rejects(()=>smokeDeployment({url:"https://example.org",expectedSha:"b".repeat(40),fetchImpl:fetchWithSha}),/SHA remoto no coincide/);
+ await assert.rejects(()=>smokeDeployment({url:"https://example.org",expectedSha:"not-a-commit",fetchImpl:fetchWithSha}),/SHA esperado inválido/);
+});

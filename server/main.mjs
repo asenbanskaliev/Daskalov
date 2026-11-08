@@ -74,10 +74,12 @@ export function createApp({
  maxCallsPerMinute=12,
  maxCallsPerDay=60,
  maxConcurrent=1,
+ releaseSha=process.env.DASKALOV_RELEASE_SHA||null,
  maxCloudCallsPerDay=24
 }={}){
  if(erasureLedgerPath&&(typeof erasureLedgerSecret!=="string"||erasureLedgerSecret.length<32))
   throw Error("Falta clave de registro de borrados: se rechaza iniciar con memoria persistente insegura.");
+ if(releaseSha!==null&&!/^[a-f0-9]{40}$/i.test(releaseSha))throw Error("SHA de despliegue inválido.");
  const memory=openMemory(dbPath);
  memory.cleanup();
  const rate=new Map();
@@ -112,7 +114,7 @@ export function createApp({
     if(!isPrivateClient(req))throw new OllamaError("Métricas solo disponibles en modo privado.",403);
     return respond(res,200,metrics.snapshot());
    }
-   if(path==="/api/health"&&req.method==="GET")return respond(res,200,{ok:true,cloudConfigured:process.env.DASKALOV_SAFE_DEMO_ONLY==="1"?false:!!process.env.OLLAMA_API_KEY,demoOnly:process.env.DASKALOV_SAFE_DEMO_ONLY==="1"});
+   if(path==="/api/health"&&req.method==="GET")return respond(res,200,{ok:true,cloudConfigured:process.env.DASKALOV_SAFE_DEMO_ONLY==="1"?false:!!process.env.OLLAMA_API_KEY,demoOnly:process.env.DASKALOV_SAFE_DEMO_ONLY==="1",releaseSha});
    if(process.env.DASKALOV_SAFE_DEMO_ONLY==="1"&&path.startsWith("/api/"))throw new OllamaError("Demo pública: IA y datos personales desactivados.",403);
    // No unauthenticated local-model proxy via public Host. Without audited
    // authentication, every inference and model-discovery endpoint is private.
