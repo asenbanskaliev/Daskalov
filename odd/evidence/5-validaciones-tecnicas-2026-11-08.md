@@ -4,8 +4,8 @@
 
 ## Evidencias verificables
 
-- **CI unitario:** [run 42486785297](https://github.com/asenbanskaliev/Daskalov/actions/runs/42486785297), `success` con tests Node de la tanda.
-- **Chromium/Firefox:** [run 42486756258](https://github.com/asenbanskaliev/Daskalov/actions/runs/42486756258); resultado por motor sujeto a comprobación del run completo.
+- **CI unitario:** [run 42486785297](https://github.com/asenbanskaliev/Daskalov/actions/runs/42486785297), **SUCCESS** con los nuevos tests Node; [CI de documentación final 42487097963](https://github.com/asenbanskaliev/Daskalov/actions/runs/42487097963), **SUCCESS**.
+- **Chromium/Firefox:** [run 42486756258](https://github.com/asenbanskaliev/Daskalov/actions/runs/42486756258), **SUCCESS** por separado: **Chromium 40 PASS / 0 FAIL** y **Firefox 39 PASS / 1 SKIPPED / 0 FAIL**. Todas las pruebas VAL-01 a VAL-05 pasaron en ambos navegadores; el SKIP corresponde a otro test de la suite, no a las cinco validaciones.
 - Se detectó y corrigió un timeout de una prueba que intentaba recorrer los nueve retos en un único test Chrome. Ahora se ejecutan de forma independiente por nivel y sin WebGL para separar el objetivo pedagógico del rendimiento 3D.
 
 | ID | Qué hace la prueba y dónde | Acredita | No acredita |
