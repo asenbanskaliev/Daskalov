@@ -29,6 +29,10 @@ test("MEM-008: max 200 rows per player, plus 30d memory and 180d progress expiry
   const external=new DatabaseSync(path);
   external.exec("UPDATE memories SET created_at='2001-01-01'; UPDATE lesson_progress SET updated_at='2001-01-01';");
   external.close();
+  // Expiration must be enforced on all read paths, not only on startup pruning.
+  assert.deepEqual(db.search(id,"Recuerdo"),[]);
+  assert.equal(db.exportPlayer(id).memories.length,0);
+  assert.deepEqual(db.getProgress(id),[]);
   db.cleanup();
   assert.equal(db.exportPlayer(id).memories.length,0);
   assert.deepEqual(db.getProgress(id),[]);
