@@ -12,6 +12,7 @@ import {streamWithOptionalFallback} from "./fallback.mjs";
 import {retryLocalStream} from "./resilience.mjs";
 import {MetricsCollector} from "./metrics.mjs";
 import {isPrivateHost,UsageBudget} from "./access-policy.mjs";
+import {AtomicUsageLedger} from "./usage-ledger.mjs";
 import {makeTurnEvent} from "../shared/turn-protocol.js";
 import {synthesizePiper} from "./tts-piper.mjs";
 import {transcribeLocalWhisper,readAudioRequest} from "./stt-whisper.mjs";
@@ -74,6 +75,8 @@ export function createApp({
  }
  const inFlight=new Map();
  const cloudBudget=new UsageBudget({dailyLimit:maxCloudCallsPerDay});
+ const distributedLedger=process.env.DASKALOV_DISTRIBUTED_LIMIT==="1"?
+  new AtomicUsageLedger({path:dbPath,secret:process.env.DASKALOV_LEDGER_SECRET}):null;
  const metrics=new MetricsCollector({cloudUsdPerMillionOutputTokens:process.env.DASKALOV_USD_PER_1M_OUTPUT_TOKENS??null});
  const server=http.createServer(async(req,res)=>{
   installSecurityHeaders(res);
@@ -220,6 +223,16 @@ export function createApp({
     if(counter?.day===day&&counter.count>=maxCallsPerDay)throw new OllamaError("Cuota diaria alcanzada.",429);
     if((inFlight.get(ip)||0)>=maxConcurrent)throw new OllamaError("Hay otra pregunta en curso.",429);
     if(provider==="cloud"&&!cloudBudget.reserve(new Date(now)))throw new OllamaError("Presupuesto diario de Cloud alcanzado.",429);
+    let distributedLease=null;
+    if(distributedLedger){
+     const reservation=distributedLedger.reserve({
+      identity:ip,provider,nowMs:now,
+      estimatedTokens:Math.ceil(body.text.length/4)+2048,
+      requestsPerDay:maxCallsPerDay,concurrent:maxConcurrent,globalCloudCallsPerDay:maxCloudCallsPerDay
+     });
+     if(!reservation.accepted)throw new OllamaError("Cuota compartida o límite de concurrencia alcanzado.",429);
+     distributedLease=reservation.leaseId;
+    }
     times.push(now);rate.set(ip,times);
     daily.set(ip,{day,count:(counter?.day===day?counter.count:0)+1});
     inFlight.set(ip,(inFlight.get(ip)||0)+1);
@@ -297,7 +310,7 @@ export function createApp({
       memory.save(session.playerId,"assistant",reply);
      }
      return respond(res,200,{reply,animation:inferAnimation(reply,event),provider,model});
-    }finally{inFlight.set(ip,Math.max(0,(inFlight.get(ip)||1)-1));metrics.active([...inFlight.values()].reduce((a,b)=>a+b,0));}
+    }finally{if(distributedLease)distributedLedger.release(distributedLease);inFlight.set(ip,Math.max(0,(inFlight.get(ip)||1)-1));metrics.active([...inFlight.values()].reduce((a,b)=>a+b,0));}
    }
    if(req.method==="GET"&&(path==="/"||path==="/index.html"||path==="/sw.js"||/^\/assets\/[A-Za-z0-9_.-]+\.(?:js|css|woff2|png|webp|svg|glb|wasm)$/.test(path))){
     const assetPath=path==="/"||path==="/index.html"?"index.html":path.slice(1);
@@ -317,7 +330,7 @@ export function createApp({
    return respond(res,404,{error:"Ruta no encontrada."});
   }catch(error){return respond(res,error instanceof OllamaError?error.status:500,{error:error instanceof OllamaError?error.message:"Error interno."});}
  });
- return {server,memory,close(){memory.close();}};
+ return {server,memory,close(){distributedLedger?.close();memory.close();}};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const app=createApp(),port=Number(process.env.PORT)||3000;
