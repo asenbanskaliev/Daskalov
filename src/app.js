@@ -11,6 +11,7 @@ import {createGameUI} from "./game-ui.js";
 import {configureDevMetrics} from "./metrics-ui.js";
 import {configureClassroomEvents} from "./classroom-ui.js";
 import {registerOfflineWorker} from "./offline-worker.js";
+import {restoreGameProgress} from "./progress-restore.js";
 const history=[];
 let playing=false,yaw=0,sceneState=null,activeController=null,activeTurn=0;
 const voice=createVoiceUI({
@@ -24,12 +25,7 @@ let gameUI=null;
 const memoryUI=createMemoryUI({
  find:$,showMessage,history,
  onRevoke:()=>gameUI?.restore([]),
- onSession:async token=>{
-  try{
-   const response=await fetch("/api/progress",{method:"POST",headers:{"content-type":"application/json","x-daskalov-csrf":token},body:JSON.stringify({readOnly:true})});
-   if(response.ok)gameUI?.restore((await response.json()).progress);
-  }catch{}
- }
+ onSession:token=>restoreGameProgress(token,()=>gameUI)
 });
 $("graphicsQuality").value=readSetting("graphicsQuality")||"auto";
 $("reducedMotion").checked=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
