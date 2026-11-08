@@ -701,6 +701,10 @@ S05.06 **PARTIAL**: al cargar el GLB original, `src/release-procedural-avatar.js
 
 S01.07/S11.07 **PARTIAL**: `src/style.css` garantiza blancos táctiles mínimos en botones de privacidad y eventos y permite reflujo de la barra al estrecharse. `e2e/mobile-touch-targets.spec.js` comprueba vista de 320/390 px, blancos de 24 px, lecciones operativas y ausencia de desbordamiento; prueba CSS `tests/a11y-targets-policy.test.mjs`. Quedan zoom real 200-400%, NVDA/VoiceOver y auditoría WCAG humana.
 
+## 4Z. Restauración fail-closed de datos persistentes — 8 noviembre 2026
+
+S07.07/S10.07/S12.05 **PARTIAL**: `npm run backup:restore` obliga automáticamente a aplicar la lista firmada de supresiones HMAC si `DASKALOV_ALLOW_MEMORY=1`, incluso aunque alguien configure `DASKALOV_STRICT_PRIVACY_RESTORE=0`. Sin ledger íntegro se deniega la restauración **antes de escribir** la base en claro. El backend rechaza arrancar si se configura ruta de supresiones sin clave válida. `tests/strict-privacy-restore.test.mjs` ejecuta el CLI en un subproceso real y verifica rechazo, restauración autorizada, purga del titular y preservación de otro titular. La custodia del ledger externo, backups remotos y un simulacro sobre staging HTTPS siguen sin certificar: no marcar estas tareas DONE.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|

@@ -76,6 +76,8 @@ export function createApp({
  maxConcurrent=1,
  maxCloudCallsPerDay=24
 }={}){
+ if(erasureLedgerPath&&(typeof erasureLedgerSecret!=="string"||erasureLedgerSecret.length<32))
+  throw Error("Falta clave de registro de borrados: se rechaza iniciar con memoria persistente insegura.");
  const memory=openMemory(dbPath);
  memory.cleanup();
  const rate=new Map();
