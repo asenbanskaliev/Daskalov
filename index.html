@@ -45,11 +45,12 @@
         <h3>¿Qué pasa en clase?</h3>
         <div id="classroomEvents" class="classroom-event-buttons">
           <button type="button" data-classroom-event="cold">Hace frío</button>
-          <button type="button" data-classroom-event="phone">Suena un móvil</button>
+          <button type="button" data-classroom-event="phone">Suena un móvil</button><button type="button" data-classroom-event="talking">Hablan compañeros</button>
           <button type="button" data-classroom-event="silence">Hay silencio</button>
           <button type="button" data-classroom-event="board">Ir a la pizarra</button>
           <button type="button" data-classroom-event="desk">Regla en la mesa</button>
         </div>
+        <label class="field-help"><input type="checkbox" id="classroomAutoEvents"> Activar situaciones ocasionales del aula (máximo una cada 90 segundos)</label>
         <p id="classroomFeedback" role="status"></p>
       </section>
       <section id="lessonPanel" class="lesson-panel" aria-label="Misiones educativas">
