@@ -7,7 +7,6 @@ export const PROVIDER_ENDPOINTS=Object.freeze({
 });
 export const NVIDIA_MODEL_FALLBACK=Object.freeze([
  "deepseek-ai/deepseek-v4-flash",
- "meta/llama-3.1-8b-instruct",
  "meta/llama-3.3-70b-instruct",
  "nvidia/nemotron-3.5-lightning-30b-a3b",
  "openai/gpt-oss-120b",

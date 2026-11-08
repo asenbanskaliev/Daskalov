@@ -75,3 +75,8 @@ test("AI-012: status 410 explains NVIDIA organization Public API Endpoints safel
  assert.equal(error.status,502);
  assert.doesNotMatch(providerChatError("openrouter",429).message,/Public API Endpoints/);
 });
+
+test("AI-012: NVIDIA fallback never advertises Llama 3.1 8B after verified HTTP 410",()=>{
+ assert.equal(NVIDIA_MODEL_FALLBACK.includes("meta/llama-3.1-8b-instruct"),false);
+ assert.ok(NVIDIA_MODEL_FALLBACK.includes("deepseek-ai/deepseek-v4-flash"));
+});
