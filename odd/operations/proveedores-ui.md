@@ -1,0 +1,9 @@
+## Selección de OpenRouter y NVIDIA Build desde la interfaz — 8 noviembre 2026
+
+El selector `#provider` incluye `openrouter` y `nvidia`, además de Ollama local, Ollama Cloud y Demo. En un servidor **privado (loopback)**, seleccionar el proveedor, pegar la clave personal en el campo tipo password y pulsar **Aplicar clave**; la interfaz consulta el catálogo real, permite buscar por nombre y elegir modelo en la lista `#modelPicker`. El modelo elegido se puede corregir manualmente en `#model`.
+
+Claves y privacidad: la clave de OpenRouter/NVIDIA se guarda exclusivamente en un `Map` en memoria JavaScript de la pestaña, nunca se escribe en `localStorage`, SQLite, URL ni cookies. Se envía por el header `x-daskalov-provider-key` al backend **del mismo origen**, que la reenvía por TLS únicamente al proveedor seleccionado y solo en esa petición. El botón **Olvidar clave** la elimina de memoria; al recargar se pierde. Se aconseja no compartir el navegador de una clase con claves activas y cerrar la pestaña al terminar. El usuario debe revisar cuotas y facturación reales de los proveedores. No se habilita a terceros ni menores sin autorización legal.
+
+Endpoints oficiales fijos: OpenRouter `https://openrouter.ai/api/v1/models` y `/chat/completions`; NVIDIA `https://integrate.api.nvidia.com/v1/models` y `/chat/completions`. Si NVIDIA no ofrece el endpoint compatible de catálogo (404/405/501), se muestra una lista reducida de modelos publicada en su documentación; la disponibilidad real puede cambiar. No se aceptan URLs arbitrarias, y el modo Demo y los accesos públicos siguen prohibiendo todas las API de IA. Las respuestas en streaming son SSE compatibles con OpenAI y pasan por el filtro de seguridad del personaje como antes. No se exponen trazas de razonamiento.
+
+Fuente OpenRouter: https://openrouter.ai/docs/api/api-reference/models/get-models ; NVIDIA: https://docs.api.nvidia.com/nim/reference/llm-apis .

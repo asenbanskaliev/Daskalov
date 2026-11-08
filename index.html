@@ -25,8 +25,24 @@
     <aside class="panel">
       <div class="panel-title"><h2>Habla con el profesor</h2><p>Pregunta lo que quieras; Daskalov improvisará usando Ollama.</p></div>
       <form id="settingsForm" autocomplete="off">
-        <div class="fields"><label for="provider">Proveedor de IA</label><select id="provider"><option value="cloud">Ollama Cloud</option><option value="local">Ollama local</option><option value="demo">Demo sin IA · offline</option></select></div>
+        <div class="fields"><label for="provider">Proveedor de IA</label><select id="provider"><option value="cloud">Ollama Cloud</option><option value="local">Ollama local</option><option value="openrouter">OpenRouter.ai</option><option value="nvidia">NVIDIA Build · NIM</option><option value="demo">Demo sin IA · offline</option></select></div>
         <p id="providerStatus" class="field-help" role="status" aria-live="polite">Comprobando proveedor…</p>
+        <div id="providerKeyRow" class="provider-api-key" hidden>
+          <label for="providerApiKey">Clave API del proveedor seleccionado (solo esta pestaña)</label>
+          <div class="actions">
+            <input id="providerApiKey" type="password" placeholder="Pega tu API key" autocomplete="off" spellcheck="false">
+            <button id="saveProviderKey" type="button" class="secondary">Aplicar clave</button>
+            <button id="forgetProviderKey" type="button" class="secondary">Olvidar clave</button>
+          </div>
+          <p id="providerKeyStatus" class="field-help" role="status">Clave no configurada.</p>
+          <p class="field-help">No se guarda en localStorage ni en SQLite; desaparece al recargar. Las consultas del proveedor pueden tener coste.</p>
+        </div>
+        <div id="modelPickerRow" class="fields">
+          <label for="modelPicker">Catálogo de modelos</label>
+          <input id="modelSearch" type="search" placeholder="Buscar modelo por nombre" autocomplete="off">
+          <select id="modelPicker" aria-label="Elegir modelo del catálogo"><option value="">Pulsa actualizar para listar los modelos</option></select>
+          <button id="refreshModels" type="button" class="secondary">Actualizar listado de modelos</button>
+        </div>
         <div class="fields"><label for="model">Modelo</label><input id="model" list="modelsList" value="beam" spellcheck="false"><datalist id="modelsList"><option value="beam"></option></datalist></div>
         <div class="fields"><label for="graphicsQuality">Calidad gráfica</label><select id="graphicsQuality"><option value="auto">Automática</option><option value="low">Baja (más fluida)</option><option value="medium">Media</option><option value="high">Alta</option></select></div>
         <div class="fields"><label for="sttMode">Reconocimiento de voz</label><select id="sttMode"><option value="webSpeech">Navegador (puede usar servicio de voz externo)</option><option value="disabled">Solo teclado · sin micrófono</option><option value="localWhisper">Whisper local (requiere instalar servidor)</option><option value="cloudWhisper">STT Cloud externo · consentimiento explícito</option></select></div>

@@ -1,3 +1,4 @@
+import {providerHeaders} from "./provider-credentials.js";
 import {validateTurnEvent} from "../shared/turn-protocol.js";
 // Shared server/browser schema validation handles the allowed event catalogue.
 
@@ -6,7 +7,7 @@ export class TurnProtocolError extends Error {
 }
 
 export async function* streamTurn({body,signal,fetchImpl=fetch,endpoint="/api/chat/stream",csrfToken=null}){
- const headers={"content-type":"application/json"};
+ const headers={"content-type":"application/json",...providerHeaders(body?.provider)};
  if(csrfToken)headers["x-daskalov-csrf"]=csrfToken;
  const response=await fetchImpl(endpoint,{
   method:"POST",

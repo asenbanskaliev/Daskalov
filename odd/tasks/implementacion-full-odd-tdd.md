@@ -755,6 +755,10 @@ S11.02/S11.03/S11.08 **PARTIAL avanzado**: `scripts/hardware-browser-benchmark.m
 
 S05.06 **PARTIAL avanzado**: `src/shared-fallback-sphere.js` crea las esferas del personaje provisional utilizando **una sola SphereGeometry compartida** de resolución reducida (12×10 segmentos), en lugar de generar un BufferGeometry de 20×16 por ojo, boca, bigote, nariz y cabello. Se mantienen escalas correctas de las formas estilizadas. `releaseProceduralAvatar` libera esa geometría una sola vez al cargar GLB; la geometría de cajas de la escena nunca se elimina. `tests/shared-fallback-sphere.test.mjs` verifica geometría compartida, tamaños correctos y un solo dispose con Three.js real. Se incrementa el contador agregado `fallbackSharedSpheres`. Queda pendiente medir VRAM y calidad visual en hardware real y revisar texturas comprimidas cuando existan.
 
+## 4AM. Proveedores configurables desde UI — 8 noviembre 2026
+
+**NUEVA CAPACIDAD AÑADIDA, ajena al cómputo inicial de 109 contratos**: selector OpenRouter.ai/NVIDIA Build, gestión de claves por pestaña, catálogo y búsqueda de modelos, elección manual, completions y streaming SSE con cancelación y moderación. `server/remote-llm.mjs` usa únicamente endpoints HTTPS fijos, rechaza URL arbitrarias e IDs inválidos; credenciales por cabecera de origen propio en memoria de pestaña, no persistidas ni enviadas a Ollama. Los proveedores consumen la cuota Cloud conjunta y el límite de concurrencia existente, incluido SQLite compartido. `tests/remote-llm.test.mjs` y `tests/remote-provider-http.test.mjs` comprueban contrato sin consumir API de pago. Requiere ejecutar una conversación REAL con cada proveedor y API key autorizada en entorno privado para validar precios y compatibilidad del modelo elegido; **no** cumple S02.09 (específicamente Ollama Beam) ni S00.05 (login público) por sí solo. Ver `odd/operations/proveedores-ui.md`.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|
