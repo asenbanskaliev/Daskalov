@@ -647,6 +647,12 @@ S01.07 **PARTIAL**: helper `src/contrast-ratio.js`, pruebas de algoritmo WCAG y 
 
 S10.06 **PARTIAL**: `scripts/license-inventory.mjs`, `npm run security:licenses` y contrato de seguridad CI con hashes SHA-256 del GLB original, dependencias y licencias declaradas, más estado de derechos de voces sin falsos aprobados. Informe `reports/license-inventory.json`. Prueba `tests/license-inventory.test.mjs`, documento `odd/security/license-inventory.md`. Pendiente licencias concretas de voces, contratos de proveedor y revisión humana antes de cerrar S10.06.
 
+## 4R. Supresión en backup histórico mediante tombstones HMAC — 8 noviembre 2026
+
+S07.07/S10.07 **PARTIAL avanzado**: `server/erasure-ledger.mjs` registra antes de borrar cada jugador un HMAC sin ID ni texto claro en almacenamiento EXTERNO a los snapshots SQLite. `restoreEncryptedBackup` opcionalmente exige un ledger íntegro, rechaza firmas alteradas y purga en transacción recuerdos, FTS, progreso, preferencias, embeddings y sesiones revocadas antes de abrir la base recuperada. `scripts/secure-backup-cli.mjs` soporta `DASKALOV_STRICT_PRIVACY_RESTORE=1`. Pruebas `tests/erasure-ledger.test.mjs`.
+
+El ledger+su clave deben mantenerse fuera de backups históricos y compartirse entre restauraciones; su pérdida impide borrados retroactivos. Los bytes cifrados de respaldos anteriores aún contienen material hasta su eliminación/expiración y sus copias remotas requieren política de supresión y revisión legal. No marcar MEM-READY/SEC-PUBLIC ni afirmar borrado jurídico completo. Deshabilitado por defecto en la demo.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|

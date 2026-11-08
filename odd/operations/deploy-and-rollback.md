@@ -36,3 +36,11 @@ Public account authentication, verifiable parental consent, deletion from backup
 
 ## Drill automático previo a producción
 `tests/staging-rollback-drill.test.mjs` realiza backup cifrado/restauración a SQLite nuevo y comprueba FTS, progreso, health y HTML. `npm run smoke:deploy` permite `DASKALOV_SMOKE_EXPECT_DEMO=1` para exigir denegación Cloud/memoria en un deployment demo. Esta prueba NO implica recuperación de una instalación real, ni sanea backups históricos de menores revocados. La revisión de restore debe realizarse con usuario autorizado y datos sintéticos.
+
+## Evitar resurrección de recuerdos borrados en restauraciones
+
+En staging privado configurar `DASKALOV_ERASURE_LEDGER_PATH` como ruta persistente **externa** al directorio y volumen de backups; configurar `DASKALOV_ERASURE_LEDGER_SECRET` con secreto de 32+ caracteres guardado en un vault; activar `DASKALOV_STRICT_PRIVACY_RESTORE=1`. Cada borrado crea primero un registro HMAC fsync y luego elimina el jugador, sin almacenar la identidad en texto claro en el ledger. Si el registro falla, la solicitud de borrado no se completa; investigar el incidente.
+
+Durante `npm run backup:restore`, con strict=1 el ledger debe estar íntegro, o la restauración falla. Los registros se aplican a la base restaurada y se eliminan los recuerdos antiguos antes de empezar el servidor. Conservar la clave y el ledger mientras cualquiera de los respaldos históricos pueda restaurarse. Nunca respaldar solo la DB y perder el ledger.
+
+**Limitación:** no elimina físicamente los bytes de backups históricos ya copiados fuera del control del servicio. Tampoco proporciona base legal de tratamiento, identidad tutelar ni consentimiento; S07.07 y S10.07 siguen pendientes hasta que se cubra toda la cadena de respaldos externos.

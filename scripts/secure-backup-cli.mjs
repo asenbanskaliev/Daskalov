@@ -12,7 +12,12 @@ async function main(){
   finally{memory.close();}
  }else if(action==="restore"){
   if(!process.env.DASKALOV_DB_PATH||!filepath)throw Error("Ruta origen .enc y DASKALOV_DB_PATH requerido.");
-  await restoreEncryptedBackup({source:resolve(filepath),target:resolve(process.env.DASKALOV_DB_PATH),keyBase64});
+  await restoreEncryptedBackup({
+   source:resolve(filepath),target:resolve(process.env.DASKALOV_DB_PATH),keyBase64,
+   erasureLedgerPath:process.env.DASKALOV_ERASURE_LEDGER_PATH?resolve(process.env.DASKALOV_ERASURE_LEDGER_PATH):null,
+   erasureSecret:process.env.DASKALOV_ERASURE_LEDGER_SECRET,
+   strictPrivacyRestore:process.env.DASKALOV_STRICT_PRIVACY_RESTORE==="1"
+  });
  }else if(action==="prune"){
   if(!filepath)throw Error("Directorio requerido.");
   await pruneEncryptedBackups({directory:resolve(filepath)});

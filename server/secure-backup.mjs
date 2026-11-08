@@ -3,6 +3,7 @@ import {readFile,writeFile,mkdtemp,rm,unlink,readdir,stat} from "node:fs/promise
 import {tmpdir} from "node:os";
 import {join,dirname,basename} from "node:path";
 import {DatabaseSync} from "node:sqlite";
+import {erasureDigest,readErasureHashes} from "./erasure-ledger.mjs";
 const MAGIC=Buffer.from("DASKALOV-BACKUP-V1\n","ascii");
 function parseKey(value){
  if(typeof value!=="string"||!/^[A-Za-z0-9+/]{43}=$/.test(value))throw Error("Se necesita una clave AES-256 en base64.");
@@ -29,7 +30,11 @@ export async function createEncryptedBackup({memory,destination,keyBase64}){
   await rm(tmp,{recursive:true,force:true});
  }
 }
-export async function restoreEncryptedBackup({source,target,keyBase64}){
+export async function restoreEncryptedBackup({
+ source,target,keyBase64,erasureLedgerPath=null,erasureSecret=null,strictPrivacyRestore=false
+}){
+ if(strictPrivacyRestore&&!erasureLedgerPath)throw Error("Restauración de privacidad exige registro de supresiones.");
+ const erased=erasureLedgerPath?await readErasureHashes({path:erasureLedgerPath,secret:erasureSecret}):new Set();
  if(typeof target!=="string"||!target.endsWith(".sqlite"))throw Error("Destino SQLite requerido.");
  const key=parseKey(keyBase64);
  const blob=await readFile(source);
@@ -40,12 +45,31 @@ export async function restoreEncryptedBackup({source,target,keyBase64}){
  const plain=Buffer.concat([decipher.update(blob.subarray(start+28)),decipher.final()]);
  try{
   await writeFile(target,plain,{mode:0o600,flag:"wx"});
-  const db=new DatabaseSync(target,{readOnly:true});
+  const db=new DatabaseSync(target);
+  let erasedPlayers=0;
   try{
    const check=db.prepare("PRAGMA quick_check").get().quick_check;
    if(check!=="ok")throw Error("Backup SQLite no supera comprobación de integridad.");
+   if(erased.size){
+    db.exec("PRAGMA foreign_keys=ON; BEGIN IMMEDIATE");
+    try{
+     const ids=db.prepare("SELECT id FROM players").all();
+     const removeMem=db.prepare("DELETE FROM memories WHERE player_id=?");
+     const removeSession=db.prepare("DELETE FROM session_credentials WHERE player_id=?");
+     const removePlayer=db.prepare("DELETE FROM players WHERE id=?");
+     for(const {id} of ids){
+      if(!erased.has(erasureDigest(id,erasureSecret)))continue;
+      removeMem.run(id);
+      removeSession.run(id);
+      removePlayer.run(id);
+      erasedPlayers++;
+     }
+     db.exec("COMMIT");
+    }catch(error){db.exec("ROLLBACK");throw error;}
+    if(db.prepare("PRAGMA quick_check").get().quick_check!=="ok")throw Error("Restauración tras supresión falló integridad.");
+   }
   }finally{db.close();}
-  return {restored:true,bytes:plain.length};
+  return {restored:true,bytes:plain.length,erasureReplayed:erasedPlayers,strictPrivacyRestore:Boolean(strictPrivacyRestore)};
  }catch(error){
   // Never erase a previously existing target on EEXIST or other pre-write errors.
   if(error.code!=="EEXIST")await unlink(target).catch(()=>{});

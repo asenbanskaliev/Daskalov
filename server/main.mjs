@@ -21,6 +21,7 @@ import {transcribeLocalWhisper,readAudioRequest} from "./stt-whisper.mjs";
 import {transcribeCloudStt} from "./stt-cloud.mjs";
 import {installSecurityHeaders} from "./security-headers.mjs";
 import {openMemory} from "./memory.mjs";
+import {appendErasure} from "./erasure-ledger.mjs";
 import {embedLocal} from "./embeddings.mjs";
 import {createSession, getSession, csrfIsValid, isSameSiteRequest, clearSessionCookie} from "./session.mjs";
 
@@ -62,6 +63,8 @@ export function createApp({
  allowCloudStt=process.env.DASKALOV_ENABLE_STT_CLOUD==="1",
  embedder=embedLocal,
  allowMemory=process.env.DASKALOV_ALLOW_MEMORY==="1",
+ erasureLedgerPath=process.env.DASKALOV_ERASURE_LEDGER_PATH||null,
+ erasureLedgerSecret=process.env.DASKALOV_ERASURE_LEDGER_SECRET||null,
  maxCallsPerMinute=12,
  maxCallsPerDay=60,
  maxConcurrent=1,
@@ -214,7 +217,8 @@ export function createApp({
     const body=await bodyOf(req);
     rejectClientPlayerId(body);
     if(req.method==="DELETE"){
-     memory.deletePlayer(session.playerId);
+     if(erasureLedgerPath)await appendErasure({path:erasureLedgerPath,secret:erasureLedgerSecret,playerId:session.playerId});
+      memory.deletePlayer(session.playerId);
      memory.revokeSession(session.keyHash);
      res.setHeader("set-cookie",clearSessionCookie(req.socket.encrypted===true||process.env.DASKALOV_SECURE_COOKIES==="1"));
      return respond(res,200,{deleted:true});
