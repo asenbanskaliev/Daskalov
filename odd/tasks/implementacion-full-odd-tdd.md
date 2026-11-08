@@ -725,6 +725,10 @@ S08.06/S10.07 **PARTIAL**: `scripts/persona-eval.mjs` evita volcar `error.messag
 
 S04.03 **PARTIAL**: `scripts/tts-local-benchmark.mjs` ejecuta Piper y Kokoro como programas locales preinstalados (sin shell y con consentimiento explícito `DASKALOV_VOICE_BENCHMARK_CONSENT=1`), usa tres frases fijas idénticas sin datos personales, mide duración WAV PCM16 y tiempo por síntesis, compara RTF p50/p95, limpia WAV temporales y exporta solo agregados. Nunca confirma licencias ni mide CPU/RAM ni calidad vocal: los criterios externos siguen abiertos. `tests/tts-local-benchmark.test.mjs` cubre denegación por defecto, frases equivalentes, WAV auténtico sintético y fail-closed por formato. Ejecutar con `npm run eval:tts:local -- <config-privado.json> <reporte.json>` solo después de verificar comandos y licencias de los modelos en el equipo. No se hacen descargas ni llamadas de pago.
 
+## 4AF. Integración del smoke exact-SHA en imagen de contenedor — 8 noviembre 2026
+
+S12.05 **PARTIAL avanzado**: el workflow `container-demo.yml` ahora inicia una imagen real de Docker con SHA del commit `GITHUB_SHA` en el proceso, espera health, ejecuta el validador post-deploy **contra la instancia en escucha** con `DASKALOV_SMOKE_EXPECTED_SHA` y `DASKALOV_SMOKE_EXPECT_DEMO=1`, exige que el API Cloud/memoria responda 403 y comprueba el usuario sin privilegios `node`. No usa credenciales, textos, voz o datos de menores. `tests/container-demo-policy.test.mjs` protege la prueba de aislamiento. Sigue sin simular HTTPS con dominio, rollback del binario anterior ni backups de un hosting real; S12.05 permanece abierta.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|

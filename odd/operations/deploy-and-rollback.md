@@ -50,3 +50,6 @@ Con `DASKALOV_ALLOW_MEMORY=1`, el CLI de restauración impone verificación de `
 
 ## Smoke ligado al commit exacto
 En el release privado, establecer `DASKALOV_RELEASE_SHA` al SHA de 40 hex de GitHub antes de iniciar Node y establecer `DASKALOV_SMOKE_EXPECTED_SHA` al mismo valor al ejecutar `npm run smoke:deploy`; un SHA ausente o distinto bloqueará el smoke. La comprobación identifica una etiqueta declarada por el proceso y **no verifica por sí sola** la firma del artefacto, despliegue HTTPS o rollback físico.
+
+## Comprobación activa del SHA en un contenedor real
+El job CI Docker ejecuta Node 24 en el runner, inyecta `DASKALOV_RELEASE_SHA=$GITHUB_SHA` en la imagen sin secretos y verifica desde fuera del contenedor `DASKALOV_SMOKE_EXPECTED_SHA=$GITHUB_SHA` y el bloqueo absoluto de Cloud y sesión. El resultado es un smoke real **del demo local aislado**, no una prueba HTTPS pública ni rollback de una versión anterior.

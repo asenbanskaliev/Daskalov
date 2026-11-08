@@ -26,13 +26,17 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: "24"
+          package-manager-cache: false
       - name: Build image without injecting secrets
         run: docker build --tag daskalov-safe-demo:test .
       - name: Check health and reject access to Cloud and player data
         shell: bash
         run: |
           set -euo pipefail
-          docker run -d --name daskalov-safe-demo-ci -p 127.0.0.1:38080:3000 daskalov-safe-demo:test
+          docker run -d --name daskalov-safe-demo-ci -e DASKALOV_RELEASE_SHA="$GITHUB_SHA" -p 127.0.0.1:38080:3000 daskalov-safe-demo:test
           trap 'docker logs daskalov-safe-demo-ci || true; docker rm -f daskalov-safe-demo-ci || true' EXIT
           ready=0
           for i in $(seq 1 40); do
@@ -42,6 +46,10 @@ jobs:
             sleep 1
           done
           test "$ready" = "1"
+          DASKALOV_SMOKE_URL="http://127.0.0.1:38080" \
+            DASKALOV_SMOKE_EXPECT_DEMO=1 \
+            DASKALOV_SMOKE_EXPECTED_SHA="$GITHUB_SHA" \
+            node scripts/post-deploy-smoke.mjs
           grep -q '"demoOnly":true' /tmp/daskalov-health.json
           curl -fsS --max-time 4 http://127.0.0.1:38080/ > /dev/null
           status=$(curl -sS --max-time 4 -o /dev/null -w '%{http_code}' -H 'Content-Type: application/json' \
