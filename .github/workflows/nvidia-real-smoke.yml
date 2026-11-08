@@ -1,0 +1,35 @@
+name: NVIDIA - real 2-call protected proof
+# Explicit user authorization 2026-11-08. Only dedicated marker push, no PR.
+on:
+  push:
+    branches: ["feat/odd-tdd-web-mvp"]
+    paths:
+      - "odd/evidence/nvidia-smoke.trigger"
+permissions:
+  contents: read
+concurrency:
+  group: daskalov-nvidia-real-proof
+  cancel-in-progress: true
+jobs:
+  nvidia-authenticated:
+    if: github.repository == 'asenbanskaliev/Daskalov' && github.ref == 'refs/heads/feat/odd-tdd-web-mvp' && github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: "24"
+          package-manager-cache: false
+      - name: Real API evidence with exactly two short synthetic turns
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "$NVIDIA_API_KEY" ]; then
+            echo "NVIDIA_SECRET_UNAVAILABLE: GitHub Actions secret missing in this workflow context."
+            exit 1
+          fi
+          node scripts/nvidia-real-smoke-ci.mjs
