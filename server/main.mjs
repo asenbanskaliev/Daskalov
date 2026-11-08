@@ -379,7 +379,9 @@ export function createApp({
       }
       return;
      }
+     const startedInference=Date.now();
      const reply=normalizeReply(moderateProfessorOutput(await (isRemoteProvider(provider)?remoteLlm({provider,model,messages,apiKey:remoteKey}):llm({provider,model,messages}))).text);
+     metrics.record({provider,ok:true,durationMs:Date.now()-startedInference,outputChars:reply.length});
      if(!reply)throw new OllamaError("El profesor no ha respondido.",502);
      if(remember&&mayPersistRememberedReply(req,memory,session)){
       memory.save(session.playerId,"user",body.text);

@@ -759,6 +759,10 @@ S05.06 **PARTIAL avanzado**: `src/shared-fallback-sphere.js` crea las esferas de
 
 **NUEVA CAPACIDAD AÑADIDA, ajena al cómputo inicial de 109 contratos**: selector OpenRouter.ai/NVIDIA Build, gestión de claves por pestaña, catálogo y búsqueda de modelos, elección manual, completions y streaming SSE con cancelación y moderación. `server/remote-llm.mjs` usa únicamente endpoints HTTPS fijos, rechaza URL arbitrarias e IDs inválidos; credenciales por cabecera de origen propio en memoria de pestaña, no persistidas ni enviadas a Ollama. Los proveedores consumen la cuota Cloud conjunta y el límite de concurrencia existente, incluido SQLite compartido. `tests/remote-llm.test.mjs` y `tests/remote-provider-http.test.mjs` comprueban contrato sin consumir API de pago. Requiere ejecutar una conversación REAL con cada proveedor y API key autorizada en entorno privado para validar precios y compatibilidad del modelo elegido; **no** cumple S02.09 (específicamente Ollama Beam) ni S00.05 (login público) por sí solo. Ver `odd/operations/proveedores-ui.md`.
 
+## 4AN. Métricas anónimas para OpenRouter/NVIDIA — 8 noviembre 2026
+
+S11.04/S10.07 **PARTIAL**: `MetricsCollector` incorpora latencia y recuentos agregados de OpenRouter y NVIDIA, sin incluir prompts, claves ni identificadores de modelo; las solicitudes sin streaming también registran duración total. El coste estimado permanece `null` para proveedores externos, pues no se puede inventar el precio efectivo de su facturación. `tests/remote-metrics.test.mjs` lo comprueba con datos sintéticos. Las mediciones reales de latencia, primera voz y percentiles siguen pendientes.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|

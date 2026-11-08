@@ -7,7 +7,7 @@ export class MetricsCollector{
  constructor({retainedSamples=100,cloudUsdPerMillionOutputTokens=null}={}){
   this.retainedSamples=retainedSamples;
   this.rate=Number.isFinite(Number(cloudUsdPerMillionOutputTokens))&&cloudUsdPerMillionOutputTokens!==null?Math.max(0,Number(cloudUsdPerMillionOutputTokens)):null;
-  this.data={cloud:{ok:0,errors:0,cancelled:0,samples:[],outputChars:0,estimatedTokens:0},local:{ok:0,errors:0,cancelled:0,samples:[],outputChars:0,estimatedTokens:0}};
+  this.data=Object.fromEntries(["cloud","local","openrouter","nvidia"].map(p=>[p,{ok:0,errors:0,cancelled:0,samples:[],outputChars:0,estimatedTokens:0}]));
   this.stages={db:[],tts:[],stt:[],firstAudio:[],audioGap:[]};
   this.activeRequests=0;this.peakRequests=0;
  }
