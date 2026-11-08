@@ -51,7 +51,7 @@
 - Ejecutar `npm run check`, `npm test`, `npm run build`, `npm run test:e2e`, `npm run security:sbom`.
 - `npm run gate:status` informa el número ODD; `npm run gate:full` falla hasta tener 109/109 y evidencia externa Ed25519 para el SHA exacto.
 - `npm run eval:persona:static` verifica 300 escenas sintéticas sin IA ni coste. Para evaluación real de un modelo local: usar el comando de evaluación opcional y consentimiento explícito; no evalúa Cloud automáticamente.
-- GitHub Actions separa CI rápido, navegadores Chromium/Firefox, seguridad, rendimiento sintético y Cloud manual restringido.
+- GitHub Actions separa CI rápido, pruebas Playwright en Chromium/Firefox, seguridad, rendimiento sintético y Cloud manual restringido.
 - Las ejecuciones con mocks no confirman latencias, FPS, pronunciación, seguridad real del modelo ni cumplimiento legal.
 
 ## Operaciones y solución de problemas
