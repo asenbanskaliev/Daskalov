@@ -4,6 +4,8 @@ import {loadLowPolyAvatar} from "./avatar-loader.js";
 import {createAvatarAnimator} from "./avatar-animation.js";
 import {GestureDirector} from "./gesture-director.js";
 import {FpsMonitor} from "./fps-monitor.js";
+import {createStaticBoxBatcher} from "./static-box-batcher.js";
+import {gestureForAudio} from "./audio-gesture.js";
 export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeaking=()=>false,getReducedMotion=()=>false,onReady=()=>{},quality="auto"}){
  try{
   const THREE=await import("three");
@@ -22,7 +24,11 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
   const mat=(hex)=>new THREE.MeshStandardMaterial({color:hex,roughness:0.85});
   const cream=mat(0xe4d7ab),wood=mat(0x7d5335),dark=mat(0x26342b),coat=mat(0x574f3f),skin=mat(0xe2ae83),black=mat(0x25221c),white=mat(0xffffff);
   const sharedBoxGeometry=new THREE.BoxGeometry(1,1,1);
-  function box(w,h,d,x,y,z,material,parent=scene){const o=new THREE.Mesh(sharedBoxGeometry,material);o.scale.set(w,h,d);o.position.set(x,y,z);parent.add(o);return o;}
+  const staticBoxes=createStaticBoxBatcher({THREE,scene,geometry:sharedBoxGeometry});
+  function box(w,h,d,x,y,z,material,parent=scene){
+   if(parent===scene)return staticBoxes.add(w,h,d,x,y,z,material);
+   const o=new THREE.Mesh(sharedBoxGeometry,material);o.scale.set(w,h,d);o.position.set(x,y,z);parent.add(o);return o;
+  }
   function sphere(r,x,y,z,material,parent=scene){const o=new THREE.Mesh(new THREE.SphereGeometry(r,20,16),material);o.position.set(x,y,z);parent.add(o);return o;}
   box(15,0.2,14,0,-0.1,-1,wood);
   box(15,7,.25,0,3.3,-7.7,cream);
@@ -52,6 +58,7 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
 
   for(let i=-1;i<=1;i++){const x=i*2.45;box(1.55,.14,.9,x,.8,2.1,wood);box(.1,.75,.1,x-.64,.37,1.75,black);box(.1,.75,.1,x+.64,.37,1.75,black);}
   box(2.8,.2,1.2,2,1,-3.3,wood);box(.14,1,.14,.9,.45,-3.3,wood);box(.14,1,.14,3.1,.45,-3.3,wood);
+  staticBoxes.finalize();
   const teacher=new THREE.Group();teacher.position.set(-0.8,0,-3.4);scene.add(teacher);
   box(.95,1.35,.47,0,1.52,0,coat,teacher);
   box(.12,.65,.1,-.24,.4,0,black,teacher);box(.12,.65,.1,.24,.4,0,black,teacher);
@@ -82,7 +89,7 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
     setQuality(value){currentQuality=value;renderer.setPixelRatio(pixelRatio());resize();},
     setBlackboardMessage,
     getStats(){
-     return {...fpsMonitor.snapshot(),drawCallsLastFrame:renderer.info.render.calls,
+     return {...fpsMonitor.snapshot(),...staticBoxes.snapshot(),drawCallsLastFrame:renderer.info.render.calls,
       trianglesLastFrame:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,
       textureObjects:renderer.info.memory.textures,pixelRatio:renderer.getPixelRatio(),
       limitations:"Renderer counters are not measured GPU VRAM and FPS is device-dependent."};
@@ -109,7 +116,8 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
    lastFrame=now;
    avatarAnimator?.update(dt);
    const currentGesture=gestureDirector.current();
-   if(avatarAnimator&&avatarAnimator.current!==currentGesture)avatarAnimator.play(currentGesture);
+    const visualGesture=gestureForAudio(currentGesture,isSpeaking());
+    if(avatarAnimator&&avatarAnimator.current!==visualGesture)avatarAnimator.play(visualGesture);
    camera.rotation.set(0,getYaw(),0);
    const active=currentGesture!=="idle";
    const bob=getReducedMotion()?0:Math.sin(now*.0017)*.025;

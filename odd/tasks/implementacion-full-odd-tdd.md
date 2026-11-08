@@ -603,6 +603,14 @@ Pruebas: `tests/output-moderation.test.mjs`, `tests/persona-baseline.test.mjs`; 
 
 **78/109 contratos técnicos implementados; 31 pendientes.** S12.04 tiene Docker Node 24 sin privilegios y en modo demo bloqueado, Caddy HTTPS de referencia y nuevo workflow que compila el contenedor sin secretos y prueba salud, HTML, denegación de Cloud/memoria y ejecución como usuario no-root. El contrato de CI sigue pendiente de ejecución en el SHA exacto. Piper es externo al contenedor demo, no se incluye una voz comercial ni se ha activado hosting público. S12.05 y SEC-PUBLIC continúan abiertos. Tests: `tests/container-demo-policy.test.mjs`. No merge ni despliegue.
 
+## 4K. Optimización y animación audiovisual incremental — 8 noviembre 2026
+
+S05.06 **PARTIAL**: instancias de geometría estática agrupadas por material, bounding spheres y culling, menos llamadas de dibujado estimadas sin tocar rig/actores. Tests: `tests/classroom-batching.test.mjs`. Falta benchmark real y completar texturas/iluminación antes de marcar DONE.
+
+S06.03 **PARTIAL**: animación de hablar por defecto se activa y desactiva según audio reproducido, sin ocupar prioridad de gestos del juego; sincronización visemas por reloj WebAudio ya existente. Tests: `tests/audio-gesture.test.mjs`. Falta medir desfase mixer/boca/audio real.
+
+**78/109 casillas DONE, 31 pendientes**. Esta tanda no declara FULL, ni tiempos/FPS no medidos.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|
