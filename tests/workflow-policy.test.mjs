@@ -25,7 +25,7 @@ test("SEC-003: ordinary PR CI does not reference secret values",()=>{
 });
 
 test("SEC-002: all GitHub Actions are pinned to full commit SHAs",()=>{
- for(const name of ["ci.yml","ollama-real.yml","browser-e2e.yml","security.yml"]){
+ for(const name of ["ci.yml","ollama-real.yml","browser-e2e.yml","security.yml","performance.yml"]){
   const yaml=readFileSync(resolve(".github/workflows",name),"utf8");
   const lines=yaml.split("\n").filter(line=>/uses:\s+/.test(line));
   assert.ok(lines.length>=2,name+": workflows should use pinned actions");
@@ -52,4 +52,13 @@ test("WEB-004: Browser E2E has no Cloud secret injection and runs on relevant ch
  assert.match(browser,/src\/\*\*/);
  assert.doesNotMatch(browser,/secrets\.|OLLAMA_API_KEY/);
  assert.match(browser,/persist-credentials:\s*false/);
+});
+
+test("REL-001: scheduled performance suite has no Cloud secrets or automatic merge",()=>{
+ const workflow=readFileSync(resolve(".github/workflows/performance.yml"),"utf8");
+ assert.match(workflow,/schedule:/);
+ assert.match(workflow,/stress-100\.test\.mjs/);
+ assert.match(workflow,/game-sessions\.test\.mjs/);
+ assert.match(workflow,/persist-credentials:\s*false/);
+ assert.doesNotMatch(workflow,/secrets\.|OLLAMA_API_KEY|pull_request_target|git push|merge pull/);
 });
