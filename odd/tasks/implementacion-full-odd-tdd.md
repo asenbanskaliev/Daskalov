@@ -783,6 +783,18 @@ S01.07/S05.09/S11.07 **PARTIAL**: la workflow `.github/workflows/browser-e2e.yml
 
 S08.06 **PARTIAL**: nueva workflow `nvidia-persona-real.yml` para ejecutar opcionalmente **20 o 300 solicitudes sintéticas reales** desde `main`, bajo `workflow_dispatch` y `confirm_paid_test=true` con Environment `daskalov-cloud-test` y secreto exclusivo `DASKALOV_ENV_NVIDIA_API_KEY`. El operador debe elegir un ID de modelo previamente validado, aprobar el posible gasto y disponer del rol de inferencia NVIDIA. El informe archivado solo contiene agregados e IDs de casos; el código se detiene en el primer fallo sin reintentos. `tests/nvidia-persona-workflow.test.mjs` verifica que nunca se active en push/PR, que exija consentimiento y que no use secretos de repositorio. **No se ha ejecutado la batería real por rechazo NVIDIA 404/410 y falta de permiso verificado; 300 respuestas reales y evaluación pedagógica humana permanecen pendientes.**
 
+## 4AT. Cinco validaciones reproducibles — navegador, voz, gráficos, enseñanza y privacidad (8 noviembre 2026)
+
+Se ejecutan cinco grupos automatizados sin credenciales ni datos personales:
+
+- **VAL-01 / conversación real de aplicación:** navegador ↔ backend privado mediante NDJSON y respuesta determinista segura; además el test de integración envía frases del stream a un generador WAV sintético por HTTP. **No demuestra inferencia LLM real**.
+- **VAL-02 / voz:** modo TTS `disabled` ahora seleccionable y funcional, no envía texto a Web Speech ni endpoints de voz; lectura en voz alta **desactivada por defecto**, con opt-in de usuario. La validación de PCM16 demuestra el contrato de audio pero no la calidad Piper, una voz licenciada o acento búlgaro.
+- **VAL-03 / gráficos:** captura de FPS, geometrías y draw calls reales en navegador cuando hay WebGL, y modo texto cuando no lo hay. No es un benchmark de GPU física ni prueba el objetivo 55/30 FPS sostenido.
+- **VAL-04 / educación:** las nueve combinaciones de materia y nivel se verifican con clave de respuestas **independiente** y se ejercitan en el navegador sin WebGL; no son una revisión curricular docente.
+- **VAL-05 / menores:** memoria desactivada, síntesis de voz inicialmente desactivada, no uso de micrófono ni llamadas LLM/voz en Demo, y filtro de salida que no permite saltarse la moderación fragmentando una orden insegura en más de 160 caracteres. La revisión jurídica y la evaluación humana de seguridad continúan pendientes.
+
+Tests `e2e/validation-five.spec.js`, `e2e/validation-voice-silent.spec.js`, `tests/validation-five-integration.test.mjs`, `tests/speech-segments.test.mjs`, `tests/validation-pedagogy-key.test.mjs`, y `tests/tts-cloud-ui.test.mjs`; evidencias en CI por SHA. Los 25 contratos con gate externo se mantienen abiertos hasta validación integral con proveedores reales, dispositivos y especialistas.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|

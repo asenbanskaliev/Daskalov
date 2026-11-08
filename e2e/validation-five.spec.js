@@ -43,23 +43,30 @@ test("VAL-03: renderer emits real browser counters or declares WebGL unavailable
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+2)).toBe(true);
 });
 
-test("VAL-04: all nine authored lessons are solvable and provide answer-specific feedback",async({page})=>{
- const all=[];
- for(const level of LEVELS){
+for(const level of LEVELS){
+ test("VAL-04: independently executable lessons for "+level,async({page})=>{
+  await page.emulateMedia({reducedMotion:"reduce"});
+  // Pedagogy test does not need GPU resources; 3D is validated separately.
+  await page.addInitScript(()=>{
+   const original=HTMLCanvasElement.prototype.getContext;
+   HTMLCanvasElement.prototype.getContext=function(type,...args){
+    if(String(type).startsWith("webgl"))return null;
+    return original.call(this,type,...args);
+   };
+  });
   await page.goto("/");
   await page.locator("#lessonDifficulty").selectOption(level);
   for(const lesson of LESSONS){
    const expected=lessonForLevel(lesson.id,level);
-   await page.getByRole("button",{name:lesson.title,exact:true}).click();
+   const pick=page.getByRole("button",{name:lesson.title,exact:true});
+   await pick.click();
    await expect(page.locator("#lessonQuestion")).toContainText(expected.question);
    await page.locator("#lessonAnswers").getByRole("button",{name:expected.answer,exact:true}).click();
    await expect(page.locator("#lessonFeedback")).toContainText(expected.explanation);
-   all.push(level+":"+lesson.id);
   }
   await expect(page.locator("#gameProgress")).toContainText("3 de 3");
- }
- expect(new Set(all).size).toBe(9);
-});
+ });
+}
 
 test("VAL-05: no memory, microphone, public-cloud audio or model calls in a demo for a minor",async({page})=>{
  let chatCalls=0,ttsCalls=0,sttCalls=0;
@@ -68,6 +75,7 @@ test("VAL-05: no memory, microphone, public-cloud audio or model calls in a demo
  await page.route("**/api/stt/cloud",route=>{sttCalls++;return route.abort();});
  await page.goto("/");
  await expect(page.locator("#remember")).toBeDisabled();
+ await expect(page.locator("#voiceEnabled")).not.toBeChecked();
  await page.locator("#provider").selectOption("demo");
  await expect(page.locator("#remember")).not.toBeChecked();
  await page.locator("#sttMode").selectOption("disabled");

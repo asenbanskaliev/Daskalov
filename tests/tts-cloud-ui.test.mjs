@@ -31,3 +31,11 @@ test("VAL-02: TTS silenciado existe en UI y nunca deriva a browser speech",()=>{
  const disabled=createTTSProvider("disabled",{browser:{speak:()=>{throw Error("Cannot speak in disabled mode");}}});
  assert.equal(disabled.speak("Mensaje de prueba"),false);
 });
+
+test("VAL-05: no speech synthesis is authorized by default when the page is loaded",()=>{
+ const html=readFileSync("index.html","utf8");
+ const voiceUI=readFileSync("src/voice-ui.js","utf8");
+ assert.match(html,/<input type="checkbox" id="voiceEnabled">/);
+ assert.match(voiceUI,/let enabled=find\("voiceEnabled"\)\?\.checked===true/);
+ assert.match(voiceUI,/speech\.setEnabled\(enabled\);local\.setEnabled\(enabled\);cloud\.setEnabled\(enabled\)/);
+});

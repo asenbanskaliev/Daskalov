@@ -7,7 +7,7 @@ import {readSetting,writeSetting} from "./settings.js";
 import {createTTSProvider} from "./tts-provider.js";
 
 export function createVoiceUI({find,onSpeaking=()=>{},onViseme=()=>{},onAudioClock=()=>{},onError=()=>{}}){
- let enabled=true;
+ let enabled=find("voiceEnabled")?.checked===true;
  const stats=new VoiceMetrics();
  const speech=new BrowserSpeechQueue({onSentenceStart:text=>onViseme(mapSpanishGrapheme(text)),onBoundary:({text,charIndex})=>onViseme(mapSpanishGrapheme(text.slice(charIndex,charIndex+3))),onSpeaking:active=>{
   onSpeaking(active);
@@ -48,6 +48,8 @@ export function createVoiceUI({find,onSpeaking=()=>{},onViseme=()=>{},onAudioClo
   onAudioFragment:fragment=>{stats.fragment(fragment);lip.schedule(fragment);onAudioClock(fragment.clockMs);},
   onSentenceStart:text=>onViseme(mapSpanishGrapheme(text)),onError
  });
+ // Voice remains disabled until the user explicitly enables read-aloud.
+ speech.setEnabled(enabled);local.setEnabled(enabled);cloud.setEnabled(enabled);
  const choice=find("ttsMode");
  choice.value=readSetting("ttsMode")||"browser";
  const silent=createTTSProvider("disabled");
