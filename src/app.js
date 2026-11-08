@@ -169,7 +169,7 @@ configureClassroomEvents({
  find:$,onVoiceCancel:()=>voice.cancel(),onGesture:gesture=>sceneState?.act(gesture,"ambient"),
  onVoice:text=>{if($("voiceEnabled").checked&&$("provider").value!=="demo")voice.speak(text);}
 });
-configureDevMetrics({find:$});
+configureDevMetrics({find:$,graphicsStats:()=>sceneState?.getStats?.()||null});
 settings.checkHealth();
 settings.refreshModels();
 memoryUI.refresh().then(applyDemoControls);

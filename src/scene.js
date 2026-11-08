@@ -3,12 +3,14 @@ import {normalizeViseme,visemeBlendshapeWeights} from "./visemes.js";
 import {loadLowPolyAvatar} from "./avatar-loader.js";
 import {createAvatarAnimator} from "./avatar-animation.js";
 import {GestureDirector} from "./gesture-director.js";
+import {FpsMonitor} from "./fps-monitor.js";
 export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeaking=()=>false,getReducedMotion=()=>false,onReady=()=>{},quality="auto"}){
  try{
   const THREE=await import("three");
   const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
   let currentQuality=quality;
   const adaptive=new AdaptiveQuality();
+  const fpsMonitor=new FpsMonitor();
   const qualityScale={low:0.7,medium:1,high:1.5};
   const pixelRatio=()=>Math.min(window.devicePixelRatio||1,currentQuality==="auto"?adaptive.ratio:qualityScale[currentQuality]||1.25);
   renderer.setPixelRatio(pixelRatio());renderer.setClearColor(0x738475);
@@ -78,7 +80,13 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
     clearSpeech(){viseme="REST";gestureDirector.clear();avatarAnimator?.play("idle");},
     setEmotion(value){if(value==="surprised")this.act("surprised");},
     setQuality(value){currentQuality=value;renderer.setPixelRatio(pixelRatio());resize();},
-    setBlackboardMessage
+    setBlackboardMessage,
+    getStats(){
+     return {...fpsMonitor.snapshot(),drawCallsLastFrame:renderer.info.render.calls,
+      trianglesLastFrame:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,
+      textureObjects:renderer.info.memory.textures,pixelRatio:renderer.getPixelRatio(),
+      limitations:"Renderer counters are not measured GPU VRAM and FPS is device-dependent."};
+    }
   };
   onReady(sceneState);
   let avatar=null,avatarAnimator=null;
@@ -92,6 +100,7 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
   }).catch(()=>{ /* Procedural professor remains available. */ });
   let lastFrame=0;
   function frame(now){
+   fpsMonitor.observe(now);
    const dt=lastFrame?Math.min(.1,(now-lastFrame)/1000):0;
    if(lastFrame&&currentQuality==="auto"){
     const sample=adaptive.sample(now-lastFrame);
