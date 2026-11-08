@@ -709,6 +709,10 @@ S07.07/S10.07/S12.05 **PARTIAL**: `npm run backup:restore` obliga automáticamen
 
 S12.05 **PARTIAL**: `/api/health` informa opcionalmente el SHA de release inyectado en el proceso mediante `DASKALOV_RELEASE_SHA` (solo si son 40 caracteres hexadecimales). `scripts/post-deploy-smoke.mjs` exige coincidencia exacta al especificar `DASKALOV_SMOKE_EXPECTED_SHA`; se rechaza una release equivocada aunque `/api/health` y la página respondan. `tests/post-deploy-smoke.test.mjs` comprueba éxito, SHA incorrecto y dato inválido; `tests/release-sha-health.test.mjs` verifica endpoint real sin credenciales. Esto comprueba identidad **declarada por el propio proceso**, no una atestación criptográfica del binario ni un rollback HTTPS real, que sigue pendiente.
 
+## 4AB. Matriz STT de 20 audios por navegador — 8 noviembre 2026
+
+S03.07 **PARTIAL**: `scripts/voice-validation.mjs stt-matrix` rechaza informes que no incluyan **los mismos 20 casos** en Chrome, Edge y Firefox, referencias diferentes, identificadores repetidos, casos sin marca de audio real y resultados incompletos. Devuelve solo WER numérico por ID, sin guardar audios ni transcripciones. `tests/stt-browser-matrix.test.mjs` comprueba el contrato con frases sintéticas. **Un atributo `realAudioVerified=true` es una declaración del operador, no prueba independiente**: la revisión de los 60 audios autorizados y compatibilidad real de micrófonos/navegadores siguen pendientes; no marcar STT-READY.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|

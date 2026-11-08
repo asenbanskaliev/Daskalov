@@ -22,6 +22,38 @@ export function assessAsrBatch(cases){
  return {samples:entries.length,meanWer:Number((entries.reduce((s,x)=>s+x.wer,0)/entries.length).toFixed(4)),
   cases:entries,actualAudioProvided:cases.every(x=>x.realAudioVerified===true),noTranscriptsExported:true};
 }
+
+export const STT_BROWSER_TARGETS=Object.freeze(["chrome","edge","firefox"]);
+export const STT_DIFFICULT_IDS=Object.freeze(Array.from({length:20},(_,i)=>"AUDIO-"+String(i+1).padStart(2,"0")));
+/**
+ * Three real-browser STT matrices of the SAME 20 difficult audio cases.
+ * Inputs are supplied offline by an operator; the tool does not prove origin
+ * or contact STT vendors. Output contains only numeric WER, never transcripts.
+ */
+export function assessSttBrowserMatrix(reports){
+ if(!Array.isArray(reports)||reports.length!==STT_BROWSER_TARGETS.length)throw Error("Se exigen Chrome, Edge y Firefox.");
+ const byBrowser={},referenceById=new Map();
+ for(const browser of STT_BROWSER_TARGETS){
+  const matching=reports.filter(row=>row?.browser===browser);
+  if(matching.length!==1)throw Error("Navegador ausente o duplicado: "+browser);
+  const samples=matching[0].cases;
+  if(!Array.isArray(samples)||samples.length!==STT_DIFFICULT_IDS.length)throw Error("Se necesitan 20 audios por navegador.");
+  if(samples.some(row=>row.realAudioVerified!==true))throw Error("La matriz exige evidencia declarada de audio real.");
+  if(samples.some(row=>typeof row.expected!=="string"||!row.expected.trim()))throw Error("Referencia de transcripción vacía.");
+  const result=assessAsrBatch(samples);
+  if(result.cases.length!==STT_DIFFICULT_IDS.length||result.cases.some(({id})=>!STT_DIFFICULT_IDS.includes(id)))
+   throw Error("Se requieren exactamente AUDIO-01 a AUDIO-20.");
+  for(const row of samples){
+   const ref=referenceById.get(row.id);
+   if(ref!==undefined&&ref!==row.expected)throw Error("Referencia diferente entre navegadores: "+row.id);
+   referenceById.set(row.id,row.expected);
+  }
+  byBrowser[browser]={samples:result.samples,meanWer:result.meanWer,cases:result.cases};
+ }
+ return {schema:"daskalov-stt-browser-matrix-v1",caseIds:STT_DIFFICULT_IDS,
+  byBrowser,noTranscriptsExported:true,submittedAudioClaims:STT_DIFFICULT_IDS.length*STT_BROWSER_TARGETS.length,
+  independentEvidenceVerified:false,releaseApproved:false};
+}
 export function compareTtsEngines(measurements){
  if(!Array.isArray(measurements))throw Error("Medidas TTS requeridas.");
  const groups=new Map();
@@ -63,9 +95,9 @@ export function blindVoicePanel(votes){
 }
 async function main(){
  const [mode,inputFile,outputFile]=process.argv.slice(2);
- if(!["stt","tts","panel"].includes(mode)||!inputFile||!outputFile)throw Error("Uso: stt|tts|panel input.json output.json");
+ if(!["stt","stt-matrix","tts","panel"].includes(mode)||!inputFile||!outputFile)throw Error("Uso: stt|stt-matrix|tts|panel input.json output.json");
  const rows=JSON.parse(await readFile(resolve(inputFile),"utf8"));
- const result=mode==="stt"?assessAsrBatch(rows):mode==="tts"?compareTtsEngines(rows):blindVoicePanel(rows);
+ const result=mode==="stt"?assessAsrBatch(rows):mode==="stt-matrix"?assessSttBrowserMatrix(rows):mode==="tts"?compareTtsEngines(rows):blindVoicePanel(rows);
  await writeFile(resolve(outputFile),JSON.stringify(result,null,2)+"\n",{flag:"wx",mode:0o600});
  process.stdout.write("Evaluación local completada sin incluir audio ni transcripciones en el informe.\n");
 }

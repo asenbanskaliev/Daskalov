@@ -32,3 +32,7 @@ Panel ciego: al menos tres jueces independientes; cada muestra VOICE_A/B con int
 Identidad de voz propuesta: grave y ligeramente áspera, teatral pero siempre clara y respetuosa, habla español natural; solo adoptar acento búlgaro cuando exista una voz original/licenciada y evaluación de hablantes nativos. No imitar a una persona real no autorizada.
 
 Estas herramientas **no inventan resultados**. STT-READY, VOICE-READY y validación pedagógica continúan pendientes de audio/voz real, licencias y personas.
+
+## Matriz rigurosa para los tres navegadores
+
+Conservar localmente un fichero JSON **privado** de tres elementos `{browser:"chrome"|"edge"|"firefox", cases:[...]}`. Cada navegador debe incluir exactamente `AUDIO-01` a `AUDIO-20`, con `expected` (transcripción de referencia), `actual` (reconocido) y `realAudioVerified:true` declarado solo por el operador que comprobó el origen/permiso de la grabación. Las 20 referencias deben coincidir en los tres navegadores. Ejecutar `node scripts/voice-validation.mjs stt-matrix <entrada-privada.json> <informe-sin-texto.json>`. El informe solo conserva IDs, WER, medias y advertencia de falta de verificación independiente; no incorpora textos ni audio y no autoriza publicación. Nunca versionar el archivo de entrada ni artefactos de personas reales.
