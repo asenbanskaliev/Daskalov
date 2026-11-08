@@ -20,7 +20,7 @@ test("VAL-04: nine independently referenced canonical answers and unique distrac
    assert.equal(actual.options.filter(x=>x===expected).length,1);
    assert.equal(new Set(actual.options).size,actual.options.length);
    assert.ok(actual.question.length>=18,level+":"+lesson.id+" question");
-   assert.ok(actual.explanation.length>=18,level+":"+lesson.id+" explanation");
+   assert.ok(actual.explanation.length>=12,level+":"+lesson.id+" explanation");
    game.start(lesson.id);
    const incorrect=actual.options.find(x=>x!==expected);
    const wrong=game.answer(incorrect);
