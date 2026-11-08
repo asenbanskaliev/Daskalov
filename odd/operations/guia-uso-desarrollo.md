@@ -64,3 +64,6 @@
 - Seguridad/HTTPS: el Dockerfile está restringido a demo pública sin API de IA ni datos. No retirar esa protección ni permitir menores sin verificación independiente.
 
 Documentos asociados: `odd/tasks/implementacion-full-odd-tdd.md`, `odd/quality/full-release-gate.md`, `odd/operations/deploy-and-rollback.md`, `odd/security/riesgos-y-bloqueos.md`.
+
+## Condición Cloud del workflow protegido
+En Settings → Environments configurar `daskalov-cloud-test`, limitar a rama predeterminada y exigir **required reviewers**. Añadir el secreto de Environment `DASKALOV_ENV_OLLAMA_API_KEY`, **no** como repository/org secret; eliminar claves anteriores de ámbitos menos protegidos. Tras revisión/merge autorizado a `main`, un operador puede lanzar el dispatch con `confirm_paid_test=true`. Sin esta autorización y ese secreto, el job no envía tráfico ni debe considerarse una prueba real. Los tests públicos del proxy solo permiten `/api/health` y archivos demo, no LLM local ni Cloud.

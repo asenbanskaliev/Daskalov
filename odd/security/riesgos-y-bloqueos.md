@@ -23,3 +23,6 @@ La aplicación **NO** está autorizada para publicación dirigida a menores mien
 
 ## Ritmo de seguimiento
 Revisar en cada PR o incidente que afecte a acceso, memoria, proveedor de IA, voz o menores. Documentar riesgo, test de mitigación, commit y responsable que revisó.
+
+## Defensa añadida para S00.01 / S00.05 (8 noviembre 2026)
+El workflow Cloud manual usa un secreto de Environment con **nombre propio** `DASKALOV_ENV_OLLAMA_API_KEY` y opción de confirmación de pago; la aplicación rechaza incluso rutas de Ollama local si `Host` o socket no demuestran loopback. Faltan revisar los ajustes de protección de GitHub Environment y diseñar autenticación pública real. No se ha habilitado Internet.

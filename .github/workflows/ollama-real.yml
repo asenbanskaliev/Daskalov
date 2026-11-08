@@ -4,6 +4,12 @@ name: Ollama Cloud - REAL smoke
 # Secrets are NEVER provided to pull requests or editable feature branches.
 on:
   workflow_dispatch:
+    inputs:
+      confirm_paid_test:
+        type: boolean
+        description: "Autorizo una prueba de pago real en entorno protegido"
+        required: true
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -11,7 +17,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   beam-api:
-    if: github.repository == 'asenbanskaliev/Daskalov' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+    if: github.repository == 'asenbanskaliev/Daskalov' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && inputs.confirm_paid_test == true
     runs-on: ubuntu-24.04
     environment: daskalov-cloud-test
     timeout-minutes: 4
@@ -23,8 +29,16 @@ jobs:
         with:
           node-version: "24"
           package-manager-cache: false
-      - name: Smoke Ollama Cloud API with repository secret
+      - name: Require isolated Environment secret (no repository fallback)
         env:
-          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+          ENV_CLOUD_KEY: ${{ secrets.DASKALOV_ENV_OLLAMA_API_KEY }}
+        run: |
+          if [ -z "$ENV_CLOUD_KEY" ]; then
+            echo "Missing approved Environment key: nothing was sent to Cloud." >&2
+            exit 1
+          fi
+      - name: Smoke Ollama Cloud API with protected Environment secret
+        env:
+          OLLAMA_API_KEY: ${{ secrets.DASKALOV_ENV_OLLAMA_API_KEY }}
           OLLAMA_CLOUD_MODEL: beam
         run: node scripts/ollama-cloud-smoke.mjs

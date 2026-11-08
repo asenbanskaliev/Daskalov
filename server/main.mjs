@@ -106,6 +106,10 @@ export function createApp({
    }
    if(path==="/api/health"&&req.method==="GET")return respond(res,200,{ok:true,cloudConfigured:process.env.DASKALOV_SAFE_DEMO_ONLY==="1"?false:!!process.env.OLLAMA_API_KEY,demoOnly:process.env.DASKALOV_SAFE_DEMO_ONLY==="1"});
    if(process.env.DASKALOV_SAFE_DEMO_ONLY==="1"&&path.startsWith("/api/"))throw new OllamaError("Demo pública: IA y datos personales desactivados.",403);
+   // No unauthenticated local-model proxy via public Host. Without audited
+   // authentication, every inference and model-discovery endpoint is private.
+   if(!isPrivateClient(req)&&["/api/chat","/api/chat/stream","/api/models","/api/provider-status"].includes(path))
+    throw new OllamaError("La IA no está habilitada fuera del entorno privado.",403);
    // Refuse persistent guest data from reverse proxies, even with memory enabled.
    if(!isPrivateClient(req)&&(path.startsWith("/api/memory")||path==="/api/progress"||(path==="/api/session"&&req.method==="POST")))
     throw new OllamaError("Memoria persistente solo disponible en modo privado.",403);

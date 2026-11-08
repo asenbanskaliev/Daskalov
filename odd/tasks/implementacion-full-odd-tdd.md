@@ -683,6 +683,14 @@ S11.08 **PARTIAL**: `scripts/performance-comparator.mjs` compara informes de har
 
 El comparador de rendimiento de S11.08 es funcional pero continúa PARTIAL por falta de muestras comparables de hardware físico. Los criterios de publicación de menores y los 12 gates externos siguen obligatorios; no merge ni release.
 
+## 4W. Puerta cerrada ante proxy público y gasto Cloud — 8 noviembre 2026
+
+S00.05 **PARTIAL (seguridad antes de autenticación pública)**: `server/main.mjs` rechaza en un Host público las rutas `/api/chat`, `/api/chat/stream`, `/api/models` y `/api/provider-status`, **también para Ollama local y respuestas de seguridad deterministas**, sin ejecutar IA. El health sigue disponible, y localhost puede operar. `tests/public-proxy-inference.test.mjs` reproduce el intento desde un proxy simulado y verifica cero llamadas al proveedor. El login público con aislamiento por persona, cuotas y consentimiento tutelar todavía NO existe.
+
+S00.01 **PARTIAL (bloqueo de secreto por defecto)**: el workflow real requiere dispatch en `main`, opción `confirm_paid_test`, Environment `daskalov-cloud-test` y variable exclusiva `secrets.DASKALOV_ENV_OLLAMA_API_KEY`; falla si no se configura. Se desaconseja colocar ese nombre como secreto de repositorio u organización. **La presencia de revisores obligatorios y la protección real del Environment no puede demostrarse desde una modificación de rama**, por lo que S00.01 sigue abierta.
+
+Tests `tests/public-proxy-inference.test.mjs` y `tests/workflow-policy.test.mjs`. No se ha gastado Cloud ni modificado `main`.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|

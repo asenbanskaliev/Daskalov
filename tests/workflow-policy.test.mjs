@@ -62,3 +62,13 @@ test("REL-001: scheduled performance suite has no Cloud secrets or automatic mer
  assert.match(workflow,/persist-credentials:\s*false/);
  assert.doesNotMatch(workflow,/secrets\.|OLLAMA_API_KEY|pull_request_target|git push|merge pull/);
 });
+
+test("SEC-001: paid Cloud smoke cannot inherit conventional repository secret by accident",()=>{
+ const yaml=readFileSync(resolve(".github/workflows/ollama-real.yml"),"utf8");
+ assert.match(yaml,/confirm_paid_test:/);
+ assert.match(yaml,/inputs\.confirm_paid_test == true/);
+ assert.match(yaml,/secrets\.DASKALOV_ENV_OLLAMA_API_KEY/);
+ assert.doesNotMatch(yaml,/secrets\.OLLAMA_API_KEY/);
+ assert.match(yaml,/Missing approved Environment key/);
+ assert.doesNotMatch(yaml,/^\s*(?:push|pull_request|pull_request_target|workflow_run|schedule):/m);
+});
