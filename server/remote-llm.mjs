@@ -14,6 +14,12 @@ export const NVIDIA_MODEL_FALLBACK=Object.freeze([
  "qwen/qwen3-next-80b-a3b-instruct"
 ]);
 export function isRemoteProvider(value){return Object.hasOwn(PROVIDER_ENDPOINTS,value);}
+export function providerChatError(provider,status){
+ const suffix=provider==="nvidia"&&[403,404,410].includes(status)?
+  " En NVIDIA comprueba el permiso Public API Endpoints de la organización y la disponibilidad del modelo.":"";
+ return new OllamaError("Error de inferencia remota (HTTP "+status+")."+suffix,502);
+}
+
 export function validateRemoteKey(key){
  if(typeof key!=="string"||key.length<10||key.length>512||!/^[\x21-\x7e]+$/.test(key))
   throw new OllamaError("Falta una clave API válida del proveedor.",401);
@@ -54,7 +60,7 @@ export async function chatRemote({provider,model,messages,apiKey,fetchImpl=fetch
  let response;
  try{response=await fetchImpl(url,{...options,signal:signal||AbortSignal.timeout(90000)});}
  catch{throw new OllamaError("No se ha podido conectar con el proveedor externo.",502);}
- if(!response.ok)throw new OllamaError("Error del proveedor externo (HTTP "+response.status+").",502);
+ if(!response.ok)throw providerChatError(provider,response.status);
  let data;try{data=await response.json();}catch{throw new OllamaError("Respuesta JSON externa inválida.",502);}
  const answer=data?.choices?.[0]?.message?.content;
  if(typeof answer!=="string"||!answer.trim())throw new OllamaError("El proveedor externo no devolvió texto visible.",502);
@@ -69,7 +75,7 @@ export async function* streamRemote({provider,model,messages,apiKey,fetchImpl=fe
  let response;
  try{response=await fetchImpl(url,{...options,headers:{...options.headers,accept:"text/event-stream"},signal:combined});}
  catch{throw new OllamaError("No se ha podido iniciar el flujo externo.",502);}
- if(!response.ok)throw new OllamaError("El proveedor rechazó la conversación (HTTP "+response.status+").",502);
+ if(!response.ok)throw providerChatError(provider,response.status);
  if(!response.body)throw new OllamaError("El proveedor no devolvió flujo.",502);
  const reader=response.body.getReader(),decoder=new TextDecoder();
  let pending="",chars=0,complete=false;

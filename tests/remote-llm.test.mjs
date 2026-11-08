@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {chatRemote,streamRemote,listRemoteModels,validateRemoteKey,isRemoteProvider,NVIDIA_MODEL_FALLBACK} from "../server/remote-llm.mjs";
+import {chatRemote,streamRemote,listRemoteModels,validateRemoteKey,isRemoteProvider,NVIDIA_MODEL_FALLBACK,providerChatError} from "../server/remote-llm.mjs";
 import {setProviderKey,clearProviderKey,hasProviderKey,providerHeaders} from "../src/provider-credentials.js";
 test("AI-011: keys only in tab memory, per-provider, not other headers",()=>{
  setProviderKey("openrouter","sk-or-v1-mocked-key");
@@ -66,4 +66,12 @@ test("AI-011: partially streamed SSE without [DONE] is never accepted as complet
    fetchImpl:async()=>new Response(stream)}))output.push(delta);
  },/sin confirmación completa/);
  assert.deepEqual(output,["Fragmento incompleto"]);
+});
+
+test("AI-012: status 410 explains NVIDIA organization Public API Endpoints safely",()=>{
+ const error=providerChatError("nvidia",410);
+ assert.match(error.message,/HTTP 410/);
+ assert.match(error.message,/Public API Endpoints/);
+ assert.equal(error.status,502);
+ assert.doesNotMatch(providerChatError("openrouter",429).message,/Public API Endpoints/);
 });
