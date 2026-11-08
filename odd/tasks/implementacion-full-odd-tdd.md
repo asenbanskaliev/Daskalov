@@ -669,6 +669,10 @@ Evidencia CI SHA `4c3caeac`: [CI](https://github.com/asenbanskaliev/Daskalov/act
 
 S12.05 sigue abierta: el drill automatizado de backup/SQLite es real en CI, pero NO demuestra rollback de una release HTTPS instalada. S07.07/S10.07 siguen abiertas por backups externos. No habilitar `SEC-PUBLIC`, no ejecutar `gate:full` como aprobado, no fusionar a `main`.
 
+## 4T. Coordinación AnimationMixer / WebAudio — 8 noviembre 2026
+
+S06.03 **implementación pendiente de cierre CI**: `src/audio-mixer-clock.js` integra el reloj `AudioContext.currentTime` en `AnimationMixer.update` durante reproducción. Una pausa suspende el avance de los clips aunque siga RAF; el cierre/cancelación reinicia el reloj, se limitan saltos temporales y se conserva RAF para idle. `src/voice-ui.js` publica el reloj al empezar los fragmentos Piper/Cloud, `src/app.js` lo dirige a `src/scene.js`. Tests: `tests/audio-mixer-clock.test.mjs`. Esto no acredita desfase físico medio menor de 120 ms ni calidad de voz, que seguirán bloqueadas para AV-READY.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|

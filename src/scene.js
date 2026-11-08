@@ -6,6 +6,7 @@ import {GestureDirector} from "./gesture-director.js";
 import {FpsMonitor} from "./fps-monitor.js";
 import {createStaticBoxBatcher} from "./static-box-batcher.js";
 import {gestureForAudio} from "./audio-gesture.js";
+import {AudioMixerClock} from "./audio-mixer-clock.js";
 export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeaking=()=>false,getReducedMotion=()=>false,onReady=()=>{},quality="auto"}){
  try{
   const THREE=await import("three");
@@ -77,6 +78,7 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
   new ResizeObserver(resize).observe(canvas);resize();
   let viseme="REST";
   const gestureDirector=new GestureDirector();
+  const audioMixerClock=new AudioMixerClock();
   const sceneState={
     act(value,source="llm"){
      const accepted=gestureDirector.propose(value,{source});
@@ -84,7 +86,8 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
      return accepted;
     },
     setViseme(value){viseme=normalizeViseme(value);},
-    clearSpeech(){viseme="REST";gestureDirector.clear();avatarAnimator?.play("idle");},
+    clearSpeech(){viseme="REST";audioMixerClock.reset();gestureDirector.clear();avatarAnimator?.play("idle");},
+    setAudioClock(value){audioMixerClock.setClock(value);},
     setEmotion(value){if(value==="surprised")this.act("surprised");},
     setQuality(value){currentQuality=value;renderer.setPixelRatio(pixelRatio());resize();},
     setBlackboardMessage,
@@ -114,7 +117,7 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
     if(sample?.changed){renderer.setPixelRatio(pixelRatio());resize();}
    }
    lastFrame=now;
-   avatarAnimator?.update(dt);
+   avatarAnimator?.update(audioMixerClock.step(dt,isSpeaking()));
    const currentGesture=gestureDirector.current();
     const visualGesture=gestureForAudio(currentGesture,isSpeaking());
     if(avatarAnimator&&avatarAnimator.current!==visualGesture)avatarAnimator.play(visualGesture);

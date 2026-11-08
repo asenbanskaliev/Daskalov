@@ -5,7 +5,7 @@ import {AudioLipSync} from "./audio-lipsync.js";
 import {VoiceMetrics} from "./voice-metrics.js";
 import {readSetting,writeSetting} from "./settings.js";
 
-export function createVoiceUI({find,onSpeaking=()=>{},onViseme=()=>{},onError=()=>{}}){
+export function createVoiceUI({find,onSpeaking=()=>{},onViseme=()=>{},onAudioClock=()=>{},onError=()=>{}}){
  let enabled=true;
  const stats=new VoiceMetrics();
  const speech=new BrowserSpeechQueue({onSentenceStart:text=>onViseme(mapSpanishGrapheme(text)),onBoundary:({text,charIndex})=>onViseme(mapSpanishGrapheme(text.slice(charIndex,charIndex+3))),onSpeaking:active=>{
@@ -31,7 +31,7 @@ export function createVoiceUI({find,onSpeaking=()=>{},onViseme=()=>{},onError=()
    if(active&&!lipFrame)lipFrame=window.requestAnimationFrame(runLipFrame);
    if(!active){onViseme("REST");}
   },
-  onAudioFragment:fragment=>{stats.fragment(fragment);lip.schedule(fragment);},
+  onAudioFragment:fragment=>{stats.fragment(fragment);lip.schedule(fragment);onAudioClock(fragment.clockMs);},
   onSentenceStart:text=>onViseme(mapSpanishGrapheme(text)),onError
  });
  const cloud=new LocalPiperVoice({
@@ -44,13 +44,13 @@ export function createVoiceUI({find,onSpeaking=()=>{},onViseme=()=>{},onError=()
    if(active&&!lipFrame)lipFrame=window.requestAnimationFrame(runLipFrame);
    if(!active)onViseme("REST");
   },
-  onAudioFragment:fragment=>{stats.fragment(fragment);lip.schedule(fragment);},
+  onAudioFragment:fragment=>{stats.fragment(fragment);lip.schedule(fragment);onAudioClock(fragment.clockMs);},
   onSentenceStart:text=>onViseme(mapSpanishGrapheme(text)),onError
  });
  const choice=find("ttsMode");
  choice.value=readSetting("ttsMode")||"browser";
  const selected=()=>choice.value==="local"?local:choice.value==="cloud"?cloud:speech;
- function cancel(){stats.cancel();speech.cancel();local.cancel();cloud.cancel();lipActive=false;if(lipFrame)window.cancelAnimationFrame(lipFrame);lipFrame=0;lip.cancel();onViseme("REST");}
+ function cancel(){stats.cancel();speech.cancel();local.cancel();cloud.cancel();lipActive=false;if(lipFrame)window.cancelAnimationFrame(lipFrame);lipFrame=0;lip.cancel();onAudioClock(null);onViseme("REST");}
  function populate(){
   const select=find("voiceChoice"),previous=select.value;
   select.replaceChildren();

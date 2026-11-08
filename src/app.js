@@ -18,6 +18,7 @@ const voice=createVoiceUI({
  find:$,
  onSpeaking:active=>{playing=active;},
  onViseme:value=>sceneState?.setViseme?.(value),
+ onAudioClock:clock=>sceneState?.setAudioClock?.(clock),
  onError:error=>showMessage("error","Voz Piper local: "+error.message)
 });
 const settings=createSettingsUI({find:$,showMessage});
