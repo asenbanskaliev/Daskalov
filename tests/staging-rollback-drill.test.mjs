@@ -27,7 +27,8 @@ test("REL-005: staging rollback restores encrypted SQLite snapshot with FTS and 
  try{
   assert.equal(rollback.integrity().quickCheck,"ok");
   assert.ok(rollback.search(playerId,"geometría").length>0);
-  assert.equal(rollback.search(playerId,"incompatible").length,0);
+  // search() deliberately falls back to recent memories; export is the exact dataset assertion.
+  assert.ok(rollback.exportPlayer(playerId).memories.every(row=>!row.content.includes("incompatible")));
   assert.equal(rollback.getProgress(playerId)[0].lesson_id,"math");
  }finally{rollback.close();}
 
