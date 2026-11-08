@@ -23,18 +23,41 @@ export async function validateNvidiaLive({key,chat=chatRemote,stream=streamRemot
   durationMs:Date.now()-started,rawRepliesExcluded:true,
   sessionDataUsed:false,claimsFullSafetyCertification:false};
 }
-export function pickNvidiaModel(ids){
- if(!Array.isArray(ids))return null;
- const safe=ids.filter(id=>typeof id==="string"&&id.length<130&&/^[A-Za-z0-9_.:-]+\/[A-Za-z0-9_.:+-]+$/.test(id));
- const preferred=[
-  "deepseek-ai/deepseek-v4-flash",
-  "nvidia/nemotron-3-super-120b-a12b",
-  "openai/gpt-oss-120b",
+export function candidateNvidiaModels(ids,max=4){
+ if(!Array.isArray(ids))return [];
+ const safe=[...new Set(ids.filter(id=>typeof id==="string"&&id.length<130&&/^[A-Za-z0-9_.:-]+\/[A-Za-z0-9_.:+-]+$/.test(id)))];
+ const preference=[
   "meta/llama-3.3-70b-instruct",
-  "qwen/qwen3-next-80b-a3b-instruct"
+  "meta/llama-3.1-70b-instruct",
+  "meta/llama-4-scout-17b-16e-instruct",
+  "qwen/qwen3-next-80b-a3b-instruct",
+  "openai/gpt-oss-120b",
+  "deepseek-ai/deepseek-v4-flash",
+  "nvidia/nemotron-3-super-120b-a12b"
  ];
- return preferred.find(id=>safe.includes(id))||
-  safe.find(id=>/instruct|gpt-oss|nemotron|deepseek/i.test(id))||null;
+ const chosen=preference.filter(id=>safe.includes(id));
+ const alternatives=safe.filter(id=>/instruct|chat|nemotron|gpt-oss/i.test(id)&&!chosen.includes(id));
+ return [...chosen,...alternatives].slice(0,Math.max(1,Math.min(4,max)));
+}
+export function pickNvidiaModel(ids){return candidateNvidiaModels(ids,1)[0]||null;}
+export async function probeNvidiaCandidates({key,models,run=validateNvidiaLive,onPhase=()=>{}}={}){
+ const candidates=candidateNvidiaModels(models);
+ if(!candidates.length)throw Error("NVIDIA_CATALOG_NO_USABLE_MODEL");
+ const unsuccessful=[];
+ for(const model of candidates){
+  let stage="chat";
+  try{
+   const evidence=await run({key,model,onPhase:value=>{stage=value;onPhase(value);}});
+   return {...evidence,candidateAttempts:unsuccessful.length+1,unavailableModels:unsuccessful.length};
+  }catch(error){
+   // Retry only 404/410 unavailable models before any successful chat; do
+   // not retry authentication/quota/network failures or a failed paid stream.
+   const status=String(error?.message||"").match(/HTTP ([0-9]{3})/)?.[1]||"unknown";
+   if(stage!=="chat"||!["404","410"].includes(status))throw error;
+   unsuccessful.push(status);
+  }
+ }
+ throw Error("NVIDIA_CANDIDATES_UNAVAILABLE_"+unsuccessful.join("_"));
 }
 async function catalogStatus(key){
  try{
@@ -55,10 +78,9 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).hr
   process.stderr.write("NVIDIA_SECRET_UNAVAILABLE: secret missing or too short.\n");
   process.exitCode=1;
  }else catalogStatus(key).then(({status,modelIds})=>{
-  const selected=pickNvidiaModel(modelIds);
-  process.stdout.write("NVIDIA_CATALOG_HTTP="+(status===null?"unreachable":status)+" models="+modelIds.length+" selected="+(selected||"none")+"\n");
-  if(!selected)throw Error("NVIDIA_CATALOG_NO_USABLE_MODEL");
-  return validateNvidiaLive({key,model:selected,onPhase:name=>phase=name});
+  const candidates=candidateNvidiaModels(modelIds);
+  process.stdout.write("NVIDIA_CATALOG_HTTP="+(status===null?"unreachable":status)+" models="+modelIds.length+" candidates="+candidates.join(",")+"\n");
+  return probeNvidiaCandidates({key,models:modelIds,onPhase:name=>phase=name});
  }).then(result=>{
   process.stdout.write("NVIDIA_LIVE_OK "+JSON.stringify(result)+"\n");
  }).catch(error=>{
