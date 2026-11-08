@@ -1,6 +1,7 @@
 import {migrateDatabase} from "./db-migrations.mjs";
 import {redactSensitiveMemory} from "./character.mjs";
 import {DatabaseSync} from "node:sqlite";
+import {createHash} from "node:crypto";
 import {mkdirSync} from "node:fs";
 import {dirname} from "node:path";
 export function isPlayerId(value) {
@@ -38,6 +39,15 @@ export function openMemory(fileName) {
  const deleteCredentials=db.prepare("DELETE FROM session_credentials WHERE player_id=?");
  const privacy=db.prepare("SELECT memory_enabled,updated_at FROM privacy_preferences WHERE player_id=?");
  const privacyUpsert=db.prepare("INSERT INTO privacy_preferences(player_id,memory_enabled) VALUES(?,?) ON CONFLICT(player_id) DO UPDATE SET memory_enabled=excluded.memory_enabled,updated_at=datetime('now')");
+ const embedLookup=db.prepare("SELECT model,checksum FROM memory_embeddings WHERE memory_id=? AND player_id=?");
+ const embedDoc=db.prepare("SELECT id,role,content FROM memories WHERE player_id=? AND id=? AND created_at>=datetime('now','-30 days')");
+ const embedDocuments=db.prepare("SELECT id,role,content FROM memories WHERE player_id=? AND created_at>=datetime('now','-30 days') ORDER BY id DESC LIMIT 200");
+ const embedUpsert=db.prepare("INSERT INTO memory_embeddings(memory_id,player_id,model,dims,vector,checksum) VALUES(?,?,?,?,?,?) ON CONFLICT(memory_id) DO UPDATE SET model=excluded.model,dims=excluded.dims,vector=excluded.vector,checksum=excluded.checksum,updated_at=datetime('now')");
+ const indexed=db.prepare("SELECT m.role,m.content,e.dims,e.vector,e.checksum FROM memory_embeddings e JOIN memories m ON m.id=e.memory_id WHERE e.player_id=? AND m.player_id=? AND e.model=? AND m.created_at>=datetime('now','-30 days') LIMIT 200");
+ const digest=text=>createHash("sha256").update(text,"utf8").digest("hex");
+ const validVector=v=>Array.isArray(v)&&v.length>=2&&v.length<=2048&&v.every(n=>typeof n==="number"&&Number.isFinite(n));
+ const normalizedModel=m=>typeof m==="string"&&/^[a-zA-Z0-9._:/-]{1,100}$/.test(m);
+
 
  return {
   save(id,role,content){
@@ -105,6 +115,60 @@ export function openMemory(fileName) {
   setMemoryConsent(id,enabled){
    if(!isPlayerId(id))throw Error("Jugador inválido.");
    insertPlayer.run(id);privacyUpsert.run(id,enabled?1:0);
+  },
+  pendingEmbeddings(id,model,limit=10){
+   if(!isPlayerId(id)||!normalizedModel(model))return [];
+   return embedDocuments.all(id).filter(row=>{
+    const saved=embedLookup.get(row.id,id);
+    return !saved||saved.model!==model||saved.checksum!==digest(row.content);
+   }).slice(0,Math.min(25,Math.max(1,Math.floor(Number(limit)||10))));
+  },
+  putEmbedding(id,memoryId,model,vector){
+   if(!isPlayerId(id)||!Number.isInteger(memoryId)||!normalizedModel(model)||!validVector(vector))throw Error("Embedding inválido.");
+   const doc=embedDoc.get(id,memoryId);
+   if(!doc)throw Error("No existe recuerdo autorizado para el vector.");
+   const bytes=Buffer.alloc(vector.length*4);
+   vector.forEach((n,i)=>bytes.writeFloatLE(n,i*4));
+   embedUpsert.run(memoryId,id,model,vector.length,bytes,digest(doc.content));
+   return true;
+  },
+  searchHybrid(id,query,vector,model,limit=5){
+   if(!isPlayerId(id))return [];
+   const size=Math.min(10,Math.max(1,Math.floor(Number(limit)||5)));
+   const lexical=this.search(id,query,size);
+   if(!normalizedModel(model)||!validVector(vector))return lexical;
+   const queryNorm=Math.hypot(...vector);
+   if(queryNorm===0)return lexical;
+   const matches=[];
+   for(const row of indexed.all(id,id,model)){
+    if(row.dims!==vector.length||row.checksum!==digest(row.content))continue;
+    const data=Buffer.from(row.vector);
+    if(data.length!==row.dims*4)continue;
+    let dot=0,norm2=0,valid=true;
+    for(let i=0;i<row.dims;i++){
+     const value=data.readFloatLE(i*4);
+     if(!Number.isFinite(value)){valid=false;break;}
+     dot+=value*vector[i];norm2+=value*value;
+    }
+    if(!valid||norm2===0)continue;
+    const cosine=dot/(Math.sqrt(norm2)*queryNorm);
+    if(cosine>=.2)matches.push({text:row.role+": "+row.content,score:cosine});
+   }
+   matches.sort((a,b)=>b.score-a.score);
+   const result=[],seen=new Set();
+   function add(value){if(value&&!seen.has(value)&&result.length<size){seen.add(value);result.push(value);}}
+   for(let i=0;i<Math.max(matches.length,lexical.length);i++){add(matches[i]?.text);add(lexical[i]);}
+   return result;
+  },
+  async reindexPlayer(id,model,embedFn,limit=10){
+   if(typeof embedFn!=="function")throw Error("Proveedor de embeddings requerido.");
+   let count=0;
+   for(const doc of this.pendingEmbeddings(id,model,limit)){
+    const vector=await embedFn({input:doc.content,model});
+    this.putEmbedding(id,doc.id,model,vector);
+    count++;
+   }
+   return {indexed:count,remaining:this.pendingEmbeddings(id,model,1).length>0};
   },
   schemaVersion(){return db.prepare("PRAGMA user_version").get().user_version;},
   integrity(){return {quickCheck:db.prepare("PRAGMA quick_check").get().quick_check,ftsCount:db.prepare("SELECT COUNT(*) AS n FROM memories_fts").get().n};},
