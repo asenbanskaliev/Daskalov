@@ -4,3 +4,4 @@
 # Retry with sanitized phase and HTTP-code diagnostics; no additional content.
 # Retry on documented openai/gpt-oss-120b following HTTP 410 from old llama.
 # Retry third: catalog status and currently documented deepseek-ai/deepseek-v4-flash.
+# Fourth probe: select model strictly from authenticated NVIDIA model catalog.
