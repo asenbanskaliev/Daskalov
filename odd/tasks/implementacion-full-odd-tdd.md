@@ -729,6 +729,12 @@ S04.03 **PARTIAL**: `scripts/tts-local-benchmark.mjs` ejecuta Piper y Kokoro com
 
 S12.05 **PARTIAL avanzado**: el workflow `container-demo.yml` ahora inicia una imagen real de Docker con SHA del commit `GITHUB_SHA` en el proceso, espera health, ejecuta el validador post-deploy **contra la instancia en escucha** con `DASKALOV_SMOKE_EXPECTED_SHA` y `DASKALOV_SMOKE_EXPECT_DEMO=1`, exige que el API Cloud/memoria responda 403 y comprueba el usuario sin privilegios `node`. No usa credenciales, textos, voz o datos de menores. `tests/container-demo-policy.test.mjs` protege la prueba de aislamiento. Sigue sin simular HTTPS con dominio, rollback del binario anterior ni backups de un hosting real; S12.05 permanece abierta.
 
+## 4AG. Capturas revisables y recorrido de teclado sin gráficos — 8 noviembre 2026
+
+S05.09 **PARTIAL avanzado**: `e2e/visual-regression.spec.js` genera capturas PNG deterministas y sin datos de usuario **únicamente del panel de misión** para 1280 y 390 px en Chromium y Firefox, con movimiento reducido. El CI sube `daskalov-visual-review-chromium-firefox` con retención de siete días en cada éxito. Comparación de PNG consecutivos más evidencia disponible para una revisión visual manual (que sigue pendiente). No se suben capturas de conversaciones.
+
+S11.07/S01.07 **PARTIAL avanzado**: `e2e/keyboard-accessibility.spec.js` prueba envío de texto, navegación de las tres materias y respuestas activadas por teclas Enter, sin WebGL ni APIs de micrófono en móvil de 320 px, con reduced-motion y sin desbordamiento. `tests/visual-review-artifacts.test.mjs` protege privacidad y cobertura básica de artefactos. Falta auditoría real con NVDA/VoiceOver, zoom y personas en dispositivos físicos.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|

@@ -13,3 +13,5 @@ Queda también pendiente consentimiento infantil verificable y avisos STT en nav
 El E2E nuevo `e2e/contrast.spec.js` calcula ratio de contraste a partir de estilos computados en controles, botones y mensajes, con mínimo 4.5:1. Su alcance es parcial: fondos translucidos, estados hover, gradientes, contrastes de iconos y evaluaciones de lectores de pantalla necesitan revisión especializada.
 
 La revisión incremental de tamaño de interacción incorpora blancos de botones ≥24 px (regla CSS >=32 para botones de privacidad) y prueba reflujo móvil a 320/390 px con misión educativa. Los resultados son automatizados y no constituyen certificación WCAG 2.2 AA; siguen pendientes zoom, lectores de pantalla y pruebas humanas.
+
+Se incluye E2E exclusivo de teclado en viewport estrecho, sin WebGL ni micrófono, que navega Matemáticas/Lengua/Historia y activa sus botones con Enter. El workflow Playwright sube capturas PNG solo del panel de lecciones sintéticas para revisión manual con vida de 7 días; no contienen conversaciones ni audio. Una captura y sus métricas no son certificación WCAG; especialistas deben valorar resultados.
