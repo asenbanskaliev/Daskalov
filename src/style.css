@@ -49,3 +49,15 @@ button{min-height:40px}
  .brand>div{min-width:0}
  .brand h1{overflow-wrap:anywhere}
 }
+
+/* Provider key entry: never force a horizontal scroll on small displays. */
+.provider-api-key{display:grid;gap:7px;margin:10px 0 14px}
+.provider-api-key[hidden]{display:none}
+.provider-api-key>label{font-size:12px;font-weight:700;color:#e6d5a8}
+.provider-api-key .actions{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.provider-api-key .actions input{grid-column:1/-1;min-width:0;width:100%;min-height:42px;background:#14221e;color:#fff;border:1px solid #557066;border-radius:9px;padding:10px}
+.provider-api-key .actions button{min-width:0;white-space:normal}
+.provider-api-key a{color:#eacb8b;font-size:12px}
+#freeOnlyRow{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:normal}
+#freeOnlyRow[hidden]{display:none}
+#freeOnlyRow input{width:auto;min-height:auto}

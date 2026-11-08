@@ -35,11 +35,13 @@
             <button id="forgetProviderKey" type="button" class="secondary">Olvidar clave</button>
           </div>
           <p id="providerKeyStatus" class="field-help" role="status">Clave no configurada.</p>
+          <a id="providerKeyLink" href="https://openrouter.ai/settings/keys" target="_blank" rel="noopener noreferrer">Crear o consultar API key del proveedor</a>
           <p class="field-help">No se guarda en localStorage ni en SQLite; desaparece al recargar. Las consultas del proveedor pueden tener coste.</p>
         </div>
         <div id="modelPickerRow" class="fields">
           <label for="modelPicker">Catálogo de modelos</label>
           <input id="modelSearch" type="search" placeholder="Buscar modelo por nombre" autocomplete="off">
+          <label id="freeOnlyRow" hidden><input id="freeOnlyModels" type="checkbox"> Solo modelos OpenRouter con sufijo :free (pueden tener cuotas)</label>
           <select id="modelPicker" aria-label="Elegir modelo del catálogo"><option value="">Pulsa actualizar para listar los modelos</option></select>
           <button id="refreshModels" type="button" class="secondary">Actualizar listado de modelos</button>
         </div>

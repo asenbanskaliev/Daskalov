@@ -11,13 +11,17 @@ export function createSettingsUI({find,showMessage,fetchImpl=fetch}){
  function showKeyStatus(){
   const selected=provider(),enabled=isExternalProvider(selected);
   find("providerKeyRow").hidden=!enabled;
+  const keyLink=find("providerKeyLink");
+  keyLink.href=selected==="nvidia"?"https://build.nvidia.com/":"https://openrouter.ai/settings/keys";
+  find("freeOnlyRow").hidden=selected!=="openrouter";
+  if(selected!=="openrouter")find("freeOnlyModels").checked=false;
   find("providerKeyStatus").textContent=!enabled?"":hasProviderKey(selected)?
    "Clave activa solo mientras permanezca abierta esta pestaña.":"Introduce la API key y pulsa Aplicar clave.";
  }
  function populateCatalog(search=""){
   const picker=find("modelPicker");
   picker.replaceChildren();
-  const names=catalog.filter(x=>x.toLowerCase().includes(search.toLowerCase())).slice(0,600);
+  const names=catalog.filter(x=>x.toLowerCase().includes(search.toLowerCase())&&(!find("freeOnlyModels").checked||x.endsWith(":free"))).slice(0,600);
   const empty=document.createElement("option");
   empty.value="";empty.textContent=names.length?"Elegir entre "+names.length+" modelos":"No hay coincidencias";
   picker.append(empty);
@@ -99,6 +103,7 @@ export function createSettingsUI({find,showMessage,fetchImpl=fetch}){
  });
  find("modelPicker").addEventListener("change",()=>selectModel(find("modelPicker").value));
  find("modelSearch").addEventListener("input",()=>populateCatalog(find("modelSearch").value));
+ find("freeOnlyModels").addEventListener("change",()=>populateCatalog(find("modelSearch").value));
  find("refreshModels").addEventListener("click",refreshModels);
  find("model").addEventListener("change",()=>{
   writeSetting("model_"+provider(),find("model").value);populateCatalog(find("modelSearch").value);

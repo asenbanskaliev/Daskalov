@@ -40,7 +40,7 @@ export async function listRemoteModels({provider,apiKey,fetchImpl=fetch}={}){
  return [...new Set(data.data.filter(x=>{
   const input=x?.architecture?.input_modalities,output=x?.architecture?.output_modalities;
   return (!Array.isArray(input)||input.includes("text"))&&(!Array.isArray(output)||output.includes("text"));
- }).map(x=>x.id).filter(x=>{try{validateRemoteModel(x);return true;}catch{return false;}}))].slice(0,600);
+ }).map(x=>x.id).filter(x=>{try{validateRemoteModel(x);return true;}catch{return false;}}))].sort((a,b)=>Number(b.endsWith(":free"))-Number(a.endsWith(":free"))||a.localeCompare(b)).slice(0,600);
 }
 function prepare({provider,model,messages,apiKey,stream}){
  const {base,headers}=connection(provider,apiKey);
