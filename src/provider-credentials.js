@@ -1,4 +1,4 @@
-/** Browser-tab memory only. Keys never enter localStorage, cookies, URLs or SQLite. */
+/** Browser-tab memory only. Credentials never enter persistent storage or cookies. */
 const keys=new Map();
 export function isExternalProvider(provider){return provider==="openrouter"||provider==="nvidia";}
 export function setProviderKey(provider,key){
