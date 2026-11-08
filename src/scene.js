@@ -7,6 +7,7 @@ import {FpsMonitor} from "./fps-monitor.js";
 import {createStaticBoxBatcher} from "./static-box-batcher.js";
 import {gestureForAudio} from "./audio-gesture.js";
 import {AudioMixerClock} from "./audio-mixer-clock.js";
+import {releaseProceduralAvatar} from "./release-procedural-avatar.js";
 export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeaking=()=>false,getReducedMotion=()=>false,onReady=()=>{},quality="auto"}){
  try{
   const THREE=await import("three");
@@ -79,6 +80,8 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
   let viseme="REST";
   const gestureDirector=new GestureDirector();
   const audioMixerClock=new AudioMixerClock();
+  let fallbackGeometryReleased=false;
+  let fallbackGeometriesDisposed=0;
   const sceneState={
     act(value,source="llm"){
      const accepted=gestureDirector.propose(value,{source});
@@ -92,7 +95,7 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
     setQuality(value){currentQuality=value;renderer.setPixelRatio(pixelRatio());resize();},
     setBlackboardMessage,
     getStats(){
-     return {...fpsMonitor.snapshot(),...staticBoxes.snapshot(),drawCallsLastFrame:renderer.info.render.calls,
+     return {...fpsMonitor.snapshot(),...staticBoxes.snapshot(),fallbackGeometryReleased,fallbackGeometriesDisposed,drawCallsLastFrame:renderer.info.render.calls,
       trianglesLastFrame:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,
       textureObjects:renderer.info.memory.textures,pixelRatio:renderer.getPixelRatio(),
       limitations:"Renderer counters are not measured GPU VRAM and FPS is device-dependent."};
@@ -105,7 +108,9 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
    avatarAnimator=createAvatarAnimator({THREE,root:model.root});
    model.root.position.copy(teacher.position);
    scene.add(model.root);
-   teacher.visible=false;
+   const reclaimed=releaseProceduralAvatar({scene,root:teacher,sharedGeometry:sharedBoxGeometry});
+   fallbackGeometryReleased=reclaimed.released;
+   fallbackGeometriesDisposed=reclaimed.uniqueGeometriesDisposed;
    status.textContent="Aula 3D · personaje GLB local cargado";
   }).catch(()=>{ /* Procedural professor remains available. */ });
   let lastFrame=0;

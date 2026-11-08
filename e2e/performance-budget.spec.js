@@ -25,6 +25,8 @@ test("PERF-002: live browser render counters and FPS exist without fabricated VR
  expect(gfx.staticBoxInstances).toBeGreaterThan(3);
  expect(gfx.staticBatchDrawCalls).toBeGreaterThan(0);
  expect(gfx.staticDrawCallsSavedEstimate).toBeGreaterThan(0);
+ expect(gfx.fallbackGeometryReleased).toBe(true);
+ expect(gfx.fallbackGeometriesDisposed).toBeGreaterThan(0);
  expect(gfx.drawCallsLastFrame).toBeGreaterThan(0);
  expect(gfx.textureObjects).toBeGreaterThanOrEqual(0);
  expect(gfx.hardwareMeasurement).toBe(false);

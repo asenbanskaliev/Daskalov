@@ -23,3 +23,6 @@ License and rights: original purely procedural placeholder in this repository. A
 - Mouth shapes now respond to the AudioClock via facial morph weights. This is a stylized rig with synthetic viseme timings, **not** an actor-calibrated or professionally lip-synced model.
 - All meshes/materials are original procedural geometry with no downloaded external asset, voice or licensed texture dependency.
 - S05.02 and S05.03 implementation can be technically checked, but production 3D gate still requires visual/manual review, measured VRAM/FPS and art-direction approval.
+
+## Liberación del avatar provisional
+Tras crear correctamente el GLB, el motor retira del grafo el avatar de esferas y libera sus geometrías independientes, conservando la BoxGeometry que comparte con el aula instanciada. Si GLB falla, el personaje provisional sigue visible. `GFX-006` prueba la política, pero deben medirse VRAM/FPS y revisarse visualmente los assets antes de aprobar 3D-READY.

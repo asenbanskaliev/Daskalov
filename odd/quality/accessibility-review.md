@@ -11,3 +11,5 @@ No afirmar conformidad WCAG AA todavía: queda auditoría independiente con axe-
 Queda también pendiente consentimiento infantil verificable y avisos STT en navegador.
 
 El E2E nuevo `e2e/contrast.spec.js` calcula ratio de contraste a partir de estilos computados en controles, botones y mensajes, con mínimo 4.5:1. Su alcance es parcial: fondos translucidos, estados hover, gradientes, contrastes de iconos y evaluaciones de lectores de pantalla necesitan revisión especializada.
+
+La revisión incremental de tamaño de interacción incorpora blancos de botones ≥24 px (regla CSS >=32 para botones de privacidad) y prueba reflujo móvil a 320/390 px con misión educativa. Los resultados son automatizados y no constituyen certificación WCAG 2.2 AA; siguen pendientes zoom, lectores de pantalla y pruebas humanas.

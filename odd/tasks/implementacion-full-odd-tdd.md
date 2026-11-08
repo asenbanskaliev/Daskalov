@@ -695,6 +695,12 @@ Tests `tests/public-proxy-inference.test.mjs` y `tests/workflow-policy.test.mjs`
 
 S07.07/S10.07 **avance de consistencia**: `server/main.mjs` comprueba justo antes de guardar una respuesta (normal o NDJSON) que la cookie y el titular siguen activos. Si la petición se inició antes del borrado y terminó después, la sesión revocada no puede recrear recuerdos. `tests/revocation-inflight.test.mjs` mantiene un modelo artificialmente bloqueado mientras borra todos los datos y comprueba memorias, progreso, sesiones y FTS en ambos formatos. Esto NO acredita supresión en servicios/backups externos; no se marcan DONE.
 
+## 4Y. Optimización de fallback GLB y objetivos táctiles — 8 noviembre 2026
+
+S05.06 **PARTIAL**: al cargar el GLB original, `src/release-procedural-avatar.js` retira el avatar provisional del grafo de escena y libera geometrías únicas de esferas **sin liberar la geometría compartida del aula**. Se añaden métricas de liberación a `sceneState.getStats()`, `tests/fallback-resource-release.test.mjs` y verificación en `e2e/performance-budget.spec.js`. Quedan iluminación horneada/texturas comprimidas y medida de VRAM/FPS en hardware real, por lo que no se marca DONE.
+
+S01.07/S11.07 **PARTIAL**: `src/style.css` garantiza blancos táctiles mínimos en botones de privacidad y eventos y permite reflujo de la barra al estrecharse. `e2e/mobile-touch-targets.spec.js` comprueba vista de 320/390 px, blancos de 24 px, lecciones operativas y ausencia de desbordamiento; prueba CSS `tests/a11y-targets-policy.test.mjs`. Quedan zoom real 200-400%, NVDA/VoiceOver y auditoría WCAG humana.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|
