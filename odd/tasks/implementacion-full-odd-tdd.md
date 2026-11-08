@@ -751,6 +751,10 @@ S07.07/S10.07 **PARTIAL avanzado**: `server/erasure-ledger.mjs` añade un anclaj
 
 S11.02/S11.03/S11.08 **PARTIAL avanzado**: `scripts/hardware-browser-benchmark.mjs` permite un benchmark local **real con Chrome, Edge o Firefox visible** y sin tráfico Ollama, durante 300 segundos de `requestAnimationFrame` del aula GLB, previa autorización `DASKALOV_HARDWARE_BENCH_CONSENT=1`. Genera `daskalov-hardware-perf-v1` con SHA exacto, navegador, tier `normal|low`, calidad, resolución, FPS p05/p50, muestras y umbral 55/30 FPS. Sin micrófono, conversación, ID de equipo ni datos privados; siempre `independentHardwareEvidenceVerified:false`. Sus informes encajan con `npm run perf:compare` para comparar antes/después; no miden VRAM, latencia LLM ni acreditan independentemente el hardware. Tests sintéticos solo validan formato y límites; falta **ejecutar efectivamente** en equipos físicos y revisar artefactos antes de cerrar S11.02/03/08.
 
+## 4AL. Instancias ligeras del avatar de respaldo — 8 noviembre 2026
+
+S05.06 **PARTIAL avanzado**: `src/shared-fallback-sphere.js` crea las esferas del personaje provisional utilizando **una sola SphereGeometry compartida** de resolución reducida (12×10 segmentos), en lugar de generar un BufferGeometry de 20×16 por ojo, boca, bigote, nariz y cabello. Se mantienen escalas correctas de las formas estilizadas. `releaseProceduralAvatar` libera esa geometría una sola vez al cargar GLB; la geometría de cajas de la escena nunca se elimina. `tests/shared-fallback-sphere.test.mjs` verifica geometría compartida, tamaños correctos y un solo dispose con Three.js real. Se incrementa el contador agregado `fallbackSharedSpheres`. Queda pendiente medir VRAM y calidad visual en hardware real y revisar texturas comprimidas cuando existan.
+
 ## 5. Gates de aceptación acumulativos (FULL)
 | Gate | Condición de salida mínima | Evidencia |
 |---|---|---|

@@ -9,6 +9,7 @@ import {gestureForAudio} from "./audio-gesture.js";
 import {AudioMixerClock} from "./audio-mixer-clock.js";
 import {releaseProceduralAvatar} from "./release-procedural-avatar.js";
 import {createBakedBoxGeometry,createBakedMaterial} from "./baked-box-geometry.js";
+import {createFallbackSphere} from "./shared-fallback-sphere.js";
 export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeaking=()=>false,getReducedMotion=()=>false,onReady=()=>{},quality="auto"}){
  try{
   const THREE=await import("three");
@@ -38,7 +39,12 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
    if(parent===scene)return staticBoxes.add(w,h,d,x,y,z,staticMat(material));
    const o=new THREE.Mesh(sharedBoxGeometry,material);o.scale.set(w,h,d);o.position.set(x,y,z);parent.add(o);return o;
   }
-  function sphere(r,x,y,z,material,parent=scene){const o=new THREE.Mesh(new THREE.SphereGeometry(r,20,16),material);o.position.set(x,y,z);parent.add(o);return o;}
+  const fallbackSphereGeometry=new THREE.SphereGeometry(1,12,10);
+  let fallbackSphereCount=0;
+  function sphere(r,x,y,z,material,parent=scene){
+   fallbackSphereCount++;
+   return createFallbackSphere({THREE,geometry:fallbackSphereGeometry,r,x,y,z,material,parent});
+  }
   box(15,0.2,14,0,-0.1,-1,wood);
   box(15,7,.25,0,3.3,-7.7,cream);
   box(.22,7,14,-7.5,3.3,-1,cream);box(.22,7,14,7.5,3.3,-1,cream);
@@ -75,10 +81,10 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
   sphere(.09,-.18,2.71,.43,white,teacher);sphere(.09,.18,2.71,.43,white,teacher);
   sphere(.044,-.18,2.71,.50,black,teacher);sphere(.044,.18,2.71,.50,black,teacher);
   sphere(.12,0,2.53,.49,skin,teacher);
-  const moustacheL=sphere(.16,-.13,2.43,.45,black,teacher);moustacheL.scale.y=.30;
-  const moustacheR=sphere(.16,.13,2.43,.45,black,teacher);moustacheR.scale.y=.30;
-  const mouth=sphere(.11,0,2.30,.44,black,teacher);mouth.scale.y=.20;
-  sphere(.42,0,2.95,-.07,mat(0x77736c),teacher).scale.y=.36;
+  const moustacheL=sphere(.16,-.13,2.43,.45,black,teacher);moustacheL.scale.y*=.30;
+  const moustacheR=sphere(.16,.13,2.43,.45,black,teacher);moustacheR.scale.y*=.30;
+  const mouth=sphere(.11,0,2.30,.44,black,teacher);mouth.scale.y*=.20;
+  sphere(.42,0,2.95,-.07,mat(0x77736c),teacher).scale.y*=.36;
   box(.20,.9,.18,-.65,1.65,0,coat,teacher);const hand=sphere(.12,-.65,1.1,0,skin,teacher);
   const arm=new THREE.Group();arm.position.set(.58,1.91,0);teacher.add(arm);
   box(.2,.82,.2,0,-.43,0,coat,arm);sphere(.13,0,-.85,0,skin,arm);box(.08,.72,.06,0,-1.03,.12,wood,arm);
@@ -102,7 +108,7 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
     setQuality(value){currentQuality=value;renderer.setPixelRatio(pixelRatio());resize();},
     setBlackboardMessage,
     getStats(){
-     return {...fpsMonitor.snapshot(),...staticBoxes.snapshot(),staticBakedVertexLighting:true,fallbackGeometryReleased,fallbackGeometriesDisposed,drawCallsLastFrame:renderer.info.render.calls,
+     return {...fpsMonitor.snapshot(),...staticBoxes.snapshot(),staticBakedVertexLighting:true,fallbackGeometryReleased,fallbackGeometriesDisposed,fallbackSharedSpheres:fallbackSphereCount,drawCallsLastFrame:renderer.info.render.calls,
       trianglesLastFrame:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,
       textureObjects:renderer.info.memory.textures,pixelRatio:renderer.getPixelRatio(),
       limitations:"Renderer counters are not measured GPU VRAM and FPS is device-dependent."};
