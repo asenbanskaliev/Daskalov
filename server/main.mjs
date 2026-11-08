@@ -8,6 +8,7 @@ import {buildContext} from "./context-builder.mjs";
 import {safeDeterministicReply} from "./child-safety.mjs";
 import {moderateProfessorOutput} from "./output-moderation.mjs";
 import {chatOllama,streamOllama,listOllamaModels,OllamaError,validateModel,validateProvider} from "./ollama.mjs";
+import {isRemoteProvider,validateRemoteKey,chatRemote,streamRemote,listRemoteModels} from "./remote-llm.mjs";
 import {SentenceChunker} from "./stream.mjs";
 import {streamWithOptionalFallback} from "./fallback.mjs";
 import {retryLocalStream} from "./resilience.mjs";
@@ -61,6 +62,9 @@ export function createApp({
  llm=chatOllama,
  streamLlm=streamOllama,
  models=listOllamaModels,
+ remoteModels=listRemoteModels,
+ remoteLlm=chatRemote,
+ remoteStream=streamRemote,
  ttsSynth=synthesizePiper,
  ttsCloudSynth=synthesizeCloudTts,
  allowCloudTts=process.env.DASKALOV_ENABLE_TTS_CLOUD==="1",
@@ -187,16 +191,20 @@ export function createApp({
     }
     return respond(res,200,{active:true,csrfToken:active.csrfToken,memoryAvailable:allowMemory});
    }
+   // API key comes from the selected tab's same-origin request header only.
+   // It is neither persisted nor forwarded to a different vendor.
+   const remoteKeyFor=provider=>isRemoteProvider(provider)?
+    validateRemoteKey(req.headers["x-daskalov-provider-key"]):null;
    if(path==="/api/models"&&req.method==="GET"){
     const provider=validateProvider(url.searchParams.get("provider"));
     if(provider==="cloud"&&!isPrivateClient(req))throw new OllamaError("Cloud solo está disponible en modo privado.",403);
-    return respond(res,200,{models:await models({provider})});
+    return respond(res,200,{models:isRemoteProvider(provider)?await remoteModels({provider,apiKey:remoteKeyFor(provider)}):await models({provider})});
    }
    if(path==="/api/provider-status"&&req.method==="GET"){
     const provider=validateProvider(url.searchParams.get("provider"));
     if(provider==="cloud"&&!isPrivateClient(req))throw new OllamaError("Cloud solo está disponible en modo privado.",403);
     try{
-     const available=await models({provider});
+     const available=isRemoteProvider(provider)?await remoteModels({provider,apiKey:remoteKeyFor(provider)}):await models({provider});
      return respond(res,200,{provider,reachable:true,models:available.length});
     }catch{return respond(res,200,{provider,reachable:false,models:0});}
    }
@@ -243,6 +251,7 @@ export function createApp({
     const body=await bodyOf(req);
     rejectClientPlayerId(body);
     const provider=validateProvider(body.provider),model=validateModel(body.model);
+    const remoteKey=remoteKeyFor(provider);
     if(provider==="cloud"&&!isPrivateClient(req))throw new OllamaError("Cloud no está habilitado fuera de localhost.",403);
     if(typeof body.text!=="string"||!body.text.trim()||body.text.length>700)throw new OllamaError("Mensaje inválido (1-700 caracteres).",400);
     const event=["dialog","turned_around","interruption","long_silence","hand_raised"].includes(body.event)?body.event:"dialog";
@@ -277,7 +286,7 @@ export function createApp({
     const counter=daily.get(ip);
     if(counter?.day===day&&counter.count>=maxCallsPerDay)throw new OllamaError("Cuota diaria alcanzada.",429);
     if((inFlight.get(ip)||0)>=maxConcurrent)throw new OllamaError("Hay otra pregunta en curso.",429);
-    if(provider==="cloud"&&!cloudBudget.reserve(new Date(now)))throw new OllamaError("Presupuesto diario de Cloud alcanzado.",429);
+    if(provider!=="local"&&!cloudBudget.reserve(new Date(now)))throw new OllamaError("Presupuesto diario de Cloud alcanzado.",429);
     let distributedLease=null;
     if(distributedLedger){
      const reservation=distributedLedger.reserve({
@@ -316,9 +325,11 @@ export function createApp({
       };
       try{
        emit("started",{provider,model});
+       const dispatchStream=args=>isRemoteProvider(args.provider)?
+        remoteStream({...args,apiKey:remoteKey}):streamLlm(args);
        const effectiveStream=(args)=>body.allowFallbackToCloud===true
-        ?streamLlm(args)
-        :retryLocalStream({provider:args.provider,signal:args.signal,run:()=>streamLlm(args)});
+        ?dispatchStream(args)
+        :retryLocalStream({provider:args.provider,signal:args.signal,run:()=>dispatchStream(args)});
        for await(const packet of streamWithOptionalFallback({
         provider,model,messages,signal:cancellation.signal,streamLlm:effectiveStream,
         allowFallbackToCloud:body.allowFallbackToCloud===true,
@@ -368,7 +379,7 @@ export function createApp({
       }
       return;
      }
-     const reply=normalizeReply(moderateProfessorOutput(await llm({provider,model,messages})).text);
+     const reply=normalizeReply(moderateProfessorOutput(await (isRemoteProvider(provider)?remoteLlm({provider,model,messages,apiKey:remoteKey}):llm({provider,model,messages}))).text);
      if(!reply)throw new OllamaError("El profesor no ha respondido.",502);
      if(remember&&mayPersistRememberedReply(req,memory,session)){
       memory.save(session.playerId,"user",body.text);

@@ -32,7 +32,7 @@ export class AtomicUsageLedger{
  key(input){return createHmac("sha256",this.secret).update(String(input),"utf8").digest("hex");}
  reserve({identity,provider,nowMs=Date.now(),estimatedTokens=2100,requestsPerDay=60,tokensPerDay=140000,concurrent=1,globalCloudCallsPerDay=24}={}){
   if(typeof identity!=="string"||!identity||identity.length>128)throw Error("Identidad de cuota inválida.");
-  if(!["local","cloud"].includes(provider))throw Error("Proveedor de cuota inválido.");
+  if(!["local","cloud","openrouter","nvidia"].includes(provider))throw Error("Proveedor de cuota inválido.");
   if(!Number.isFinite(nowMs)||nowMs<0)throw Error("Reloj de cuota inválido.");
   const tokens=Math.max(1,Math.min(200000,Math.ceil(Number(estimatedTokens)||2100)));
   const day=new Date(nowMs).toISOString().slice(0,10);
@@ -43,13 +43,13 @@ export class AtomicUsageLedger{
    this.expire.run(Math.trunc(nowMs));this.old.run(previous);
    const used=this.read.get(subject,provider,day)||{requests:0,tokens:0};
    const busy=this.active.get(subject).n;
-   const globalUsed=provider==="cloud"?this.read.get(global,"cloud",day)||{requests:0}:null;
+   const globalUsed=provider!=="local"?this.read.get(global,"cloud",day)||{requests:0}:null;
    const denied=used.requests>=requestsPerDay||used.tokens+tokens>tokensPerDay||
-    busy>=concurrent||(provider==="cloud"&&globalUsed.requests>=globalCloudCallsPerDay);
+    busy>=concurrent||(provider!=="local"&&globalUsed.requests>=globalCloudCallsPerDay);
    if(denied){this.db.exec("ROLLBACK");return {accepted:false,reason:"quota"};}
    const leaseId=randomUUID();
    this.upsert.run(subject,provider,day,tokens);
-   if(provider==="cloud")this.upsert.run(global,"cloud",day,tokens);
+   if(provider!=="local")this.upsert.run(global,"cloud",day,tokens);
    this.insert.run(leaseId,subject,provider,Math.trunc(nowMs+this.leaseMs));
    this.db.exec("COMMIT");
    return {accepted:true,leaseId};

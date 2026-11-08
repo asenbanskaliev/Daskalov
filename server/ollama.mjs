@@ -4,15 +4,16 @@ export class OllamaError extends Error {
  constructor(message,status=502){super(message);this.name="OllamaError";this.status=status;}
 }
 export function validateProvider(value) {
- if(value!=="cloud"&&value!=="local")throw new OllamaError("Proveedor no admitido.",400);
+ if(!["cloud","local","openrouter","nvidia"].includes(value))throw new OllamaError("Proveedor no admitido.",400);
  return value;
 }
 export function validateModel(value) {
- if(typeof value!=="string"||!/^[a-zA-Z0-9._:-]{1,100}$/.test(value))throw new OllamaError("Modelo inválido.",400);
+ if(typeof value!=="string"||(value.length>160||!/^[a-zA-Z0-9._:-]+(?:\/[a-zA-Z0-9._:+-]+)*$/.test(value)||value.includes("//")))throw new OllamaError("Modelo inválido.",400);
  return value;
 }
 export function connection(provider,env=process.env) {
  validateProvider(provider);
+ if(provider!=="cloud"&&provider!=="local")throw new OllamaError("Usa el conector externo seguro.",400);
  if(provider==="cloud") {
   if(!env.OLLAMA_API_KEY)throw new OllamaError("Configura OLLAMA_API_KEY en el servidor.",503);
   return {base:"https://ollama.com",headers:{Authorization:"Bearer "+env.OLLAMA_API_KEY}};
