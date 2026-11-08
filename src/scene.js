@@ -1,6 +1,7 @@
 import {AdaptiveQuality} from "./performance-profile.js";
 import {normalizeViseme} from "./visemes.js";
 import {loadLowPolyAvatar} from "./avatar-loader.js";
+import {createAvatarAnimator} from "./avatar-animation.js";
 export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeaking=()=>false,getReducedMotion=()=>false,onReady=()=>{},quality="auto"}){
  try{
   const THREE=await import("three");
@@ -66,17 +67,18 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
   let animation="talk",until=0,viseme="REST";
   const allowedGestures=new Set(["talk","ruler_desk","point_board","surprised","raise_hand"]);
   const sceneState={
-    act(value){animation=allowedGestures.has(value)?value:"talk";until=performance.now()+2400;},
+    act(value){animation=allowedGestures.has(value)?value:"talk";until=performance.now()+2400;avatarAnimator?.play(animation);},
     setViseme(value){viseme=normalizeViseme(value);},
-    clearSpeech(){viseme="REST";animation="talk";until=0;},
+    clearSpeech(){viseme="REST";animation="idle";until=0;avatarAnimator?.play("idle");},
     setEmotion(value){if(value==="surprised")this.act("surprised");},
     setQuality(value){currentQuality=value;renderer.setPixelRatio(pixelRatio());resize();},
     setBlackboardMessage
   };
   onReady(sceneState);
-  let avatar=null;
+  let avatar=null,avatarAnimator=null;
   loadLowPolyAvatar().then(model=>{
    avatar=model;
+   avatarAnimator=createAvatarAnimator({THREE,root:model.root});
    model.root.position.copy(teacher.position);
    scene.add(model.root);
    teacher.visible=false;
@@ -84,20 +86,21 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
   }).catch(()=>{ /* Procedural professor remains available. */ });
   let lastFrame=0;
   function frame(now){
+   const dt=lastFrame?Math.min(.1,(now-lastFrame)/1000):0;
    if(lastFrame&&currentQuality==="auto"){
     const sample=adaptive.sample(now-lastFrame);
     if(sample?.changed){renderer.setPixelRatio(pixelRatio());resize();}
    }
    lastFrame=now;
+   avatarAnimator?.update(dt);
+   if(avatarAnimator&&now>=until&&avatarAnimator.current!=="idle")avatarAnimator.play("idle");
    camera.rotation.set(0,getYaw(),0);
    const active=now<until;
    const bob=getReducedMotion()?0:Math.sin(now*.0017)*.025;
-   if(avatar)avatar.head.position.y=2.69+bob;
-   else head.position.y=2.66+bob;
+   if(!avatarAnimator)head.position.y=2.66+bob;
    const armAngle=active&&!getReducedMotion()
     ?animation==="ruler_desk"?.6+Math.sin(now*.015)*.36:animation==="raise_hand"?-2:0:0;
-   if(avatar)avatar.arm.rotation.z=armAngle;
-   else arm.rotation.z=armAngle;
+   if(!avatarAnimator)arm.rotation.z=armAngle;
    const shapes={REST:[1,.18],A:[1,1.25],I:[1.35,.38],E:[1.1,.6],O:[.75,.95],U:[.65,.55],MBP:[.9,.12],FV:[1,.25],L:[1,.55],CHSH:[.8,.45]};
    const target=isSpeaking()?(shapes[viseme]||shapes.REST):shapes.REST;
    const activeMouth=avatar?.mouth||mouth;
