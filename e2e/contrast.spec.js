@@ -3,7 +3,7 @@ import {contrastRatio} from "../src/contrast-ratio.js";
 test("WEB-007: readable controls and message have at least 4.5:1 measured contrast",async({page})=>{
  await page.goto("/");
  await page.getByRole("button",{name:"Matemáticas"}).click();
- for(const selector of ["#question","#sendButton","#speechBubble","#lessonAnswers button",".message.assistant",".secondary"]){
+ for(const selector of ["#question","#sendButton","#speechBubble","#lessonAnswers button",".message.assistant",".secondary:visible"]){
   const node=page.locator(selector).first();
   await expect(node).toBeVisible();
   const colors=await node.evaluate(el=>{
