@@ -3,34 +3,41 @@ export class LocalPiperVoice{
  constructor({fetchImpl=fetch,onSpeaking=()=>{},onSentenceStart=()=>{},onAudioFragment=()=>{},onError=()=>{},AudioQueueFactory=options=>new AudioQueue(options)}={}){
   this.fetchImpl=fetchImpl;this.onError=onError;this.onSentenceStart=onSentenceStart;
   this.audio=AudioQueueFactory({onSpeaking,onFragmentStart:onAudioFragment});
-  this.enabled=true;this.epoch=0;this.pending=new Set();
+  this.enabled=true;this.epoch=0;this.pending=new Set();this.audioTail=Promise.resolve();
  }
  listVoices(){return [{name:"Piper local",lang:"es-ES",localService:true}];}
  setEnabled(value){this.enabled=Boolean(value);if(!this.enabled)this.cancel();}
  setVoiceName(){}
  speak(text){
   if(!this.enabled||!String(text).trim())return false;
+  if(this.pending.size>=6){this.onError(Error("La cola de voz está llena."));return false;}
   const epoch=this.epoch,control=new AbortController();
   this.pending.add(control);
-  (async()=>{
-   const response=await this.fetchImpl("/api/tts/local",{
-    method:"POST",headers:{"content-type":"application/json"},
-    body:JSON.stringify({text:String(text).slice(0,160)}),signal:control.signal
-   });
+  // Fetch sentences eagerly (prebuffer), but play them in original stream order.
+  const prebuffer=this.fetchImpl("/api/tts/local",{
+   method:"POST",headers:{"content-type":"application/json"},
+   body:JSON.stringify({text:String(text).slice(0,160)}),signal:control.signal
+  }).then(async response=>{
    if(!response.ok){
     let body={};try{body=await response.json();}catch{}
     throw Error(body.error||"Piper local no está disponible.");
    }
-   const audio=await response.arrayBuffer();
-   if(epoch!==this.epoch||control.signal.aborted)return;
+   return response.arrayBuffer();
+  }).then(audio=>({audio}),error=>({error}));
+  const play=this.audioTail.then(async()=>{
+   const result=await prebuffer;
+   if(result.error)throw result.error;
+   if(epoch!==this.epoch||control.signal.aborted)return false;
    this.onSentenceStart(text);
-   await this.audio.enqueue(audio,{text});
-  })().catch(error=>{
+   return this.audio.enqueue(result.audio,{text});
+  });
+  this.audioTail=play.catch(()=>{});
+  play.catch(error=>{
    if(!control.signal.aborted&&epoch===this.epoch)this.onError(error);
   }).finally(()=>this.pending.delete(control));
   return true;
  }
- cancel(){this.epoch++;for(const c of this.pending)c.abort();this.pending.clear();this.audio.cancel();}
+ cancel(){this.epoch++;for(const c of this.pending)c.abort();this.pending.clear();this.audioTail=Promise.resolve();this.audio.cancel();}
  pause(){this.audio.pause();}
  resume(){this.audio.resume();}
 }

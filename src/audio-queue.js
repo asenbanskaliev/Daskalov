@@ -23,7 +23,7 @@ export class AudioQueue {
      if(finished)return;
      finished=true;
      this.sources.delete(source);this.pending.delete(finish);
-     this.onSpeaking(false);resolve(true);
+     this.onSpeaking(false);resolve(version===this.generation);
     };
     source.onended=finish;
     this.sources.add(source);this.pending.add(finish);
@@ -33,13 +33,13 @@ export class AudioQueue {
      const started=Number(this.ctx.currentTime);
      const seconds=Number(audio.duration);
      if(Number.isFinite(started)&&Number.isFinite(seconds)&&seconds>0){
-      this.onFragmentStart({
+      try{this.onFragmentStart({
        fragmentId:fragmentId||"fragment-"+version+"-"+Math.round(started*1000),
        text:String(text).slice(0,160),
        audioStartMs:Math.round(started*1000),
        durationMs:Math.round(seconds*1000),
        clockMs:()=>Number(this.ctx?.currentTime||0)*1000
-      });
+      });}catch{ /* Visual animation must never break audio playback. */ }
      }
     }catch(error){finish();reject(error);}
    });
@@ -47,6 +47,18 @@ export class AudioQueue {
   const current=this.tail.then(play,play);
   this.tail=current.catch(()=>{});
   return current;
+ }
+ /** Stream of independently decodable WAV fragments; bounded by sequential playback. */
+ async enqueueStream(fragments,{signal}={}){
+  let count=0;
+  for await(const fragment of fragments){
+   if(signal?.aborted)return {played:count,cancelled:true};
+   const bytes=fragment?.audio||fragment;
+   if(!(bytes instanceof ArrayBuffer))throw Error("Se requieren fragmentos WAV decodificables.");
+   if(!(await this.enqueue(bytes,{text:fragment?.text||""})))return {played:count,cancelled:true};
+   count++;
+  }
+  return {played:count,cancelled:false};
  }
  async pause(){await this.ctx?.suspend?.();this.onSpeaking(false);}
  async resume(){await this.ctx?.resume?.();if(this.sources.size)this.onSpeaking(true);}
