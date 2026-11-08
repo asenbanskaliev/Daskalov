@@ -2,6 +2,7 @@ import {AdaptiveQuality} from "./performance-profile.js";
 import {normalizeViseme} from "./visemes.js";
 import {loadLowPolyAvatar} from "./avatar-loader.js";
 import {createAvatarAnimator} from "./avatar-animation.js";
+import {GestureDirector} from "./gesture-director.js";
 export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeaking=()=>false,getReducedMotion=()=>false,onReady=()=>{},quality="auto"}){
  try{
   const THREE=await import("three");
@@ -64,12 +65,16 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
   box(.2,.82,.2,0,-.43,0,coat,arm);sphere(.13,0,-.85,0,skin,arm);box(.08,.72,.06,0,-1.03,.12,wood,arm);
   function resize(){const w=canvas.clientWidth,h=canvas.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/Math.max(1,h);camera.updateProjectionMatrix();}
   new ResizeObserver(resize).observe(canvas);resize();
-  let animation="talk",until=0,viseme="REST";
-  const allowedGestures=new Set(["talk","ruler_desk","point_board","surprised","raise_hand"]);
+  let viseme="REST";
+  const gestureDirector=new GestureDirector();
   const sceneState={
-    act(value){animation=allowedGestures.has(value)?value:"talk";until=performance.now()+2400;avatarAnimator?.play(animation);},
+    act(value,source="llm"){
+     const accepted=gestureDirector.propose(value,{source});
+     if(accepted)avatarAnimator?.play(gestureDirector.current());
+     return accepted;
+    },
     setViseme(value){viseme=normalizeViseme(value);},
-    clearSpeech(){viseme="REST";animation="idle";until=0;avatarAnimator?.play("idle");},
+    clearSpeech(){viseme="REST";gestureDirector.clear();avatarAnimator?.play("idle");},
     setEmotion(value){if(value==="surprised")this.act("surprised");},
     setQuality(value){currentQuality=value;renderer.setPixelRatio(pixelRatio());resize();},
     setBlackboardMessage
@@ -93,13 +98,14 @@ export async function createClassroomScene({canvas,status,getYaw=()=>0,isSpeakin
    }
    lastFrame=now;
    avatarAnimator?.update(dt);
-   if(avatarAnimator&&now>=until&&avatarAnimator.current!=="idle")avatarAnimator.play("idle");
+   const currentGesture=gestureDirector.current();
+   if(avatarAnimator&&avatarAnimator.current!==currentGesture)avatarAnimator.play(currentGesture);
    camera.rotation.set(0,getYaw(),0);
-   const active=now<until;
+   const active=currentGesture!=="idle";
    const bob=getReducedMotion()?0:Math.sin(now*.0017)*.025;
    if(!avatarAnimator)head.position.y=2.66+bob;
    const armAngle=active&&!getReducedMotion()
-    ?animation==="ruler_desk"?.6+Math.sin(now*.015)*.36:animation==="raise_hand"?-2:0:0;
+    ?currentGesture==="ruler_desk"?.6+Math.sin(now*.015)*.36:currentGesture==="raise_hand"?-2:0:0;
    if(!avatarAnimator)arm.rotation.z=armAngle;
    const shapes={REST:[1,.18],A:[1,1.25],I:[1.35,.38],E:[1.1,.6],O:[.75,.95],U:[.65,.55],MBP:[.9,.12],FV:[1,.25],L:[1,.55],CHSH:[.8,.45]};
    const target=isSpeaking()?(shapes[viseme]||shapes.REST):shapes.REST;

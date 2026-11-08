@@ -89,7 +89,7 @@ async function send(text,event="dialog"){
     completed=true;
     answer.textContent=eventData.reply;
     $("speechBubble").textContent="«"+eventData.reply+"»";
-    sceneState?.act(eventData.animation||"talk");
+    sceneState?.act(eventData.animation||"talk","llm");
     history.push({role:"user",content:text},{role:"assistant",content:eventData.reply});
     if(history.length>16)history.splice(0,history.length-16);
    }else if(eventData.type==="error"){
@@ -154,7 +154,7 @@ $("chatForm").addEventListener("submit",event=>{
 memoryUI.bind();
 const mic=configureVoiceInput({find:$,send,stopSpeech:()=>{activeController?.abort();voice.cancel();},showMessage});
 gameUI=createGameUI({
- find:$,onGesture:gesture=>sceneState?.act(gesture),
+ find:$,onGesture:gesture=>sceneState?.act(gesture,"lesson"),
  onCompleted:async lessonId=>{
   if(!$("remember").checked)return;
   try{
@@ -169,7 +169,7 @@ bindCameraKeyboard({
  onTurn:()=>{if($("autoTurn").checked)send("Me he girado a mirar a mis compañeros.","turned_around");}
 });
 configureClassroomEvents({
- find:$,onVoiceCancel:()=>voice.cancel(),onGesture:gesture=>sceneState?.act(gesture),
+ find:$,onVoiceCancel:()=>voice.cancel(),onGesture:gesture=>sceneState?.act(gesture,"ambient"),
  onVoice:text=>{if($("voiceEnabled").checked&&$("provider").value!=="demo")voice.speak(text);}
 });
 configureDevMetrics({find:$});
