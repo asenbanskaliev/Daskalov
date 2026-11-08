@@ -23,6 +23,7 @@ const settings=createSettingsUI({find:$,showMessage});
 let gameUI=null;
 const memoryUI=createMemoryUI({
  find:$,showMessage,history,
+ onRevoke:()=>gameUI?.restore([]),
  onSession:async token=>{
   try{
    const response=await fetch("/api/progress",{method:"POST",headers:{"content-type":"application/json","x-daskalov-csrf":token},body:JSON.stringify({readOnly:true})});

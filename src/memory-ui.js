@@ -1,8 +1,8 @@
-export function createMemoryUI({find,showMessage,history,onSession=()=>{}}){
+export function createMemoryUI({find,showMessage,history,onSession=()=>{},onRevoke=()=>{},fetchImpl=fetch}){
  let csrfToken=null;
  async function refresh(){
   try{
-   const r=await fetch("/api/session");
+   const r=await fetchImpl("/api/session");
    if(!r.ok)throw Error("Privacidad no disponible.");
    const state=await r.json();
    csrfToken=state.active?state.csrfToken:null;
@@ -16,7 +16,7 @@ export function createMemoryUI({find,showMessage,history,onSession=()=>{}}){
  }
  async function ensure(){
   if(csrfToken){await onSession(csrfToken);return;}
-  const response=await fetch("/api/session",{method:"POST"});
+  const response=await fetchImpl("/api/session",{method:"POST"});
   const state=await response.json();
   if(!response.ok)throw Error(state.error||"Memoria no disponible.");
   csrfToken=state.csrfToken;find("forgetButton").disabled=false;
@@ -26,16 +26,17 @@ export function createMemoryUI({find,showMessage,history,onSession=()=>{}}){
  async function forget(){
   if(!csrfToken){showMessage("assistant","No hay sesión de memoria activa.");return;}
   try{
-   const res=await fetch("/api/memory",{method:"DELETE",headers:{"content-type":"application/json","x-daskalov-csrf":csrfToken},body:"{}"});
+   const res=await fetchImpl("/api/memory",{method:"DELETE",headers:{"content-type":"application/json","x-daskalov-csrf":csrfToken},body:"{}"});
    if(!res.ok)throw Error("No se pudo borrar la memoria.");
    csrfToken=null;history.length=0;find("remember").checked=false;find("forgetButton").disabled=true;
+   await onRevoke();
    find("viewMemories").disabled=true;find("exportMemories").disabled=true;find("memoryDetails").hidden=true;
    showMessage("assistant","Los recuerdos guardados se han borrado.");
   }catch(error){showMessage("error",error.message);}
  }
  async function queryExport(){
   if(!csrfToken)throw Error("Primero debes habilitar la memoria privada.");
-  const res=await fetch("/api/memory/export",{method:"POST",headers:{"content-type":"application/json","x-daskalov-csrf":csrfToken},body:"{}"});
+  const res=await fetchImpl("/api/memory/export",{method:"POST",headers:{"content-type":"application/json","x-daskalov-csrf":csrfToken},body:"{}"});
   if(!res.ok)throw Error("No se pudieron consultar tus datos.");
   return res.json();
  }
@@ -50,7 +51,7 @@ export function createMemoryUI({find,showMessage,history,onSession=()=>{}}){
     const button=document.createElement("button");button.textContent="Guardar corrección";button.type="button";
     button.addEventListener("click",async()=>{
      try{
-      const res=await fetch("/api/memory/correct",{method:"POST",headers:{"content-type":"application/json","x-daskalov-csrf":csrfToken},body:JSON.stringify({id:memory.id,content:input.value})});
+      const res=await fetchImpl("/api/memory/correct",{method:"POST",headers:{"content-type":"application/json","x-daskalov-csrf":csrfToken},body:JSON.stringify({id:memory.id,content:input.value})});
       if(!res.ok)throw Error("No se pudo corregir este recuerdo.");
       showMessage("assistant","Recuerdo corregido.");
      }catch(error){showMessage("error",error.message);}
@@ -73,7 +74,7 @@ export function createMemoryUI({find,showMessage,history,onSession=()=>{}}){
  }
  function bind(){
   find("remember").addEventListener("change",async()=>{
-   if(!find("remember").checked)return;
+   if(!find("remember").checked){await forget();return;}
    try{await ensure();}catch(error){find("remember").checked=false;showMessage("error",error.message);}
   });
   find("forgetButton").addEventListener("click",forget);
