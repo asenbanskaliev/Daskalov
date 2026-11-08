@@ -1,3 +1,4 @@
+import {withSettings} from "./support/aula.js";
 import {test,expect} from "@playwright/test";
 test.beforeEach(async({page})=>{
  await page.route("**/api/models?*",route=>route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({models:["beam","qwen2.5:7b"]})}));
@@ -6,6 +7,7 @@ test.beforeEach(async({page})=>{
 test("WEB-005: panel accesible ofrece calidad, voz, permiso, estado e indicadores",async({page})=>{
  await page.setViewportSize({width:390,height:844});
  await page.goto("/");
+ await page.locator("#settingsToggle").click();
  await expect(page.locator("#graphicsQuality")).toBeVisible();
  await expect(page.locator("#voiceChoice")).toBeVisible();
  await expect(page.locator("#providerStatus")).toContainText("Conectado");
@@ -13,11 +15,12 @@ test("WEB-005: panel accesible ofrece calidad, voz, permiso, estado e indicadore
  await expect(page.locator("#micStatus")).toBeVisible();
  await expect(page.locator("#pauseVoice")).toBeVisible();
  await expect(page.locator("#resumeVoice")).toBeVisible();
+ await page.locator("#settingsClose").click();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(392);
 });
 test("WEB-005: calidad baja se conserva tras recargar la página",async({page})=>{
  await page.goto("/");
- await page.locator("#graphicsQuality").selectOption("low");
+ await withSettings(page,()=>page.locator("#graphicsQuality").selectOption("low"));
  await page.reload();
  await expect(page.locator("#graphicsQuality")).toHaveValue("low");
 });
@@ -27,6 +30,6 @@ test("WEB-007: navegación con teclado, foco y reducción de animación",async({
  await expect(page.locator(".skip-link")).toBeFocused();
  await page.keyboard.press("Enter");
  await expect(page.locator("#question")).toBeFocused();
- await page.locator("#reducedMotion").check();
+ await withSettings(page,()=>page.locator("#reducedMotion").check());
  await expect(page.locator("#reducedMotion")).toBeChecked();
 });

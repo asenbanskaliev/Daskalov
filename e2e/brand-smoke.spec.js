@@ -1,3 +1,4 @@
+import {withSettings} from "./support/aula.js";
 import {test,expect} from "@playwright/test";
 
 /** Non-LLM branded browser smoke; no credentials, real audio, or personal data. */
@@ -14,7 +15,7 @@ for(const view of [{width:1280,height:800},{width:390,height:844}]){
   await page.goto("/");
   await expect(page.locator("#question")).toBeVisible();
   await expect(page.locator("#sceneStatus")).toContainText("3D no disponible");
-  await page.locator("#provider").selectOption("demo");
+  await withSettings(page,()=>page.locator("#provider").selectOption("demo"));
   await page.locator("#question").fill("¿Qué es la historia?");
   await page.locator("#sendButton").click();
   await expect(page.locator("#history")).toContainText("La historia");

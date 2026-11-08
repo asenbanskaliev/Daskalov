@@ -1,9 +1,10 @@
+import {withSettings} from "./support/aula.js";
 import {test,expect} from "@playwright/test";
 test("WEB-008 SEC-006: demo no solicita conversaciones Cloud ni activa micrófono o memoria",async({page})=>{
  let chatCalls=0;
  await page.route("**/api/chat**",async route=>{chatCalls++;await route.abort();});
  await page.goto("/");
- await page.locator("#provider").selectOption("demo");
+ await withSettings(page,()=>page.locator("#provider").selectOption("demo"));
  await expect(page.locator("#demoNotice")).toBeVisible();
  await expect(page.locator("#remember")).toBeDisabled();
  await expect(page.locator("#voiceEnabled")).toBeDisabled();
@@ -18,11 +19,11 @@ test("WEB-008: carga offline desde service worker tras primera visita",async({pa
  await page.goto("/");
  await page.evaluate(()=>navigator.serviceWorker.ready);
  await expect.poll(()=>page.evaluate(()=>Boolean(navigator.serviceWorker.controller))).toBe(true);
- await page.locator("#provider").selectOption("demo");
+ await withSettings(page,()=>page.locator("#provider").selectOption("demo"));
  await page.context().setOffline(true);
  await page.reload();
  await expect(page.getByRole("heading",{name:"Profesor Daskalov"})).toBeVisible();
- await page.locator("#provider").selectOption("demo");
+ await withSettings(page,()=>page.locator("#provider").selectOption("demo"));
  await page.locator("#question").fill("¡Tengo frío en invierno!");
  await page.locator("#sendButton").click();
  await expect(page.getByRole("log")).toContainText("¡Abrígate");

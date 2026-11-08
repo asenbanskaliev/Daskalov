@@ -1,3 +1,4 @@
+import {withSettings} from "./support/aula.js";
 import {test,expect} from "@playwright/test";
 test.beforeEach(async({page})=>{
  await page.route("**/api/models?*",route=>{
@@ -33,7 +34,7 @@ test("WEB-004: conversación simulada muestra respuesta de Daskalov sin Ollama n
   await route.fulfill({status:200,contentType:"application/x-ndjson",body:mockTurn("¡En mis tiempos sumábamos hasta las sillas!","point_board")});
  });
  await page.goto("/");
- await page.locator("#voiceEnabled").uncheck();
+ await withSettings(page,()=>page.locator("#voiceEnabled").uncheck());
  await page.locator("#question").fill("Profesor, ¿para qué sirven las matemáticas?");
  await page.getByRole("button",{name:"Preguntar al profesor"}).click();
  await expect(page.getByRole("log")).toContainText("¡En mis tiempos sumábamos hasta las sillas!");
@@ -50,7 +51,7 @@ test("WEB-006: si no hay WebGL puede conversar igualmente por texto",async({page
  await page.route("**/api/chat/stream",route=>route.fulfill({status:200,contentType:"application/x-ndjson",body:mockTurn("¡Puedes seguir aprendiendo sin gráficos!","talk")}));
  await page.goto("/");
  await expect(page.locator("#sceneStatus")).toContainText("3D no disponible");
- await page.locator("#voiceEnabled").uncheck();
+ await withSettings(page,()=>page.locator("#voiceEnabled").uncheck());
  await page.locator("#question").fill("Hola profesor");
  await page.locator("#sendButton").click();
  await expect(page.getByRole("log")).toContainText("Puedes seguir aprendiendo sin gráficos");
@@ -59,8 +60,10 @@ test("WEB-006: si no hay WebGL puede conversar igualmente por texto",async({page
 test("WEB-005: controles de IA y teclado son utilizables en tamaño móvil",async({page})=>{
  await page.setViewportSize({width:390,height:844});
  await page.goto("/");
+ await page.locator("#settingsToggle").click();
  await expect(page.locator("#provider")).toBeVisible();
  await expect(page.locator("#model")).toBeVisible();
+ await page.locator("#settingsClose").click();
  await expect(page.locator("#question")).toBeVisible();
  await expect(page.locator("#sendButton")).toBeVisible();
  const width=await page.evaluate(()=>document.documentElement.scrollWidth);
@@ -77,9 +80,9 @@ test("WEB-003: una recarga conserva la interfaz y sirve assets compilados",async
 
 test("LLM-005: el catálogo de modelos depende del proveedor elegido",async({page})=>{
  await page.goto("/");
- await page.locator("#provider").selectOption("local");
+ await withSettings(page,()=>page.locator("#provider").selectOption("local"));
  await expect(page.locator("#model")).toHaveValue("qwen2.5:7b");
- await page.locator("#provider").selectOption("cloud");
+ await withSettings(page,()=>page.locator("#provider").selectOption("cloud"));
  await expect(page.locator("#model")).toHaveValue("beam");
 });
 
@@ -87,7 +90,7 @@ test("LLM-003: el botón Interrumpir está disponible en la interfaz y vuelve a 
  await page.route("**/api/chat/stream",route=>route.fulfill({status:200,contentType:"application/x-ndjson",body:mockTurn("¡Respuesta de prueba!")}));
  await page.goto("/");
  await expect(page.locator("#stopButton")).toBeDisabled();
- await page.locator("#voiceEnabled").uncheck();
+ await withSettings(page,()=>page.locator("#voiceEnabled").uncheck());
  await page.locator("#question").fill("Hola profesor");
  await page.locator("#sendButton").click();
  await expect(page.getByRole("log")).toContainText("¡Respuesta de prueba!");
