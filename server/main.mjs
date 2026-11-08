@@ -17,6 +17,7 @@ import {synthesizePiper} from "./tts-piper.mjs";
 import {transcribeLocalWhisper,readAudioRequest} from "./stt-whisper.mjs";
 import {installSecurityHeaders} from "./security-headers.mjs";
 import {openMemory} from "./memory.mjs";
+import {embedLocal} from "./embeddings.mjs";
 import {createSession, getSession, csrfIsValid, isSameSiteRequest, clearSessionCookie} from "./session.mjs";
 
 const root=dirname(dirname(fileURLToPath(import.meta.url)));
@@ -51,6 +52,7 @@ export function createApp({
  models=listOllamaModels,
  ttsSynth=synthesizePiper,
  sttTranscriber=transcribeLocalWhisper,
+ embedder=embedLocal,
  allowMemory=process.env.DASKALOV_ALLOW_MEMORY==="1",
  maxCallsPerMinute=12,
  maxCallsPerDay=60,
@@ -61,6 +63,15 @@ export function createApp({
  memory.cleanup();
  const rate=new Map();
  const daily=new Map();
+ async function recalledMemories(id,text){
+  const lexical=memory.search(id,text,5);
+  if(process.env.DASKALOV_ENABLE_LOCAL_EMBEDDINGS!=="1"||!process.env.DASKALOV_EMBED_MODEL)return lexical;
+  try{
+   const model=process.env.DASKALOV_EMBED_MODEL;
+   const vector=await embedder({input:text,model});
+   return memory.searchHybrid(id,text,vector,model,5);
+  }catch{return lexical;}
+ }
  const inFlight=new Map();
  const cloudBudget=new UsageBudget({dailyLimit:maxCloudCallsPerDay});
  const metrics=new MetricsCollector({cloudUsdPerMillionOutputTokens:process.env.DASKALOV_USD_PER_1M_OUTPUT_TOKENS??null});
@@ -128,6 +139,17 @@ export function createApp({
      const available=await models({provider});
      return respond(res,200,{provider,reachable:true,models:available.length});
     }catch{return respond(res,200,{provider,reachable:false,models:0});}
+   }
+   if(path==="/api/memory/reindex"&&req.method==="POST"){
+    if(!allowMemory)throw new OllamaError("Memoria privada no habilitada.",403);
+    const session=requireSession(req,memory);
+    const body=await bodyOf(req);
+    rejectClientPlayerId(body);
+    if(process.env.DASKALOV_ENABLE_LOCAL_EMBEDDINGS!=="1"||!process.env.DASKALOV_EMBED_MODEL)throw new OllamaError("Embeddings locales desactivados.",503);
+    const model=process.env.DASKALOV_EMBED_MODEL;
+    const limit=Math.min(10,Math.max(1,Math.floor(Number(body.limit)||5)));
+    const status=await memory.reindexPlayer(session.playerId,model,({input})=>embedder({input,model}),limit);
+    return respond(res,200,{model,...status,cloudUsed:false});
    }
    if((path==="/api/memory/export"||path==="/api/memory/correct"||path==="/api/progress")&&req.method==="POST"){
     if(!allowMemory)throw new OllamaError("Memoria desactivada en este servidor.",403);
@@ -198,7 +220,7 @@ export function createApp({
     daily.set(ip,{day,count:(counter?.day===day?counter.count:0)+1});
     inFlight.set(ip,(inFlight.get(ip)||0)+1);
     try{
-     const memories=remember?memory.search(session.playerId,body.text):[];
+     const memories=remember?await recalledMemories(session.playerId,body.text):[];
      const messages=buildContext({text:body.text,event,memories,history:body.history});
      if(path==="/api/chat/stream"){
       const requestId=randomUUID(),chunker=new SentenceChunker();
