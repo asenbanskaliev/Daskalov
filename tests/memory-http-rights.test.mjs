@@ -1,0 +1,30 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {once} from "node:events";
+import {createApp} from "../server/main.mjs";
+test("MEM-007: exportación/corrección y progreso exigen sesión y propiedad",async t=>{
+ const app=createApp({dbPath:":memory:",allowMemory:true,llm:async()=>"Sí, profesor"});
+ app.server.listen(0,"127.0.0.1");await once(app.server,"listening");
+ t.after(async()=>{await new Promise(done=>app.server.close(done));app.close();});
+ const base="http://127.0.0.1:"+app.server.address().port;
+ const post=(path,body={},cookie="",csrf="")=>fetch(base+path,{method:"POST",headers:{"content-type":"application/json",...(cookie?{cookie}:{}),...(csrf?{"x-daskalov-csrf":csrf}:{})},body:JSON.stringify(body)});
+ const login=async()=>{
+  const r=await post("/api/session");return {cookie:r.headers.get("set-cookie").split(";")[0],csrf:(await r.json()).csrfToken};
+ };
+ const a=await login(),b=await login();
+ assert.equal((await post("/api/memory/export")).status,401);
+ assert.equal((await post("/api/memory/export",{},a.cookie)).status,403);
+ assert.equal((await post("/api/chat",{provider:"local",model:"qwen:7b",text:"Me gustan los números",remember:true},a.cookie,a.csrf)).status,200);
+ const exportA=await (await post("/api/memory/export",{},a.cookie,a.csrf)).json();
+ const row=exportA.memories.find(x=>x.role==="user");
+ assert.ok(row);
+ assert.equal((await post("/api/memory/correct",{id:row.id,content:"robado"},b.cookie,b.csrf)).status,404);
+ assert.equal((await post("/api/memory/correct",{id:row.id,content:"Ahora prefiero geometría"},a.cookie,a.csrf)).status,200);
+ const reread=await (await post("/api/memory/export",{},a.cookie,a.csrf)).json();
+ assert.ok(reread.memories.some(x=>x.content==="Ahora prefiero geometría"));
+ assert.equal((await post("/api/progress",{lessonId:"math",points:10},a.cookie,a.csrf)).status,200);
+ const progresses=await (await post("/api/progress",{readOnly:true},a.cookie,a.csrf)).json();
+ assert.equal(progresses.progress.length,1);
+ const none=await (await post("/api/progress",{readOnly:true},b.cookie,b.csrf)).json();
+ assert.equal(none.progress.length,0);
+});

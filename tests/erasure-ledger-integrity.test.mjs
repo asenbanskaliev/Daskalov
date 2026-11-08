@@ -1,0 +1,44 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {randomBytes,randomUUID} from "node:crypto";
+import {mkdtempSync,rmSync,readFileSync,writeFileSync,unlinkSync} from "node:fs";
+import {tmpdir} from "node:os";
+import {join} from "node:path";
+import {initializeErasureLedger,appendErasure,readErasureHashes} from "../server/erasure-ledger.mjs";
+test("MEM-007: anchored full HMAC log detects truncated valid deletion records",async t=>{
+ const dir=mkdtempSync(join(tmpdir(),"daskalov-anchored-"));
+ t.after(()=>rmSync(dir,{recursive:true,force:true}));
+ const path=join(dir,"erasure.jsonl"),secret=randomBytes(32).toString("hex");
+ assert.equal((await initializeErasureLedger({path,secret})).initialized,true);
+ assert.equal((await readErasureHashes({path,secret})).size,0);
+ const before=readFileSync(path+".head","utf8");
+ await appendErasure({path,secret,playerId:randomUUID()});
+ await appendErasure({path,secret,playerId:randomUUID()});
+ assert.equal((await readErasureHashes({path,secret})).size,2);
+ const data=readFileSync(path,"utf8").split("\n");
+ writeFileSync(path,data[0]+"\n");
+ await assert.rejects(()=>readErasureHashes({path,secret}),/Firma/);
+ await assert.rejects(()=>appendErasure({path,secret,playerId:randomUUID()}),/Firma/);
+ writeFileSync(path,readFileSync(path,"utf8"));
+ writeFileSync(path+".head",before);
+ await assert.rejects(()=>readErasureHashes({path,secret}),/Firma/);
+});
+test("MEM-007: deleted/truncated anchor and wrong secret fail closed",async t=>{
+ const dir=mkdtempSync(join(tmpdir(),"daskalov-anchor-"));
+ t.after(()=>rmSync(dir,{recursive:true,force:true}));
+ const path=join(dir,"erasure.jsonl"),secret=randomBytes(32).toString("hex");
+ await appendErasure({path,secret,playerId:randomUUID()});
+ assert.equal((await readErasureHashes({path,secret})).size,1);
+ await assert.rejects(()=>readErasureHashes({path,secret:"b".repeat(64)}),/Firma/);
+ unlinkSync(path+".head");
+ await assert.rejects(()=>readErasureHashes({path,secret}),/ENOENT/);
+ await assert.rejects(()=>appendErasure({path,secret,playerId:randomUUID()}),/ENOENT|Firma/);
+});
+test("MEM-007: existing head without ledger blocks new deletion, never starts empty",async t=>{
+ const dir=mkdtempSync(join(tmpdir(),"daskalov-anchored-missing-"));
+ t.after(()=>rmSync(dir,{recursive:true,force:true}));
+ const path=join(dir,"erasure.jsonl"),secret=randomBytes(32).toString("hex");
+ await appendErasure({path,secret,playerId:randomUUID()});
+ unlinkSync(path);
+ await assert.rejects(()=>appendErasure({path,secret,playerId:randomUUID()}),/Firma/);
+});

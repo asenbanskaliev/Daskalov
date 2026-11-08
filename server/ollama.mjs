@@ -1,0 +1,114 @@
+import {parseNDJSON} from "./stream.mjs";
+
+export class OllamaError extends Error {
+ constructor(message,status=502){super(message);this.name="OllamaError";this.status=status;}
+}
+export function validateProvider(value) {
+ if(!["cloud","local","openrouter","nvidia"].includes(value))throw new OllamaError("Proveedor no admitido.",400);
+ return value;
+}
+export function validateModel(value) {
+ if(typeof value!=="string"||(value.length>160||!/^[a-zA-Z0-9._:-]+(?:\/[a-zA-Z0-9._:+-]+)*$/.test(value)||value.includes("//")))throw new OllamaError("Modelo inválido.",400);
+ return value;
+}
+export function connection(provider,env=process.env) {
+ validateProvider(provider);
+ if(provider!=="cloud"&&provider!=="local")throw new OllamaError("Usa el conector externo seguro.",400);
+ if(provider==="cloud") {
+  if(!env.OLLAMA_API_KEY)throw new OllamaError("Configura OLLAMA_API_KEY en el servidor.",503);
+  return {base:"https://ollama.com",headers:{Authorization:"Bearer "+env.OLLAMA_API_KEY}};
+ }
+ const url=new URL(env.OLLAMA_LOCAL_URL||"http://127.0.0.1:11434");
+ if(!["http:","https:"].includes(url.protocol)||url.username||url.password)throw new OllamaError("OLLAMA_LOCAL_URL inválido.",503);
+ return {base:url.origin,headers:{}};
+}
+export async function chatOllama({provider,model,messages,fetchImpl=fetch,env=process.env}) {
+ validateModel(model);
+ const {base,headers}=connection(provider,env);
+ let response;
+ try {
+  response=await fetchImpl(base+"/api/chat",{method:"POST",headers:{"content-type":"application/json",...headers},body:JSON.stringify({model,messages,stream:false,think:false,options:{num_predict:model==="beam"?2048:512}}),signal:AbortSignal.timeout(90000)});
+ }catch{throw new OllamaError("No se ha podido conectar con Ollama.",502);}
+ if(!response.ok)throw new OllamaError("Ollama devolvió HTTP "+response.status+".",502);
+ let data;try{data=await response.json();}catch{throw new OllamaError("Ollama devolvió JSON inválido.",502);}
+ if(typeof data.message?.content!=="string"||!data.message.content.trim()){
+  const reason=String(data.done_reason||"desconocido").slice(0,30);
+  const tokens=Number.isFinite(data.eval_count)?data.eval_count:"?";
+  const thoughts=typeof data.message?.thinking==="string"?data.message.thinking.length:0;
+  throw new OllamaError("Ollama no devolvió respuesta final (reason="+reason+", tokens="+tokens+", thinking_chars="+thoughts+").",502);
+ }
+ return data.message.content;
+}
+export async function listOllamaModels({provider,fetchImpl=fetch,env=process.env}) {
+ validateProvider(provider);
+ const base=provider==="cloud"?"https://ollama.com":connection("local",env).base;
+ try{
+  const res=await fetchImpl(base+"/api/tags",{signal:AbortSignal.timeout(7000)});
+  if(!res.ok)throw new Error("HTTP "+res.status);
+  const data=await res.json();
+  return Array.isArray(data.models)?data.models
+   .map(m=>m.name)
+   .filter(name=>typeof name==="string"&&/^[a-zA-Z0-9._:-]{1,100}$/.test(name))
+   .slice(0,200):[];
+ }catch{
+  throw new OllamaError("No se pueden consultar los modelos de Ollama "+provider+".",502);
+ }
+}
+
+// Produces only user-visible text deltas; hidden reasoning is neither emitted nor persisted.
+// User-visible text only; the provider's hidden reasoning is never exposed.
+export async function* streamOllama({
+ provider,model,messages,signal,fetchImpl=fetch,env=process.env,
+ connectTimeoutMs=provider==="cloud"?25000:10000,
+ idleTimeoutMs=provider==="cloud"?60000:20000
+}){
+ validateModel(model);
+ const {base,headers}=connection(provider,env);
+ const total=AbortSignal.timeout(90000);
+ const phaseController=new AbortController();
+ const combined=signal?AbortSignal.any([signal,total,phaseController.signal]):AbortSignal.any([total,phaseController.signal]);
+ const timer=setTimeout(()=>phaseController.abort(Error("Connect phase deadline")),Math.max(1,connectTimeoutMs));
+ let response;
+ try{
+  response=await fetchImpl(base+"/api/chat",{
+   method:"POST",
+   headers:{"content-type":"application/json",...headers},
+   body:JSON.stringify({model,messages,stream:true,think:false,options:{num_predict:model==="beam"?2048:512}}),
+   signal:combined
+  });
+ }catch(error){
+  if(signal?.aborted)throw error;
+  throw new OllamaError("No se ha podido iniciar el flujo de Ollama (conexión o timeout).",502);
+ }finally{
+  clearTimeout(timer);
+ }
+ if(!response.ok)throw new OllamaError("Ollama streaming devolvió HTTP "+response.status+".",502);
+ let outputLength=0;
+ let idleTimer;
+ const refresh=()=>{
+  clearTimeout(idleTimer);
+  idleTimer=setTimeout(()=>phaseController.abort(Error("Stream idle phase deadline")),Math.max(1,idleTimeoutMs));
+ };
+ refresh();
+ try{
+  for await(const event of parseNDJSON(response.body,{signal:combined})){
+   if(combined.aborted)throw new OllamaError("Respuesta cancelada o tiempo agotado.",502);
+   refresh();
+   if(event.error)throw new OllamaError("El proveedor devolvió un error durante la respuesta.",502);
+   const delta=event.message?.content;
+   if(typeof delta==="string"&&delta.length){
+    outputLength+=delta.length;
+    if(outputLength>6000)throw new OllamaError("Respuesta demasiado larga.",502);
+    yield delta;
+   }
+  }
+  if(combined.aborted)throw new OllamaError("Respuesta cancelada o tiempo agotado.",502);
+ }catch(error){
+  if(signal?.aborted)throw error;
+  if(error instanceof OllamaError)throw error;
+  throw new OllamaError("Flujo NDJSON inválido, cancelado o timeout.",502);
+ }finally{
+  clearTimeout(idleTimer);
+ }
+ if(!outputLength)throw new OllamaError("Ollama no devolvió texto en streaming.",502);
+}

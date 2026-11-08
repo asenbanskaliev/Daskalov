@@ -1,0 +1,9 @@
+# Reference only; not approval for public deployment.
+example.org {
+    encode zstd gzip
+    reverse_proxy daskalov:3000
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy no-referrer
+    }
+}

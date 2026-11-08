@@ -1,0 +1,46 @@
+name: Performance - synthetic tests only
+on:
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+  push:
+    branches:
+      - "feat/**"
+    paths:
+      - ".github/workflows/performance.yml"
+      - "tests/stress-100.test.mjs"
+      - "tests/stress-network-chaos.test.mjs"
+      - "tests/game-sessions.test.mjs"
+permissions:
+  contents: read
+concurrency:
+  group: perf-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  synthetic-performance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: "24"
+          package-manager-cache: false
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: GLB geometry and memory estimate (NOT hardware FPS)
+        run: npm run gfx:budget
+      - name: 100 synthetic conversations and 10 sessions
+        run: |
+          mkdir -p reports
+          node --test --test-reporter=tap tests/stress-100.test.mjs tests/stress-network-chaos.test.mjs tests/game-sessions.test.mjs > reports/performance.tap
+          cat reports/performance.tap
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: always()
+        with:
+          name: daskalov-synthetic-performance
+          path: |
+            reports/performance.tap
+            reports/graphics-budget.json
+          retention-days: 7

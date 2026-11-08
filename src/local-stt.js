@@ -1,0 +1,99 @@
+import {VADTracker} from "./vad.js";
+/**
+ * Ephemeral microphone recording for local Whisper. Raw recorded bytes are sent
+ * only to this application's same-origin /api/stt/local; never to Cloud.
+ */
+export class LocalWhisperRecorder{
+ constructor({
+  mediaDevices=globalThis.navigator?.mediaDevices,
+  MediaRecorderCtor=globalThis.MediaRecorder,
+  fetchImpl=fetch,
+  maxDurationMs=12000,
+  maxBytes=2*1024*1024,
+  vadEnabled=()=>false,
+  AudioContextCtor=globalThis.AudioContext||globalThis.webkitAudioContext,
+  endpoint="/api/stt/local",cloudConsent=()=>false
+ }={}){
+  if(!["/api/stt/local","/api/stt/cloud"].includes(endpoint))throw Error("Endpoint STT no permitido.");
+  this.endpoint=endpoint;this.cloudConsent=cloudConsent;this.uploadAbort=null;
+  this.mediaDevices=mediaDevices;this.Recorder=MediaRecorderCtor;this.fetchImpl=fetchImpl;
+  this.maxDurationMs=maxDurationMs;this.maxBytes=maxBytes;
+  this.vadEnabled=vadEnabled;this.AudioContextCtor=AudioContextCtor;this.vadInterval=null;this.audioContext=null;
+  this.stream=null;this.recorder=null;this.timer=null;this.cancelled=false;this.running=false;
+ }
+ get available(){return Boolean(this.mediaDevices?.getUserMedia&&this.Recorder);}
+ async start(){
+  if(!this.available)throw Error("Captura local no disponible.");
+  if(this.endpoint==="/api/stt/cloud"&&!this.cloudConsent())throw Error("Autoriza la transferencia de voz.");
+  if(this.running)throw Error("Ya hay una grabación activa.");
+  this.running=true;this.cancelled=false;
+  try{
+   const stream=await this.mediaDevices.getUserMedia({audio:true,video:false});
+   if(this.cancelled){for(const track of stream.getTracks())track.stop();throw Error("Grabación cancelada.");}
+   this.stream=stream;
+   const type=["audio/webm;codecs=opus","audio/ogg;codecs=opus","audio/webm","audio/ogg"].find(t=>this.Recorder.isTypeSupported?.(t))||"audio/webm";
+   const chunks=[];
+   this.recorder=new this.Recorder(stream,{mimeType:type});
+   return await new Promise((resolve,reject)=>{
+    this.recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data);};
+    this.recorder.onerror=()=>reject(Error("Grabación de voz no disponible."));
+    this.recorder.onstop=async()=>{
+     clearTimeout(this.timer);this.cleanup();
+     if(this.cancelled){reject(Error("Grabación cancelada."));return;}
+     try{
+      const blob=new Blob(chunks,{type});
+      if(blob.size<10||blob.size>this.maxBytes)throw Error("La muestra de voz es demasiado corta o grande.");
+      if(this.endpoint==="/api/stt/cloud"&&!this.cloudConsent())throw Error("Consentimiento revocado antes del envío.");
+      this.uploadAbort=new AbortController();
+      const headers={"content-type":type.split(";")[0]};
+      if(this.endpoint==="/api/stt/cloud")headers["x-daskalov-audio-consent"]="cloud";
+      const result=await this.fetchImpl(this.endpoint,{method:"POST",headers,body:blob,signal:this.uploadAbort.signal});
+      if(!result.ok){
+       let error={};try{error=await result.json();}catch{}
+       throw Error(error.error||"No se pudo transcribir con Whisper local.");
+      }
+      const data=await result.json();
+      if(typeof data.transcript!=="string"||!data.transcript.trim())throw Error("Whisper no reconoció palabras.");
+      resolve(data.transcript);
+     }catch(error){reject(error);}
+    };
+    this.recorder.start(250);
+    this.timer=setTimeout(()=>this.finish(),this.maxDurationMs);
+    this.activateVAD(stream);
+   });
+  }catch(error){this.cleanup();throw error;}
+ }
+ activateVAD(stream){
+  if(!this.vadEnabled()||!this.AudioContextCtor)return;
+  try{
+   this.audioContext=new this.AudioContextCtor();
+   const source=this.audioContext.createMediaStreamSource(stream);
+   const analyser=this.audioContext.createAnalyser();
+   analyser.fftSize=1024;source.connect(analyser);
+   const data=new Uint8Array(analyser.fftSize);
+   const tracker=new VADTracker({maxDurationMs:this.maxDurationMs});
+   this.vadInterval=setInterval(()=>{
+    if(this.recorder?.state!=="recording")return;
+    analyser.getByteTimeDomainData(data);
+    let total=0;
+    for(const byte of data){const v=(byte-128)/128;total+=v*v;}
+    const rms=Math.sqrt(total/data.length);
+    if(tracker.feed(rms,Date.now()).finished)this.finish();
+   },80);
+  }catch{this.audioContext?.close?.();this.audioContext=null;}
+ }
+ finish(){
+  if(this.recorder?.state==="recording")this.recorder.stop();
+ }
+ cancel(){
+  this.cancelled=true;
+  if(this.recorder?.state==="recording")this.recorder.stop();
+  this.cleanup();
+ }
+ cleanup(){
+  clearTimeout(this.timer);clearInterval(this.vadInterval);this.vadInterval=null;
+  this.audioContext?.close?.();this.audioContext=null;
+  for(const track of this.stream?.getTracks?.()||[])track.stop();
+  this.stream=null;this.running=false;
+ }
+}

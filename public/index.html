@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#182521">
+  <title>Profesor Daskalov — En mis tiempos…</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="shell">
+  <header class="topbar">
+    <div class="brand"><span class="seal">D</span><div><h1>Profesor Daskalov</h1><p>En mis tiempos… · Aula 3D interactiva</p></div></div>
+    <div class="connection"><span id="apiDot" class="dot"></span><span id="apiStatus">Comprobando servidor…</span></div>
+  </header>
+  <main class="layout">
+    <section class="stage" aria-label="Aula tridimensional del Profesor Daskalov">
+      <canvas id="sceneCanvas" aria-label="Vista 3D del aula y del profesor"></canvas>
+      <div class="scene-status" id="sceneStatus">Preparando aula 3D…</div>
+      <div class="stage-label"><strong>AULA 01</strong><span>Usa ← → para mirar a los lados</span></div>
+      <div class="speech" id="speechBubble" aria-live="polite">«¡Bienvenido! ¡En mis tiempos hasta las tizas llegaban puntuales!»</div>
+    </section>
+    <aside class="panel">
+      <div class="panel-title"><h2>Habla con el profesor</h2><p>Pregunta lo que quieras; Daskalov improvisará usando Ollama.</p></div>
+      <form id="settingsForm" autocomplete="off">
+        <div class="fields"><label for="provider">Proveedor de IA</label><select id="provider"><option value="cloud">Ollama Cloud</option><option value="local">Ollama local</option></select></div>
+        <div class="fields"><label for="model">Modelo</label><input id="model" list="modelsList" value="beam" spellcheck="false"><datalist id="modelsList"><option value="beam"></option></datalist></div>
+        <div class="toggles"><label><input type="checkbox" id="remember"> Recordar conversaciones (opcional)</label><label><input type="checkbox" id="autoTurn"> Reaccionar con IA al girarme</label><label><input type="checkbox" id="voiceEnabled" checked> Leer respuestas en voz alta</label></div>
+      </form>
+      <div id="history" class="history" role="log" aria-live="polite">
+        <div class="message assistant">¡Buenos días! Soy el Profesor Daskalov. ¿Qué querías preguntarme?</div>
+      </div>
+      <form id="chatForm" class="chat-form">
+        <label class="sr-only" for="question">Escribe una pregunta</label>
+        <input id="question" placeholder="Profesor, ¿puedo hablar en clase?" maxlength="700" autocomplete="off" required>
+        <div class="actions"><button type="button" id="micButton" class="secondary" title="Hablar por micrófono">Micrófono</button><button type="submit" id="sendButton">Preguntar al profesor</button></div>
+      </form>
+      <div class="privacy"><button id="forgetButton" type="button" class="text-button">Borrar mis recuerdos</button><span>Memoria desactivada por defecto. Sin guardar audio.</span></div>
+    </aside>
+  </main>
+  <footer>Prototipo ODD + TDD · Humor ficticio y educativo · La voz con acento búlgaro específico se incorporará en una fase posterior.</footer>
+</div>
+<script type="module" src="/app.js"></script>
+</body>
+</html>
