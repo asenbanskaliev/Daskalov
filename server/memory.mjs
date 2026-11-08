@@ -21,6 +21,7 @@ export function openMemory(fileName) {
  ].join("\n"));
  migrateDatabase(db);
  const add=db.prepare("INSERT INTO memories(player_id,role,content) VALUES (?,?,?)");
+ const capMemories=db.prepare("DELETE FROM memories WHERE player_id=? AND id NOT IN (SELECT id FROM memories WHERE player_id=? ORDER BY id DESC LIMIT 200)");
  const recent=db.prepare("SELECT role,content,created_at FROM memories WHERE player_id=? ORDER BY id DESC LIMIT ?");
  const fts=db.prepare("SELECT m.role,m.content,m.created_at FROM memories_fts JOIN memories m ON m.id=memories_fts.rowid WHERE memories_fts MATCH ? AND m.player_id=? ORDER BY bm25(memories_fts) LIMIT ?");
  const del=db.prepare("DELETE FROM memories WHERE player_id=?");
@@ -38,7 +39,7 @@ export function openMemory(fileName) {
  const privacyUpsert=db.prepare("INSERT INTO privacy_preferences(player_id,memory_enabled) VALUES(?,?) ON CONFLICT(player_id) DO UPDATE SET memory_enabled=excluded.memory_enabled,updated_at=datetime('now')");
 
  return {
-  save(id,role,content){if(!isPlayerId(id)||!["user","assistant"].includes(role))throw new Error("Memoria inválida");insertPlayer.run(id);add.run(id,role,redactSensitiveMemory(content));},
+  save(id,role,content){if(!isPlayerId(id)||!["user","assistant"].includes(role))throw new Error("Memoria inválida");insertPlayer.run(id);add.run(id,role,redactSensitiveMemory(content));capMemories.run(id,id);},
   search(id,query,limit=5){
    if(!isPlayerId(id))return [];
    const size=Math.min(10,Math.max(1,Math.floor(limit)));
@@ -68,7 +69,7 @@ export function openMemory(fileName) {
   },
   correctMemory(id,memoryId,text){
    if(!isPlayerId(id)||!Number.isInteger(memoryId)||memoryId<1||typeof text!=="string"||!text.trim()||text.length>1500)return false;
-   const result=modify.run(text,id,memoryId);
+   const result=modify.run(redactSensitiveMemory(text),id,memoryId);
    if(result.changes)db.prepare("INSERT INTO privacy_audit(action) VALUES ('correct')").run();
    return result.changes>0;
   },
@@ -91,7 +92,7 @@ export function openMemory(fileName) {
   createSession(hash,id){if(!/^[a-f0-9]{64}$/.test(hash)||!isPlayerId(id))throw new Error("Credential format invalid");insertPlayer.run(id);insertCredential.run(hash,id);},
   resolveSession(hash){if(typeof hash!=="string"||!/^[a-f0-9]{64}$/.test(hash))return null;return queryCredential.get(hash)?.player_id||null;},
   revokeSession(hash){if(typeof hash==="string"&&/^[a-f0-9]{64}$/.test(hash))revokeCredential.run(hash);},
-  cleanup(){db.exec("DELETE FROM memories WHERE created_at < datetime('now','-30 days'); DELETE FROM session_credentials WHERE expires_at < datetime('now')");},
+  cleanup(){db.exec("DELETE FROM memories WHERE created_at < datetime('now','-30 days'); DELETE FROM lesson_progress WHERE updated_at < datetime('now','-180 days'); DELETE FROM session_credentials WHERE expires_at < datetime('now'); DELETE FROM privacy_audit WHERE at < datetime('now','-30 days');");},
   close(){db.close();}
  };
 }
